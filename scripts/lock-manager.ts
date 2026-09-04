@@ -87,7 +87,7 @@ export function transferLock(domain: string, fromOperator: string, toOperator: s
 
 export function listLocks(): DomainLease[] {
   ensureLocksDir();
-  const files = readdirSync(LOCKS_DIR).filter((f) => f.endsWith(".lock.json"));
+  const files = readdirSync(LOCKS_DIR).filter((f: string) => f.endsWith(".lock.json"));
   const leases: DomainLease[] = [];
   const now = new Date();
 

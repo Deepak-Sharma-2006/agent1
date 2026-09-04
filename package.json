@@ -1,0 +1,20 @@
+{
+  "name": "antigravity-enterprise-workflow",
+  "version": "1.0.0",
+  "description": "Enterprise 2-Person / 2-Computer Shared Context Autonomous Agentic Workflow",
+  "type": "module",
+  "scripts": {
+    "lock:status": "node --experimental-strip-types scripts/lock-manager.ts status",
+    "lock:acquire": "node --experimental-strip-types scripts/lock-manager.ts acquire",
+    "lock:transfer": "node --experimental-strip-types scripts/lock-manager.ts transfer",
+    "lock:release": "node --experimental-strip-types scripts/lock-manager.ts release",
+    "check:hallucinations": "node --experimental-strip-types scripts/anti-hallucination-checker.ts scripts",
+    "pentest": "node --experimental-strip-types scripts/pen-test-runner.ts",
+    "token:budget": "node --experimental-strip-types scripts/token-budget-guard.ts",
+    "harness:eval": "node --experimental-strip-types .agents/harness/eval-runner.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment and secrets
+.env
+.env.local
+*.pem
+
+# Build artifacts and caches
+dist/
+build/
+.npm-cache/
+
+# Ephemeral runtime logs (keep directory structure)
+.agents/state/metrics/*.json
+.agents/security/pentest-report.json
+*.log

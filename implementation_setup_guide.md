@@ -2465,37 +2465,37 @@ To prevent runaway LLM costs during autonomous loop execution, both machines enf
 #### Workstation 1 (Computer 1) - Initial Setup
 ```bash
 # 1. Clone repository
-git clone <remote-repo-url> enterprise-workspace
-cd enterprise-workspace
+git clone https://github.com/Deepak-Sharma-2006/agent1.git
+cd agent1
 
 # 2. Install workspace dependencies
-pnpm install
+npm install
 
 # 3. Verify Antigravity customization layer
 ls -la .agents/rules .agents/skills .agents/hooks.json
 
 # 4. Verify lock manager & anti-hallucination shield
-npx ts-node scripts/lock-manager.ts status
-npx ts-node scripts/anti-hallucination-checker.ts scripts
+node --experimental-strip-types scripts/lock-manager.ts status
+node --experimental-strip-types scripts/anti-hallucination-checker.ts scripts
 
 # 5. Acquire Phase 1 Lease (Alpha Builder)
-npx ts-node scripts/lock-manager.ts acquire --domain auth --operator "Computer1" --role Alpha --ttl 7200
+node --experimental-strip-types scripts/lock-manager.ts acquire --domain auth --operator "Computer1" --role Alpha --ttl 7200
 ```
 
 #### Workstation 2 (Computer 2) - Initial Setup
 ```bash
 # 1. Clone repository
-git clone <remote-repo-url> enterprise-workspace
-cd enterprise-workspace
+git clone https://github.com/Deepak-Sharma-2006/agent1.git
+cd agent1
 
 # 2. Install workspace dependencies
-pnpm install
+npm install
 
 # 3. Configure Antigravity CLI settings
 # Ensure ~/.gemini/antigravity-cli/settings.json points to .agents
 
 # 4. Check active locks (Verify Computer 1 holds Phase 1 lease)
-npx ts-node scripts/lock-manager.ts status
+node --experimental-strip-types scripts/lock-manager.ts status
 
 # 5. Spin up container sandbox for Styx DAST red-teaming
 docker compose up -d test-sandbox

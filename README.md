@@ -48,8 +48,8 @@ An enterprise-grade, production-hardened development platform and operational ha
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/Deepak-Sharma-2006/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/Deepak-Sharma-2006/agent1.git
+cd agent1
 
 # 2. Install dependencies & type definitions
 npm install
@@ -69,8 +69,8 @@ node --experimental-strip-types scripts/lock-manager.ts acquire --domain auth --
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/Deepak-Sharma-2006/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/Deepak-Sharma-2006/agent1.git
+cd agent1
 
 # 2. Install dependencies
 npm install

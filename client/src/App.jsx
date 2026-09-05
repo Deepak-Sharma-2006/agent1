@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth, ROLE_DEFAULT_VIEWS } from './context/AuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
+import { OfflineProvider } from './context/OfflineContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
+import { ConflictResolutionModal } from './components/ConflictResolutionModal';
 import { LoginScreen } from './pages/LoginScreen';
 import { Dashboard } from './pages/Dashboard';
 import { QuotationStudio } from './pages/QuotationStudio';
@@ -126,6 +128,7 @@ function MainLayout() {
           {currentView === 'warehouse' && <WarehouseView />}
         </main>
       </div>
+      <ConflictResolutionModal />
     </div>
   );
 }
@@ -134,7 +137,9 @@ export function App() {
   return (
     <AuthProvider>
       <WebSocketProvider>
-        <MainLayout />
+        <OfflineProvider>
+          <MainLayout />
+        </OfflineProvider>
       </WebSocketProvider>
     </AuthProvider>
   );

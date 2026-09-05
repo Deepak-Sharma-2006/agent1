@@ -283,6 +283,28 @@ export function createApiRouter({ quotationService, repositories }) {
       }
     }
 
+    if (singleQuoteMatch && method === "PUT") {
+      const quoteId = singleQuoteMatch[1];
+      try {
+        const body = await parseJsonRequestBody(req);
+        const expectedVersion = req.headers["if-match"]
+          ? parseInt(req.headers["if-match"], 10)
+          : body.expectedVersion;
+
+        const updatedQuote = quotationService.updateQuotation(quoteId, body, expectedVersion);
+        sendJsonResponse(res, 200, { quotation: updatedQuote });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        let currentQuote = null;
+        try {
+          currentQuote = quotationService.quotationRepository.findById(quoteId);
+        } catch (_) {}
+        sendErrorResponse(res, status, err.message, currentQuote ? { currentQuote } : null);
+        return true;
+      }
+    }
+
     // Customer Portal View (Sanitized & Cloaked Proposal with zero internal cost metrics)
     const portalQuoteMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/portal$/);
     if (portalQuoteMatch && method === "GET") {

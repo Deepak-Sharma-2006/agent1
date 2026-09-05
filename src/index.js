@@ -21,6 +21,7 @@ const MIME_TYPES = {
   ".ico": "image/x-icon",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
 };
 
 export const defaultConfig = {
@@ -147,6 +148,18 @@ export function createServer(config = defaultConfig, customDependencies = null) 
       // Static Asset & SPA Fallback Serving
       if (req.method === "GET" || req.method === "HEAD") {
         const distDir = resolve(process.cwd(), "dist");
+        const clientPublicDir = resolve(process.cwd(), "client", "public");
+
+        // Helper to determine if file is PWA service worker or manifest
+        const getPwaCacheHeader = (filePath, ext) => {
+          const fileName = filePath.split(/[\/\\]/).pop().toLowerCase();
+          if (ext === ".html" || fileName === "sw.js" || fileName === "manifest.json" || ext === ".webmanifest") {
+            return "no-cache, no-store, must-revalidate";
+          }
+          return "public, max-age=31536000, immutable";
+        };
+
+        // 1. Check dist directory
         if (existsSync(distDir)) {
           let filePath = resolve(distDir, pathname.replace(/^\//, ""));
 
@@ -155,7 +168,7 @@ export function createServer(config = defaultConfig, customDependencies = null) 
             const contentType = MIME_TYPES[ext] || "application/octet-stream";
             res.writeHead(200, {
               "Content-Type": contentType,
-              "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
+              "Cache-Control": getPwaCacheHeader(filePath, ext),
             });
             if (req.method === "HEAD") {
               res.end();
@@ -170,12 +183,31 @@ export function createServer(config = defaultConfig, customDependencies = null) 
           if (!pathname.startsWith("/api") && !extname(pathname) && existsSync(indexPath)) {
             res.writeHead(200, {
               "Content-Type": "text/html; charset=utf-8",
-              "Cache-Control": "no-cache",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
             });
             if (req.method === "HEAD") {
               res.end();
             } else {
               createReadStream(indexPath).pipe(res);
+            }
+            return;
+          }
+        }
+
+        // 2. Fallback check in client/public for development mode assets (e.g. sw.js, manifest.json)
+        if (existsSync(clientPublicDir)) {
+          let publicFilePath = resolve(clientPublicDir, pathname.replace(/^\//, ""));
+          if (publicFilePath.startsWith(clientPublicDir) && existsSync(publicFilePath) && statSync(publicFilePath).isFile()) {
+            const ext = extname(publicFilePath).toLowerCase();
+            const contentType = MIME_TYPES[ext] || "application/octet-stream";
+            res.writeHead(200, {
+              "Content-Type": contentType,
+              "Cache-Control": getPwaCacheHeader(publicFilePath, ext),
+            });
+            if (req.method === "HEAD") {
+              res.end();
+            } else {
+              createReadStream(publicFilePath).pipe(res);
             }
             return;
           }

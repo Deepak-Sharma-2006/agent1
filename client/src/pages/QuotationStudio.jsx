@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
+import { useOffline } from '../context/OfflineContext';
+import {
+  cacheCatalog,
+  getCachedCatalog,
+  cacheCustomers,
+  getCachedCustomers,
+  saveOfflineQuote,
+  getOfflineQuote,
+} from '../offline/indexeddb';
 import {
   Save,
   Send,
@@ -31,6 +40,7 @@ import { FallbackBanner } from '../components/FallbackBanner';
 export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
   const { currentUser, canApprove, canViewInternalMargins, isCustomer, isWarehouse, canCreateQuotes } = useAuth();
   const { sendAction, lastEvent, addToast } = useWebSocket();
+  const { isOnline, enqueueAction } = useOffline();
 
   const [quote, setQuote] = useState(null);
   const [customers, setCustomers] = useState([]);
@@ -102,32 +112,59 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
     const init = async () => {
       try {
         setLoading(true);
-        const [cRes, pRes] = await Promise.all([
-          fetch('/api/customers').then((r) => r.json()),
-          fetch('/api/products').then((r) => r.json()),
-        ]);
+        let cData = [];
+        let pData = [];
+        let qData = null;
 
-        if (cRes.success) setCustomers(cRes.customers || []);
-        if (pRes.success) setProducts(pRes.products || []);
+        try {
+          const [cRes, pRes] = await Promise.all([
+            fetch('/api/customers').then((r) => r.json()),
+            fetch('/api/products').then((r) => r.json()),
+          ]);
 
-        if (quoteId) {
-          const qRes = await fetch(`/api/quotes/${quoteId}`).then((r) => r.json());
-          if (qRes.success && qRes.quotation) {
-            setQuote(qRes.quotation);
+          if (cRes.success) {
+            cData = cRes.customers || [];
+            cacheCustomers(cData).catch(() => {});
           }
-        } else {
+          if (pRes.success) {
+            pData = pRes.products || [];
+            cacheCatalog(pData).catch(() => {});
+          }
+
+          if (quoteId) {
+            const qRes = await fetch(`/api/quotes/${quoteId}`).then((r) => r.json());
+            if (qRes.success && qRes.quotation) {
+              qData = qRes.quotation;
+              saveOfflineQuote(qData).catch(() => {});
+            }
+          }
+        } catch {
+          // Fallback to native IndexedDB if network is offline
+          cData = await getCachedCustomers().catch(() => []);
+          pData = await getCachedCatalog().catch(() => []);
+          if (quoteId) {
+            qData = await getOfflineQuote(quoteId).catch(() => null);
+          }
+        }
+
+        setCustomers(cData);
+        setProducts(pData);
+
+        if (qData) {
+          setQuote(qData);
+        } else if (!quoteId) {
           // New draft initialization
           setQuote({
             id: `quote-new-${Date.now()}`,
             quoteNumber: `Q-2026-${Math.floor(100 + Math.random() * 900)}`,
-            customerId: cRes.customers?.[0]?.id || 'cust-acme-01',
+            customerId: cData?.[0]?.id || 'cust-acme-01',
             salesRepId: currentUser.id,
             status: 'Draft',
             version: 1,
             lines: [
               {
                 id: `line-${Date.now()}-1`,
-                productId: pRes.products?.[0]?.id || 'prod-srv-01',
+                productId: pData?.[0]?.id || 'prod-srv-01',
                 quantity: 1,
                 unitDiscountPercentage: 5,
               },
@@ -257,20 +294,80 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
         expectedVersion: quote.version,
       };
 
+      // If browser is offline, persist draft in IndexedDB and enqueue mutation
+      if (!navigator.onLine) {
+        const offlineQuote = {
+          ...quote,
+          lines: quote.lines,
+          totalAmount: preview?.summary?.total ?? quote.totalAmount,
+          _offlinePending: true,
+        };
+        await saveOfflineQuote(offlineQuote);
+        await enqueueAction({
+          endpoint: url,
+          method,
+          payload,
+          entityId: quote.id,
+          entityType: 'quote',
+          description: `Save ${quote.quoteNumber || quote.id}`,
+        });
+        setQuote(offlineQuote);
+        addToast(
+          'Saved Offline',
+          'Quotation stored locally in IndexedDB. Will synchronize automatically upon reconnect.',
+          'warning'
+        );
+        return;
+      }
+
+      // Online network path
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      }).then((r) => r.json());
+      });
 
-      if (res.success) {
-        setQuote(res.quotation);
-        addToast('Saved', `Quotation ${res.quotation.quoteNumber || res.quotation.id} saved successfully!`, 'success');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setQuote(data.quotation);
+          saveOfflineQuote(data.quotation).catch(() => {});
+          addToast('Saved', `Quotation ${data.quotation.quoteNumber || data.quotation.id} saved successfully!`, 'success');
+        } else {
+          addToast('Save Failed', data.error || 'Conflict detected', 'danger');
+        }
+      } else if (res.status === 409) {
+        // Optimistic concurrency conflict handled by OfflineContext modal when queued or alert here
+        addToast('Version Conflict (409)', 'Another user updated this quotation. Refresh or review conflicts.', 'danger');
       } else {
-        addToast('Save Failed', res.error || 'Conflict detected', 'danger');
+        // Fall back to offline queue on unexpected network/server error
+        const offlineQuote = { ...quote, lines: quote.lines, _offlinePending: true };
+        await saveOfflineQuote(offlineQuote);
+        await enqueueAction({
+          endpoint: url,
+          method,
+          payload,
+          entityId: quote.id,
+          entityType: 'quote',
+          description: `Save ${quote.quoteNumber || quote.id}`,
+        });
+        setQuote(offlineQuote);
+        addToast('Saved to Offline Queue', 'Server unreachable. Queued in IndexedDB for automatic synchronization.', 'warning');
       }
     } catch {
-      addToast('Error', 'Failed to communicate with pricing engine', 'danger');
+      // Network drop during save
+      const offlineQuote = { ...quote, lines: quote.lines, _offlinePending: true };
+      await saveOfflineQuote(offlineQuote).catch(() => {});
+      await enqueueAction({
+        endpoint: url,
+        method,
+        payload,
+        entityId: quote.id,
+        entityType: 'quote',
+        description: `Save ${quote.quoteNumber || quote.id}`,
+      }).catch(() => {});
+      setQuote(offlineQuote);
+      addToast('Offline Queue Saved', 'Network connection interrupted. Saved locally for synchronization.', 'warning');
     } finally {
       setSaving(false);
     }

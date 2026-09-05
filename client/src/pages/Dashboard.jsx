@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
 import {
+  cacheCustomers,
+  getCachedCustomers,
+  saveOfflineQuote,
+  getAllOfflineQuotes,
+} from '../offline/indexeddb';
+import {
   Plus,
   ArrowUpRight,
   TrendingUp,
@@ -44,6 +50,7 @@ export function Dashboard({ onOpenQuote }) {
 
       if (qRes.success) {
         setQuotes(qRes.quotations || []);
+        (qRes.quotations || []).forEach((q) => saveOfflineQuote(q).catch(() => {}));
       }
       if (cRes.success) {
         const cMap = {};
@@ -51,9 +58,28 @@ export function Dashboard({ onOpenQuote }) {
           cMap[c.id] = c;
         });
         setCustomers(cMap);
+        cacheCustomers(cRes.customers || []).catch(() => {});
       }
     } catch {
-      // Offline fallback
+      // Offline fallback: load from native IndexedDB
+      try {
+        const [cachedQuotes, cachedCustomersList] = await Promise.all([
+          getAllOfflineQuotes(),
+          getCachedCustomers(),
+        ]);
+        if (cachedQuotes && cachedQuotes.length > 0) {
+          setQuotes(cachedQuotes);
+        }
+        if (cachedCustomersList && cachedCustomersList.length > 0) {
+          const cMap = {};
+          cachedCustomersList.forEach((c) => {
+            cMap[c.id] = c;
+          });
+          setCustomers(cMap);
+        }
+      } catch (e) {
+        console.warn('Could not read from offline IndexedDB:', e);
+      }
     } finally {
       setLoading(false);
     }

@@ -1,0 +1,18 @@
+{
+  "name": "DealFlow360 — Enterprise Autonomous CPQ & Sales Operations",
+  "short_name": "DealFlow360",
+  "description": "Enterprise CPQ, Margin Floor Protection, Multi-Warehouse Logistics & Real-Time Sales Operations",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#714B67",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -593,6 +593,73 @@ export class QuotationService {
   }
 
   /**
+   * Updates general quotation attributes and lines with Optimistic Concurrency Control.
+   * 
+   * @param {string} quotationId
+   * @param {Object} updateData
+   * @param {number|undefined} [expectedVersion]
+   * @returns {Object} Updated quotation
+   */
+  updateQuotation(quotationId, updateData = {}, expectedVersion) {
+    const quotation = this.getQuotationById(quotationId);
+    this._assertConcurrencyVersion(quotation, expectedVersion);
+
+    if (quotation.status === "Confirmed") {
+      throw new ValidationError("Cannot modify a quote that has already been confirmed into an order.");
+    }
+
+    if (updateData.customerId) quotation.customerId = updateData.customerId;
+    if (updateData.salesRepId) quotation.salesRepId = updateData.salesRepId;
+    if (updateData.customerCounterNotes !== undefined) quotation.customerCounterNotes = updateData.customerCounterNotes;
+
+    // If updateData contains lines, recalculate each line
+    if (Array.isArray(updateData.lines)) {
+      quotation.lines = updateData.lines.map((l, idx) => {
+        const product = this.productRepository ? this.productRepository.findById(l.productId) : null;
+        const discountPercentage = l.discountPct !== undefined
+          ? l.discountPct
+          : (l.discountPercentage !== undefined
+            ? l.discountPercentage
+            : (l.unitDiscountPercentage !== undefined ? l.unitDiscountPercentage : 0));
+
+        const lineId = l.id || `line-${Date.now()}-${idx}`;
+        if (product) {
+          return QuotationCalculator.createLine(quotationId, lineId, {
+            product,
+            quantity: Math.floor(Number(l.quantity) || 1),
+            discountPct: Math.min(100, Math.max(0, Number(discountPercentage) || 0)),
+            variantId: l.variantId || null,
+            allocatedWarehouseId: l.allocatedWarehouseId || null,
+          });
+        }
+        return l;
+      });
+    }
+
+    if (quotation.status === "Approved") {
+      quotation.status = "Draft";
+      quotation.approvalChain.push({
+        action: "ApprovalRevoked",
+        role: "System",
+        approverName: "System Automation",
+        timestamp: new Date().toISOString(),
+        note: "Quotation modified. Prior approval invalidated.",
+      });
+    }
+
+    QuotationCalculator.recalculateQuotation(quotation);
+    this._syncCompatibilityAliases(quotation);
+    this._incrementVersion(quotation);
+    this.quotationRepository.save(quotation);
+
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitQuoteUpdated(quotation, "QUOTE_UPDATED");
+    }
+
+    return quotation;
+  }
+
+  /**
    * Submits a quotation for governance review and escalation assessment.
    * 
    * @param {string} quotationId

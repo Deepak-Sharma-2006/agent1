@@ -106,6 +106,66 @@ sqliteDb.withTransaction(fn)
      Return hydrated quotation
 ```
 
+### Diagram C: Provider Routing & Database Initialization Pipeline
+
+```mermaid
+flowchart TD
+    AppStart[Application Boot / Test Runner] --> GetRepo[getRepositories provider]
+    GetRepo --> CheckProvider{Provider Type?}
+
+    CheckProvider -- "memory" --> MemStore[MemoryStore.getInstance]
+    MemStore --> SeedMem[seedMemoryDatabase: In-Memory Map Collections]
+    SeedMem --> ReturnMem[Return In-Memory Repositories]
+
+    CheckProvider -- "sqlite (Default)" --> CheckInst{Active Database Instance Exists?}
+    CheckInst -- "Yes & not forceNew" --> ReturnSqlite[Return Cached Repositories]
+    CheckInst -- "No or forceNew" --> InitDir[mkdirSync prisma directory]
+
+    InitDir --> OpenDB[new DatabaseSync prisma/dev.db]
+    OpenDB --> Pragmas[Configure Pragmas: WAL mode, 5000ms busy timeout, foreign keys ON, NORMAL synchronous]
+    Pragmas --> SchemaInit[Execute 16 DDL CREATE TABLE & INDEX statements]
+    SchemaInit --> SeedSqlite[seedSqliteDatabase: Seed 5 warehouses, products, inventory in ACID transaction]
+    SeedSqlite --> ReturnSqlite
+```
+
+### Diagram D: ACID Transaction Execution & Foreign Key Rollback Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Service as QuotationService
+    participant Repo as SqliteQuotationRepository
+    participant DB as SqliteDatabase
+    participant SQLite as Node.js native DatabaseSync
+
+    Service->>Repo: save(quotation)
+    Repo->>DB: withTransaction(fn)
+    DB->>SQLite: exec("BEGIN IMMEDIATE;")
+    Note over DB,SQLite: Atomic write lock acquired; WAL active
+
+    Repo->>SQLite: executeUpsertQuotation(quotation)
+    SQLite-->>Repo: OK (Parent row written)
+
+    Repo->>SQLite: DELETE FROM quotation_lines WHERE quotation_id = ?
+    SQLite-->>Repo: OK (Old lines cleared)
+
+    loop For each Line Item
+        Repo->>SQLite: INSERT INTO quotation_lines (id, quotation_id, product_id, ...)
+        alt Valid Product ID
+            SQLite-->>Repo: OK (Row inserted)
+        else Invalid / Ghost Product ID
+            SQLite-->>DB: SqliteError: FOREIGN KEY constraint failed (Code 787)
+            DB->>SQLite: exec("ROLLBACK;")
+            Note over DB,SQLite: All changes reverted; parent quote and line deletions rolled back
+            DB-->>Service: Throw error (Transaction aborted safely)
+        end
+    end
+
+    DB->>SQLite: exec("COMMIT;")
+    Note over DB,SQLite: Pages flushed to WAL; lock released
+    DB-->>Service: Return fully hydrated quotation entity
+```
+
 ---
 
 ## Technique 3: Variable Lifecycle Trace (Birth -> Transformation -> Egress)

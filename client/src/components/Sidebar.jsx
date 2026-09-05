@@ -11,15 +11,15 @@ import {
 } from 'lucide-react';
 
 export function Sidebar({ currentView, setCurrentView }) {
-  const { currentUser, canApprove, isCustomer, isWarehouse } = useAuth();
+  const { currentUser, canApprove, canManageRules, canNegotiate, isCustomer, isWarehouse } = useAuth();
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, visible: true },
-    { id: 'quotes', label: isCustomer() ? 'My Proposals' : 'Quotation Studio', icon: FileText, visible: true },
-    { id: 'rules', label: 'CPQ Rule Matrix', icon: Sliders, visible: !isCustomer() },
-    { id: 'chat', label: 'Negotiation Feed', icon: MessageSquare, visible: true },
+    { id: 'dashboard', label: isWarehouse() ? 'Fulfillment Center' : 'Dashboard', icon: LayoutDashboard, visible: true },
+    { id: 'quotes', label: isCustomer() ? 'My Proposals' : isWarehouse() ? 'Dispatch Orders' : 'Quotation Studio', icon: FileText, visible: true },
+    { id: 'rules', label: 'CPQ Rule Matrix', icon: Sliders, visible: canManageRules() },
+    { id: 'chat', label: 'Negotiation Feed', icon: MessageSquare, visible: canNegotiate() },
     { id: 'catalog', label: 'Product Catalog', icon: Package, visible: !isWarehouse() },
-    { id: 'warehouse', label: 'Warehouse Hubs', icon: Truck, visible: !isCustomer() },
+    { id: 'warehouse', label: isWarehouse() ? 'Depot Inventory' : 'Warehouse Hubs', icon: Truck, visible: !isCustomer() },
     { id: 'approvals', label: 'Managerial Inbox', icon: ShieldCheck, visible: canApprove() },
   ];
 

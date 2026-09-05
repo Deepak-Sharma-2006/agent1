@@ -14,6 +14,16 @@ import { RuleMatrixBuilder } from './pages/RuleMatrixBuilder';
 function MainLayout() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [activeQuoteId, setActiveQuoteId] = useState(null);
+  const { canManageRules, canNegotiate, isCustomer, isWarehouse, canApprove } = useAuth();
+
+  // Active view guardrails to strictly prevent unauthorized route access on role switch
+  React.useEffect(() => {
+    if (currentView === 'rules' && !canManageRules()) setCurrentView('dashboard');
+    if (currentView === 'warehouse' && isCustomer()) setCurrentView('dashboard');
+    if (currentView === 'chat' && isWarehouse()) setCurrentView('dashboard');
+    if (currentView === 'catalog' && isWarehouse()) setCurrentView('dashboard');
+    if (currentView === 'approvals' && !canApprove()) setCurrentView('dashboard');
+  }, [currentView, canManageRules, isCustomer, isWarehouse, canApprove]);
 
   const handleOpenQuote = (id) => {
     setActiveQuoteId(id);

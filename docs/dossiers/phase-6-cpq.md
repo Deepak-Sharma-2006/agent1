@@ -43,8 +43,19 @@ Before Phase 6, DealFlow360 had established precision integer-cents math engines
    - Provides administrative visibility into customer tier ceilings, category ceilings, and escalation routing rules.
    - Features an Interactive Deal Simulator Sandbox where operators can slide hypothetical discounts and margins to observe immediate approval route calculation in real time.
 
+6. **5-Actor RBAC & Anti-Bleed Isolation Architecture ([client/src/context/AuthContext.jsx](file:///d:/agent1/client/src/context/AuthContext.jsx))**:
+   - Hardened RBAC capability model with 5 distinct actor personas:
+     * `SalesRep` (David Miller): Commercial quotation builder, live telemetry, upsell engine, negotiation counter-offers.
+     * `SalesManager` (Sarah Jenkins): Governance controller, approval inbox, rule matrix simulator, discount margin overrides.
+     * `Finance` (Elena Rostova): Statutory controller, hard block arbitration, rule matrix authoring, floor audits.
+     * `Customer` (Marcus Vance - Apex Dynamics): Commercial proposals, product catalog (margins cloaked), counter-offers, strictly isolated negotiation threads.
+     * `Warehouse` (Alex Mercer - Chicago Hub): Depot logistics, dispatch packing slips, allocated stock fulfillment, confirmed order queues.
+   - Margin Cloaking: `canViewInternalMargins()` strictly denies external customers and depot workers to prevent price leakages.
+   - Cross-Tenant Isolation: `NegotiationChat.jsx` strictly isolates negotiation threads by `customerId`.
+   - Logistics Pivot: `Dashboard.jsx` automatically transforms into a fulfillment center with home-depot routing when viewed by warehouse personnel.
+
 **Explicit Architectural Boundary**:
-Phase 6 delivers the interactive CPQ quotation studio, visual SVG deal telemetry, and administrative rule matrix builder. External customer portal negotiation, PDF generation, and graceful fallback reversion UI are scheduled for Phase 7.
+Phase 6 delivers the interactive CPQ quotation studio, visual SVG deal telemetry, administrative rule matrix builder, and the complete 5-actor anti-bleed RBAC matrix. PDF document generation, offline sync, and automated fallback reversion UI are scheduled for Phase 7.
 
 ---
 

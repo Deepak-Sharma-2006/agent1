@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { Package, Tag, Layers, Server, Network, Wrench, ShieldCheck } from 'lucide-react';
 
 export function CatalogView() {
+  const { canViewInternalMargins } = useAuth();
   const [products, setProducts] = useState([]);
   const [incentives, setIncentives] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,19 +84,21 @@ export function CatalogView() {
                 </p>
 
                 <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: canViewInternalMargins() ? '4px' : 0 }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Base List Price:</span>
                     <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--primary)' }}>
                       {formatCurrency(product.listPriceCents)}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Standard Gross Margin:</span>
-                    <span style={{ fontWeight: 600, color: margin >= 25 ? 'var(--success)' : 'var(--warning)' }}>
-                      {margin}%
-                    </span>
-                  </div>
+                  {canViewInternalMargins() && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Standard Gross Margin:</span>
+                      <span style={{ fontWeight: 600, color: margin >= 25 ? 'var(--success)' : 'var(--warning)' }}>
+                        {margin}%
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {product.variants?.length > 0 && (

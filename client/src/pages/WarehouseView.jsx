@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, MapPin, Package, Shield, Layers } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Truck, MapPin, Package, Shield, Layers, Home } from 'lucide-react';
 
 export function WarehouseView() {
+  const { currentUser, isWarehouse } = useAuth();
   const [warehouses, setWarehouses] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [products, setProducts] = useState({});
@@ -33,10 +35,12 @@ export function WarehouseView() {
     <div>
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
-          Multi-Warehouse Logistics & Inventory Heatmap
+          {isWarehouse() ? `${currentUser.company} — Depot Logistics Station` : 'Multi-Warehouse Logistics & Inventory Heatmap'}
         </h1>
         <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-          Real-time physical stock levels, reservation allocations, and safety buffers across 5 regional depots.
+          {isWarehouse()
+            ? `Active physical depot inventory, reservations, and stock safety buffers for Logistics Lead ${currentUser.name}.`
+            : 'Real-time physical stock levels, reservation allocations, and safety buffers across 5 regional depots.'}
         </p>
       </div>
 
@@ -48,16 +52,30 @@ export function WarehouseView() {
             const whInventory = inventory.filter((inv) => inv.warehouseId === wh.id);
             const totalUnits = whInventory.reduce((sum, i) => sum + (i.physicalStock || 0), 0);
             const reservedUnits = whInventory.reduce((sum, i) => sum + (i.reservedStock || 0), 0);
+            const isHomeDepot = isWarehouse() && (wh.id === currentUser.warehouseId || wh.code === 'ORD-01');
 
             return (
-              <div key={wh.id} className="card" style={{ marginBottom: 0 }}>
+              <div
+                key={wh.id}
+                className="card"
+                style={{
+                  marginBottom: 0,
+                  border: isHomeDepot ? '2px solid var(--primary, #0284c7)' : '1px solid var(--border-subtle, #e2e8f0)',
+                  boxShadow: isHomeDepot ? '0 4px 12px -2px rgba(2, 132, 199, 0.15)' : 'var(--shadow-sm)',
+                }}
+              >
                 <div className="card-header">
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span className="card-title" style={{ fontSize: '15px' }}>
                         {wh.name}
                       </span>
-                      {wh.isPrimaryHub && (
+                      {isHomeDepot && (
+                        <span className="badge badge-approved" style={{ fontSize: '10px' }}>
+                          Your Home Depot
+                        </span>
+                      )}
+                      {wh.isPrimaryHub && !isHomeDepot && (
                         <span className="badge badge-confirmed" style={{ fontSize: '10px' }}>
                           Primary Hub
                         </span>

@@ -84,7 +84,16 @@ export function AuthProvider({ children }) {
   };
 
   const canApprove = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance';
-  const canViewInternalMargins = () => currentUser.role !== 'Customer';
+  const canViewInternalMargins = () =>
+    currentUser.role === 'SalesRep' ||
+    currentUser.role === 'SalesManager' ||
+    currentUser.role === 'Finance';
+  const canManageRules = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance';
+  const canCreateQuotes = () =>
+    currentUser.role === 'SalesRep' ||
+    currentUser.role === 'SalesManager' ||
+    currentUser.role === 'Finance';
+  const canNegotiate = () => currentUser.role !== 'Warehouse';
   const isCustomer = () => currentUser.role === 'Customer';
   const isWarehouse = () => currentUser.role === 'Warehouse';
 
@@ -97,6 +106,9 @@ export function AuthProvider({ children }) {
         setIsSwitchModalOpen,
         canApprove,
         canViewInternalMargins,
+        canManageRules,
+        canCreateQuotes,
+        canNegotiate,
         isCustomer,
         isWarehouse,
       }}

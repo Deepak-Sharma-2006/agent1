@@ -4,7 +4,7 @@ import { useWebSocket } from '../context/WebSocketContext';
 import { Send, MessageSquare, ShieldCheck, User } from 'lucide-react';
 
 export function NegotiationChat({ initialQuoteId }) {
-  const { currentUser } = useAuth();
+  const { currentUser, isCustomer } = useAuth();
   const { sendAction, lastEvent } = useWebSocket();
 
   const [quotes, setQuotes] = useState([]);
@@ -14,20 +14,26 @@ export function NegotiationChat({ initialQuoteId }) {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Fetch quotations list
+  // Fetch quotations list and apply tenant isolation
   useEffect(() => {
     fetch('/api/quotes')
       .then((r) => r.json())
       .then((data) => {
         if (data.success && data.quotations) {
-          setQuotes(data.quotations);
-          if (!selectedQuoteId && data.quotations.length > 0) {
-            setSelectedQuoteId(data.quotations[0].id);
+          const rawQuotes = data.quotations || [];
+          setQuotes(rawQuotes);
+          const allowed = rawQuotes.filter((q) =>
+            !isCustomer() || q.customerId === currentUser.customerId
+          );
+          if (!selectedQuoteId && allowed.length > 0) {
+            setSelectedQuoteId(allowed[0].id);
+          } else if (selectedQuoteId && !allowed.some((q) => q.id === selectedQuoteId)) {
+            setSelectedQuoteId(allowed.length > 0 ? allowed[0].id : '');
           }
         }
       })
       .catch(() => {});
-  }, []);
+  }, [currentUser.id]);
 
   // Fetch message history for selected quote
   useEffect(() => {
@@ -88,6 +94,9 @@ export function NegotiationChat({ initialQuoteId }) {
     setInputMessage('');
   };
 
+  const displayedQuotes = quotes.filter((q) =>
+    !isCustomer() || q.customerId === currentUser.customerId
+  );
   const selectedQuote = quotes.find((q) => q.id === selectedQuoteId);
 
   return (
@@ -111,11 +120,15 @@ export function NegotiationChat({ initialQuoteId }) {
             onChange={(e) => setSelectedQuoteId(e.target.value)}
             style={{ width: '220px', padding: '6px 10px', fontSize: '13px' }}
           >
-            {quotes.map((q) => (
-              <option key={q.id} value={q.id}>
-                {q.quoteNumber || q.id} ({q.status})
-              </option>
-            ))}
+            {displayedQuotes.length === 0 ? (
+              <option value="">No Active Deals</option>
+            ) : (
+              displayedQuotes.map((q) => (
+                <option key={q.id} value={q.id}>
+                  {q.quoteNumber || q.id} ({q.status})
+                </option>
+              ))
+            )}
           </select>
         </div>
       </div>

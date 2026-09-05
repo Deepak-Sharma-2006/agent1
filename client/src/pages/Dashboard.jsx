@@ -4,7 +4,7 @@ import { useWebSocket } from '../context/WebSocketContext';
 import { Plus, ArrowUpRight, TrendingUp, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 
 export function Dashboard({ onOpenQuote }) {
-  const { currentUser, canViewInternalMargins, isCustomer } = useAuth();
+  const { currentUser, canViewInternalMargins, canCreateQuotes, isCustomer, isWarehouse } = useAuth();
   const { lastEvent } = useWebSocket();
   const [quotes, setQuotes] = useState([]);
   const [customers, setCustomers] = useState({});
@@ -46,10 +46,13 @@ export function Dashboard({ onOpenQuote }) {
     }
   }, [lastEvent]);
 
-  // If logged in as Customer, filter only to their quotations
+  // Role-isolated quote filtering
   const displayedQuotes = quotes.filter((q) => {
     if (isCustomer() && q.customerId !== currentUser.customerId) {
       return false;
+    }
+    if (isWarehouse()) {
+      return q.status === 'Confirmed';
     }
     if (filter === 'PENDING') return q.status === 'PendingApproval';
     if (filter === 'APPROVED') return q.status === 'Approved';
@@ -63,6 +66,11 @@ export function Dashboard({ onOpenQuote }) {
     ? displayedQuotes.reduce((sum, q) => sum + (q.grossMarginPercent || 0), 0) / displayedQuotes.length
     : 0;
 
+  const totalUnitsToDispatch = displayedQuotes.reduce((total, q) => {
+    const quoteUnits = q.lines?.reduce((lineSum, l) => lineSum + (l.quantity || 1), 0);
+    return total + (quoteUnits || 4);
+  }, 0);
+
   const formatCurrency = (cents) => `$${((cents || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
@@ -71,14 +79,22 @@ export function Dashboard({ onOpenQuote }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
-            Commercial Operations Dashboard
+            {isWarehouse()
+              ? 'Warehouse Logistics & Depot Fulfillment'
+              : isCustomer()
+              ? 'Client Commercial Proposals'
+              : 'Commercial Operations Dashboard'}
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            Real-time CPQ deal velocity, gross margin floor governance, and approval pipeline.
+            {isWarehouse()
+              ? `Real-time physical stock allocations, picking queues, and dispatch orders for ${currentUser.company}.`
+              : isCustomer()
+              ? 'Active enterprise proposals, pricing quotes, and binding order confirmations.'
+              : 'Real-time CPQ deal velocity, gross margin floor governance, and approval pipeline.'}
           </p>
         </div>
 
-        {!isCustomer() && (
+        {canCreateQuotes() && (
           <button className="btn btn-primary" onClick={() => onOpenQuote(null)}>
             <Plus size={16} />
             <span>New Quotation</span>
@@ -87,57 +103,91 @@ export function Dashboard({ onOpenQuote }) {
       </div>
 
       {/* KPI Metric Tiles */}
-      <div className="kpi-grid">
-        <div className="kpi-tile">
-          <span className="kpi-label">Active Pipeline Value</span>
-          <span className="kpi-value">{formatCurrency(totalPipelineCents)}</span>
-          <span className="kpi-subtext">{displayedQuotes.length} active deals in pipeline</span>
-        </div>
-
-        {canViewInternalMargins() && (
-          <div className={`kpi-tile ${avgMargin >= 25 ? 'kpi-success' : avgMargin >= 18 ? 'kpi-warning' : 'kpi-danger'}`}>
-            <span className="kpi-label">Average Gross Margin</span>
-            <span className="kpi-value">{avgMargin.toFixed(1)}%</span>
-            <span className="kpi-subtext">
-              {avgMargin >= 25 ? '✓ Target achieved (≥25%)' : avgMargin >= 18 ? '⚠ Discretionary (18–25%)' : '🚨 Margin breach (<18%)'}
-            </span>
+      {isWarehouse() ? (
+        <div className="kpi-grid">
+          <div className="kpi-tile kpi-success">
+            <span className="kpi-label">Confirmed Orders to Fulfill</span>
+            <span className="kpi-value">{displayedQuotes.length}</span>
+            <span className="kpi-subtext">Binding orders cleared for depot packaging</span>
           </div>
-        )}
 
-        <div className={`kpi-tile ${pendingCount > 0 ? 'kpi-warning' : ''}`}>
-          <span className="kpi-label">Pending Governance Approvals</span>
-          <span className="kpi-value">{pendingCount}</span>
-          <span className="kpi-subtext">Requires SalesManager / Finance review</span>
-        </div>
+          <div className="kpi-tile">
+            <span className="kpi-label">Total Allocated Stock Units</span>
+            <span className="kpi-value">{totalUnitsToDispatch} Units</span>
+            <span className="kpi-subtext">Reserved across 5 regional depots</span>
+          </div>
 
-        <div className="kpi-tile">
-          <span className="kpi-label">Average DSO Timeliness</span>
-          <span className="kpi-value">18.4 Days</span>
-          <span className="kpi-subtext">Within Net 30 agreement threshold</span>
+          <div className="kpi-tile">
+            <span className="kpi-label">Assigned Home Hub</span>
+            <span className="kpi-value" style={{ fontSize: '20px' }}>Chicago Hub</span>
+            <span className="kpi-subtext">Primary dispatch depot: {currentUser.warehouseId}</span>
+          </div>
+
+          <div className="kpi-tile">
+            <span className="kpi-label">Fulfillment SLA Compliance</span>
+            <span className="kpi-value" style={{ color: 'var(--success)' }}>99.4%</span>
+            <span className="kpi-subtext">Within standard 48h dispatch window</span>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="kpi-grid">
+          <div className="kpi-tile">
+            <span className="kpi-label">{isCustomer() ? 'Active Order Value' : 'Active Pipeline Value'}</span>
+            <span className="kpi-value">{formatCurrency(totalPipelineCents)}</span>
+            <span className="kpi-subtext">{displayedQuotes.length} active {isCustomer() ? 'proposals' : 'deals'}</span>
+          </div>
+
+          {canViewInternalMargins() && (
+            <div className={`kpi-tile ${avgMargin >= 25 ? 'kpi-success' : avgMargin >= 18 ? 'kpi-warning' : 'kpi-danger'}`}>
+              <span className="kpi-label">Average Gross Margin</span>
+              <span className="kpi-value">{avgMargin.toFixed(1)}%</span>
+              <span className="kpi-subtext">
+                {avgMargin >= 25 ? '✓ Target achieved (≥25%)' : avgMargin >= 18 ? '⚠ Discretionary (18–25%)' : '🚨 Margin breach (<18%)'}
+              </span>
+            </div>
+          )}
+
+          {!isCustomer() && (
+            <div className={`kpi-tile ${pendingCount > 0 ? 'kpi-warning' : ''}`}>
+              <span className="kpi-label">Pending Governance Approvals</span>
+              <span className="kpi-value">{pendingCount}</span>
+              <span className="kpi-subtext">Requires SalesManager / Finance review</span>
+            </div>
+          )}
+
+          <div className="kpi-tile">
+            <span className="kpi-label">Average DSO Timeliness</span>
+            <span className="kpi-value">18.4 Days</span>
+            <span className="kpi-subtext">Within Net 30 agreement threshold</span>
+          </div>
+        </div>
+      )}
 
       {/* Quotations Card */}
       <div className="card">
         <div className="card-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span className="card-title">Commercial Quotations</span>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {['ALL', 'PENDING', 'APPROVED', 'CONFIRMED'].map((f) => (
-                <button
-                  key={f}
-                  className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setFilter(f)}
-                  style={{ fontSize: '11px', padding: '3px 8px' }}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
+            <span className="card-title">
+              {isWarehouse() ? 'Active Dispatch & Fulfillment Orders' : 'Commercial Quotations'}
+            </span>
+            {!isWarehouse() && (
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {['ALL', 'PENDING', 'APPROVED', 'CONFIRMED'].map((f) => (
+                  <button
+                    key={f}
+                    className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setFilter(f)}
+                    style={{ fontSize: '11px', padding: '3px 8px' }}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            Showing {displayedQuotes.length} deals
+            Showing {displayedQuotes.length} {isWarehouse() ? 'dispatch orders' : 'deals'}
           </span>
         </div>
 
@@ -154,12 +204,12 @@ export function Dashboard({ onOpenQuote }) {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Quote #</th>
+                  <th>{isWarehouse() ? 'Dispatch Order #' : 'Quote #'}</th>
                   <th>Customer Account</th>
-                  <th>Tier</th>
-                  <th>Net Total</th>
+                  {!isWarehouse() && <th>Tier</th>}
+                  <th>{isWarehouse() ? 'Order Net Value' : 'Net Total'}</th>
                   {canViewInternalMargins() && <th>Gross Margin</th>}
-                  <th>Governance Level</th>
+                  {!isWarehouse() && <th>Governance Level</th>}
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -180,11 +230,13 @@ export function Dashboard({ onOpenQuote }) {
                           {cust.companyName || cust.email || ''}
                         </div>
                       </td>
-                      <td>
-                        <span className={`tier-badge tier-${(cust.tier || 'Bronze').toLowerCase()}`}>
-                          {cust.tier || 'Bronze'}
-                        </span>
-                      </td>
+                      {!isWarehouse() && (
+                        <td>
+                          <span className={`tier-badge tier-${(cust.tier || 'Bronze').toLowerCase()}`}>
+                            {cust.tier || 'Bronze'}
+                          </span>
+                        </td>
+                      )}
                       <td style={{ fontWeight: 600 }}>
                         {formatCurrency(quote.netTotalCents)}
                       </td>
@@ -200,11 +252,13 @@ export function Dashboard({ onOpenQuote }) {
                           </span>
                         </td>
                       )}
-                      <td>
-                        <span className="badge badge-draft" style={{ textTransform: 'capitalize' }}>
-                          {quote.requiredApprovalLevel || quote.escalationTier || 'Self'}
-                        </span>
-                      </td>
+                      {!isWarehouse() && (
+                        <td>
+                          <span className="badge badge-draft" style={{ textTransform: 'capitalize' }}>
+                            {quote.requiredApprovalLevel || quote.escalationTier || 'Self'}
+                          </span>
+                        </td>
+                      )}
                       <td>
                         <span
                           className={`badge ${
@@ -227,7 +281,7 @@ export function Dashboard({ onOpenQuote }) {
                           className="btn btn-secondary btn-sm"
                           onClick={() => onOpenQuote(quote.id)}
                         >
-                          <span>Open</span>
+                          <span>{isWarehouse() ? 'Inspect Packing Slip' : 'Open'}</span>
                           <ArrowUpRight size={13} />
                         </button>
                       </td>

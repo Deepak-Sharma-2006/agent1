@@ -18,13 +18,15 @@ import {
   Activity,
   Layers,
   Check,
+  Truck,
+  Package,
 } from 'lucide-react';
 import { MarginSpeedometerGauge } from '../components/MarginSpeedometerGauge';
 import { TierSpendVelocityCurve } from '../components/TierSpendVelocityCurve';
 import { BlendedRiskRadarChart } from '../components/BlendedRiskRadarChart';
 
 export function QuotationStudio({ quoteId, onBack }) {
-  const { currentUser, canApprove, canViewInternalMargins, isCustomer } = useAuth();
+  const { currentUser, canApprove, canViewInternalMargins, isCustomer, isWarehouse, canCreateQuotes } = useAuth();
   const { sendAction, lastEvent, addToast } = useWebSocket();
 
   const [quote, setQuote] = useState(null);
@@ -355,7 +357,11 @@ export function QuotationStudio({ quoteId, onBack }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: 700, margin: 0 }}>
-                {quote.quoteNumber || 'Draft Proposal'}
+                {isWarehouse()
+                  ? `Dispatch Packing Slip: ${quote.quoteNumber || quote.id}`
+                  : isCustomer()
+                  ? `Commercial Proposal: ${quote.quoteNumber || quote.id}`
+                  : (quote.quoteNumber || 'Draft Proposal')}
               </h1>
               <span className={`badge ${quote.status === 'Approved' ? 'badge-approved' : quote.status === 'Confirmed' ? 'badge-confirmed' : 'badge-draft'}`}>
                 {quote.status}
@@ -371,7 +377,7 @@ export function QuotationStudio({ quoteId, onBack }) {
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          {!isCustomer() && quote.status === 'Draft' && (
+          {canCreateQuotes() && quote.status === 'Draft' && (
             <>
               <button className="btn btn-secondary" onClick={handleSave} disabled={saving}>
                 <Save size={15} />
@@ -404,11 +410,18 @@ export function QuotationStudio({ quoteId, onBack }) {
             </>
           )}
 
-          {!isCustomer() && quote.status === 'Approved' && (
+          {canCreateQuotes() && quote.status === 'Approved' && (
             <button className="btn btn-success" onClick={handleConfirm} disabled={saving || isFloorBreached}>
               <CheckCircle size={15} />
               <span>Finalize Order</span>
             </button>
+          )}
+
+          {isWarehouse() && (
+            <span className="badge badge-confirmed" style={{ fontSize: '11.5px', padding: '6px 10px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <Truck size={14} />
+              <span>Depot Dispatch Station</span>
+            </span>
           )}
         </div>
       </div>
@@ -418,8 +431,10 @@ export function QuotationStudio({ quoteId, onBack }) {
         {/* Left Column: Line Items Matrix */}
         <div className="card">
           <div className="card-header">
-            <span className="card-title">Commercial Line Items Matrix</span>
-            {!isCustomer() && quote.status === 'Draft' && (
+            <span className="card-title">
+              {isWarehouse() ? 'Warehouse Picking & Packing SKU Items' : isCustomer() ? 'Proposal Line Items' : 'Commercial Line Items Matrix'}
+            </span>
+            {canCreateQuotes() && quote.status === 'Draft' && (
               <button className="btn btn-secondary btn-sm" onClick={handleAddLine}>
                 <Plus size={14} />
                 <span>Add SKU Line</span>
@@ -482,7 +497,7 @@ export function QuotationStudio({ quoteId, onBack }) {
                       </td>
                       <td>{formatCurrency(listPrice)}</td>
                       <td>
-                        {!isCustomer() && quote.status === 'Draft' ? (
+                        {canCreateQuotes() && quote.status === 'Draft' ? (
                           <input
                             type="number"
                             min="1"
@@ -496,7 +511,7 @@ export function QuotationStudio({ quoteId, onBack }) {
                         )}
                       </td>
                       <td>
-                        {!isCustomer() && quote.status === 'Draft' ? (
+                        {canCreateQuotes() && quote.status === 'Draft' ? (
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <input
@@ -533,7 +548,7 @@ export function QuotationStudio({ quoteId, onBack }) {
                       </td>
                       <td style={{ fontWeight: 600 }}>{formatCurrency(netPrice)}</td>
                       <td style={{ fontWeight: 700, color: 'var(--text-main)' }}>{formatCurrency(lineTotal)}</td>
-                      {!isCustomer() && quote.status === 'Draft' && (
+                      {canCreateQuotes() && quote.status === 'Draft' && (
                         <td>
                           <button
                             className="btn btn-secondary btn-sm"
@@ -553,38 +568,72 @@ export function QuotationStudio({ quoteId, onBack }) {
           </div>
         </div>
 
-        {/* Right Column: Financial Ledger & Interactive Telemetry Console */}
+        {/* Right Column: Financial Ledger / Depot Routing & Interactive Telemetry Console */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Financial Ledger Summary Card */}
-          <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-header">
-              <span className="card-title">
-                <DollarSign size={16} />
-                <span>Financial Ledger</span>
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Catalog Subtotal</span>
-                <span style={{ fontWeight: 600 }}>{formatCurrency(preview?.subtotalCents || quote.subtotalCents)}</span>
+          {/* Warehouse Depot Routing Card */}
+          {isWarehouse() && (
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="card-header">
+                <span className="card-title" style={{ fontSize: '13.5px' }}>
+                  <Truck size={16} color="var(--primary)" />
+                  <span>Depot Dispatch & Fulfillment</span>
+                </span>
+                <span className="badge badge-confirmed">Confirmed Order</span>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Discounts & Incentives</span>
-                <span style={{ fontWeight: 600, color: 'var(--danger)' }}>
-                  -{formatCurrency(preview?.totalDiscountCents || preview?.discountTotalCents || quote.discountAmountCents || 0)}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12.5px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Assigned Fulfillment Depot:</span>
+                  <strong style={{ color: 'var(--primary)' }}>Chicago Central Hub (wh-chi-01)</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Inventory Reservation:</span>
+                  <span style={{ fontWeight: 700, color: 'var(--success)' }}>100% Stock Reserved</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Dispatch Protocol:</span>
+                  <span>Standard 48h Freight</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Delivery Destination:</span>
+                  <span style={{ fontWeight: 600 }}>{activeCustomer.name || 'Acme Industrial'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Financial Ledger Summary Card (Hidden for Warehouse) */}
+          {!isWarehouse() && (
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="card-header">
+                <span className="card-title">
+                  <DollarSign size={16} />
+                  <span>Financial Ledger</span>
                 </span>
               </div>
 
-              <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '4px 0' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Catalog Subtotal</span>
+                  <span style={{ fontWeight: 600 }}>{formatCurrency(preview?.subtotalCents || quote.subtotalCents)}</span>
+                </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
-                <span style={{ fontWeight: 700 }}>Contract Net Total</span>
-                <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(netTotal)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Discounts & Incentives</span>
+                  <span style={{ fontWeight: 600, color: 'var(--danger)' }}>
+                    -{formatCurrency(preview?.totalDiscountCents || preview?.discountTotalCents || quote.discountAmountCents || 0)}
+                  </span>
+                </div>
+
+                <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '4px 0' }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
+                  <span style={{ fontWeight: 700 }}>Contract Net Total</span>
+                  <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(netTotal)}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Interactive Visual Telemetry Console */}
           {canViewInternalMargins() && (

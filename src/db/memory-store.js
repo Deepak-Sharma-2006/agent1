@@ -152,6 +152,10 @@ export class InventoryRepository {
     return results;
   }
 
+  findAll() {
+    return Array.from(this.store.inventory.values());
+  }
+
   save(item) {
     item.updatedAt = new Date().toISOString();
     this.store.inventory.set(item.id, item);

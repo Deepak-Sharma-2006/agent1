@@ -36,6 +36,7 @@ export class FallbackEngine {
       approverRole,
       approverName,
       reason,
+      lines: JSON.parse(JSON.stringify(lines)),
       approvedAt: new Date().toISOString(),
     };
   }
@@ -84,17 +85,21 @@ export class FallbackEngine {
       };
     }
 
-    // Restore line discounts proportionally to snapshot discount pct
-    for (const line of (quotation.lines || [])) {
-      line.discountPct = snapshot.approvedDiscountPct;
-      line.discountAmountCents = Math.round(line.unitListPriceCents * (line.discountPct / 100));
-      line.netUnitPriceCents = line.unitListPriceCents - line.discountAmountCents;
-      line.lineSubtotalCents = line.netUnitPriceCents * line.quantity;
-      line.lineCostCents = line.unitCostPriceCents * line.quantity;
-      line.grossMarginCents = line.lineSubtotalCents - line.lineCostCents;
-      line.grossMarginPct = line.lineSubtotalCents > 0
-        ? Math.round(((line.grossMarginCents / line.lineSubtotalCents) * 100) * 10) / 10
-        : 0;
+    // Restore line items from snapshot if available, or restore discounts proportionally
+    if (snapshot.lines && Array.isArray(snapshot.lines) && snapshot.lines.length > 0) {
+      quotation.lines = JSON.parse(JSON.stringify(snapshot.lines));
+    } else {
+      for (const line of (quotation.lines || [])) {
+        line.discountPct = snapshot.approvedDiscountPct;
+        line.discountAmountCents = Math.round(line.unitListPriceCents * (line.discountPct / 100));
+        line.netUnitPriceCents = line.unitListPriceCents - line.discountAmountCents;
+        line.lineSubtotalCents = line.netUnitPriceCents * line.quantity;
+        line.lineCostCents = line.unitCostPriceCents * line.quantity;
+        line.grossMarginCents = line.lineSubtotalCents - line.lineCostCents;
+        line.grossMarginPct = line.lineSubtotalCents > 0
+          ? Math.round(((line.grossMarginCents / line.lineSubtotalCents) * 100) * 10) / 10
+          : 0;
+      }
     }
 
     // Restore totals

@@ -50,6 +50,8 @@ export class QuotationCalculator {
       unitListPriceCents,
       unitCostPriceCents,
       discountPct: clampedDiscountPct,
+      discountPercentage: clampedDiscountPct,
+      unitDiscountPercentage: clampedDiscountPct,
       discountAmountCents,
       netUnitPriceCents,
       lineSubtotalCents,

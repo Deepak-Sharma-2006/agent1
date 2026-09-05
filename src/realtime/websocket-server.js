@@ -51,7 +51,9 @@ export class WebSocketClient extends EventEmitter {
     });
 
     this.socket.on("error", (err) => {
-      this.emit("error", err);
+      if (this.listenerCount("error") > 0) {
+        this.emit("error", err);
+      }
       this._handleClose(1006, err.message);
     });
   }
@@ -343,6 +345,7 @@ export class NativeWebSocketServer extends EventEmitter {
     const client = new WebSocketClient(socket, req);
     this.clients.set(client.id, client);
 
+    client.on("error", () => {});
     client.on("close", () => {
       this.clients.delete(client.id);
     });

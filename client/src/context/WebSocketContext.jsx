@@ -118,11 +118,17 @@ export function WebSocketProvider({ children }) {
     return false;
   };
 
+  const sendChatMessage = (payload = {}) => {
+    return sendAction('chat', payload);
+  };
+
   return (
     <WebSocketContext.Provider
       value={{
         status,
+        isConnected: status === 'connected',
         sendAction,
+        sendChatMessage,
         lastEvent,
         addToast,
       }}

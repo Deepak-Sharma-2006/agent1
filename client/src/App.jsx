@@ -14,6 +14,9 @@ import { CatalogView } from './pages/CatalogView';
 import { RuleMatrixBuilder } from './pages/RuleMatrixBuilder';
 import { CustomerPortal } from './pages/CustomerPortal';
 import { ApprovalsInbox } from './pages/ApprovalsInbox';
+import { BillingView } from './pages/BillingView';
+import { DatabaseInspector } from './pages/DatabaseInspector';
+import { AdminHub } from './pages/AdminHub';
 
 function MainLayout() {
   const { currentUser, isAuthenticated, canManageRules, canNegotiate, isCustomer, isWarehouse, canApprove } = useAuth();
@@ -125,7 +128,10 @@ function MainLayout() {
           {currentView === 'rules' && <RuleMatrixBuilder />}
           {currentView === 'chat' && <NegotiationChat initialQuoteId={activeQuoteId} />}
           {currentView === 'catalog' && <CatalogView />}
+          {currentView === 'billing' && <BillingView />}
           {currentView === 'warehouse' && <WarehouseView />}
+          {currentView === 'database' && <DatabaseInspector />}
+          {currentView === 'admin-hub' && <AdminHub />}
         </main>
       </div>
       <ConflictResolutionModal />

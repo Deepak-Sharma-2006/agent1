@@ -7,7 +7,7 @@
     "build": "vite build client",
     "dev": "vite client",
     "start": "node src/index.js",
-    "test:unit": "node --test --test-concurrency=1 tests/bootstrap.test.js tests/phase1-entities.test.js tests/phase2-api.test.js tests/phase3-persistence.test.js tests/phase4-realtime.test.js tests/phase5-frontend.test.js tests/phase6-cpq-studio.test.js tests/phase7-portal-fallback.test.js tests/phase8-warehouse-split.test.js tests/phase9-offline-pwa.test.js tests/phase10-production-scenarios.test.js",
+    "test:unit": "node --test --test-concurrency=1 tests/bootstrap.test.js tests/phase1-entities.test.js tests/phase2-api.test.js tests/phase3-persistence.test.js tests/phase4-realtime.test.js tests/phase5-frontend.test.js tests/phase6-cpq-studio.test.js tests/phase7-portal-fallback.test.js tests/phase8-warehouse-split.test.js tests/phase9-offline-pwa.test.js tests/phase10-production-scenarios.test.js tests/phase11-admin-actor.test.js",
     "test": "npm run test:unit && npm run harness:eval",
     "role:status": "node --experimental-strip-types scripts/role-switch.ts status",
     "role:alpha": "node --experimental-strip-types scripts/role-switch.ts alpha",
@@ -30,6 +30,7 @@
     "check:hallucinations": "node --experimental-strip-types scripts/anti-hallucination-checker.ts scripts src tests client/src",
     "token:budget": "node --experimental-strip-types scripts/token-budget-guard.ts",
     "harness:eval": "node --experimental-strip-types .agents/harness/eval-runner.ts",
+    "db:inspect": "node scripts/db-inspector.js",
     "skill:list": "node --experimental-strip-types scripts/skill-finder.ts list",
     "skill:search": "node --experimental-strip-types scripts/skill-finder.ts search"
   },

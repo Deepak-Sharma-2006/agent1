@@ -22,6 +22,7 @@ import {
   FileText,
   CreditCard,
 } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 
 export function Dashboard({ onOpenQuote }) {
   const {
@@ -39,6 +40,8 @@ export function Dashboard({ onOpenQuote }) {
   const [customers, setCustomers] = useState({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchQuotes = async () => {
     try {
@@ -120,6 +123,11 @@ export function Dashboard({ onOpenQuote }) {
     if (filter === 'CONFIRMED') return q.status === 'Confirmed';
     return true;
   });
+
+  const paginatedQuotes = displayedQuotes.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const totalPipelineCents = displayedQuotes.reduce((sum, q) => sum + (q.netTotalCents || 0), 0);
   const pendingCount = displayedQuotes.filter((q) => q.status === 'PendingApproval').length;
@@ -333,7 +341,10 @@ export function Dashboard({ onOpenQuote }) {
                   <button
                     key={f}
                     className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
-                    onClick={() => setFilter(f)}
+                    onClick={() => {
+                      setFilter(f);
+                      setCurrentPage(1);
+                    }}
                     style={{ fontSize: '11px', padding: '3px 8px' }}
                   >
                     {f}
@@ -374,7 +385,7 @@ export function Dashboard({ onOpenQuote }) {
                 </tr>
               </thead>
               <tbody>
-                {displayedQuotes.map((quote) => {
+                {paginatedQuotes.map((quote) => {
                   const cust = customers[quote.customerId] || {};
                   const margin = quote.grossMarginPercent || 0;
                   const quoteUnits = quote.lines?.reduce((sum, l) => sum + (l.quantity || 1), 0) || 4;
@@ -481,6 +492,17 @@ export function Dashboard({ onOpenQuote }) {
                 })}
               </tbody>
             </table>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={displayedQuotes.length}
+              pageSize={pageSize}
+              pageSizeOptions={[10, 25, 50, 100]}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
+            />
           </div>
         )}
       </div>

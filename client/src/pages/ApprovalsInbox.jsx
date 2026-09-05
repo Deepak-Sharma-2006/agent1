@@ -12,6 +12,7 @@ import {
   ChevronUp,
   FileText,
 } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 
 export function ApprovalsInbox({ onOpenQuote }) {
   const { currentUser, canApprove } = useAuth();
@@ -23,6 +24,8 @@ export function ApprovalsInbox({ onOpenQuote }) {
   const [approvalNotes, setApprovalNotes] = useState({});
   const [actionLoading, setActionLoading] = useState(null);
   const [filter, setFilter] = useState('PendingApproval');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchPendingQuotes = async () => {
     try {
@@ -63,6 +66,11 @@ export function ApprovalsInbox({ onOpenQuote }) {
     if (filter === 'ALL') return true;
     return q.status === filter;
   });
+
+  const paginatedQuotes = filteredQuotes.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const pendingCount = quotes.filter((q) => q.status === 'PendingApproval').length;
   const approvedCount = quotes.filter((q) => q.status === 'Approved').length;
@@ -156,7 +164,10 @@ export function ApprovalsInbox({ onOpenQuote }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '20px' }}>
         <div
           className="card"
-          onClick={() => setFilter('PendingApproval')}
+          onClick={() => {
+            setFilter('PendingApproval');
+            setCurrentPage(1);
+          }}
           style={{
             cursor: 'pointer',
             padding: '16px 20px',
@@ -174,7 +185,10 @@ export function ApprovalsInbox({ onOpenQuote }) {
         </div>
         <div
           className="card"
-          onClick={() => setFilter('Approved')}
+          onClick={() => {
+            setFilter('Approved');
+            setCurrentPage(1);
+          }}
           style={{
             cursor: 'pointer',
             padding: '16px 20px',
@@ -192,7 +206,10 @@ export function ApprovalsInbox({ onOpenQuote }) {
         </div>
         <div
           className="card"
-          onClick={() => setFilter('ALL')}
+          onClick={() => {
+            setFilter('ALL');
+            setCurrentPage(1);
+          }}
           style={{
             cursor: 'pointer',
             padding: '16px 20px',
@@ -230,7 +247,7 @@ export function ApprovalsInbox({ onOpenQuote }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredQuotes.map((q) => {
+          {paginatedQuotes.map((q) => {
             const customer = customers[q.customerId];
             const risk = getRiskBadge(q.blendedRiskScore);
             const isExpanded = expandedQuote === q.id;
@@ -419,6 +436,19 @@ export function ApprovalsInbox({ onOpenQuote }) {
               </div>
             );
           })}
+          <div style={{ marginTop: '12px' }}>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredQuotes.length}
+              pageSize={pageSize}
+              pageSizeOptions={[5, 10, 25, 50]}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -53,6 +53,16 @@ export const ENTERPRISE_USERS = {
     avatar: 'AM',
     badgeColor: 'success',
   },
+  admin: {
+    id: 'admin-01',
+    name: 'David Vance',
+    email: 'admin@dealflow360.com',
+    role: 'Admin',
+    title: 'Chief Platform Architect & System Administrator',
+    company: 'DealFlow360 Enterprise HQ',
+    avatar: 'DV',
+    badgeColor: 'purple',
+  },
 };
 
 /** Default view per role after login */
@@ -62,6 +72,7 @@ export const ROLE_DEFAULT_VIEWS = {
   Finance: 'dashboard',
   Customer: 'portal',
   Warehouse: 'dashboard',
+  Admin: 'admin-hub',
 };
 
 const AuthContext = createContext(null);
@@ -91,11 +102,35 @@ export function AuthProvider({ children }) {
     localStorage.setItem('dealflow360_authenticated', String(isAuthenticated));
   }, [isAuthenticated]);
 
-  const login = (userKey) => {
-    if (ENTERPRISE_USERS[userKey]) {
-      setCurrentUser(ENTERPRISE_USERS[userKey]);
+  const login = (identifier, password) => {
+    if (!identifier) return { success: false, error: 'Please enter your enterprise email.' };
+
+    // 1. Direct user key match (e.g. 'salesRep')
+    if (ENTERPRISE_USERS[identifier]) {
+      setCurrentUser(ENTERPRISE_USERS[identifier]);
       setIsAuthenticated(true);
+      return { success: true, user: ENTERPRISE_USERS[identifier] };
     }
+
+    // 2. Email or role name match (case-insensitive)
+    const normalized = identifier.trim().toLowerCase();
+    const foundEntry = Object.values(ENTERPRISE_USERS).find(
+      (u) =>
+        u.email.toLowerCase() === normalized ||
+        u.email.split('@')[0].toLowerCase() === normalized ||
+        u.role.toLowerCase() === normalized
+    );
+
+    if (foundEntry) {
+      setCurrentUser(foundEntry);
+      setIsAuthenticated(true);
+      return { success: true, user: foundEntry };
+    }
+
+    return {
+      success: false,
+      error: 'Unrecognized enterprise credentials. Please check your email or select a demo account.',
+    };
   };
 
   const logout = () => {
@@ -105,16 +140,19 @@ export function AuthProvider({ children }) {
     setCurrentUser(ENTERPRISE_USERS.salesRep);
   };
 
-  const canApprove = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance';
+  const isAdmin = () => currentUser.role === 'Admin';
+  const canApprove = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance' || currentUser.role === 'Admin';
   const canViewInternalMargins = () =>
     currentUser.role === 'SalesRep' ||
     currentUser.role === 'SalesManager' ||
-    currentUser.role === 'Finance';
-  const canManageRules = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance';
+    currentUser.role === 'Finance' ||
+    currentUser.role === 'Admin';
+  const canManageRules = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance' || currentUser.role === 'Admin';
   const canCreateQuotes = () =>
     currentUser.role === 'SalesRep' ||
     currentUser.role === 'SalesManager' ||
-    currentUser.role === 'Finance';
+    currentUser.role === 'Finance' ||
+    currentUser.role === 'Admin';
   const canNegotiate = () => currentUser.role !== 'Warehouse';
   const isCustomer = () => currentUser.role === 'Customer';
   const isWarehouse = () => currentUser.role === 'Warehouse';
@@ -134,6 +172,7 @@ export function AuthProvider({ children }) {
         canManageRules,
         canCreateQuotes,
         canNegotiate,
+        isAdmin,
         isCustomer,
         isWarehouse,
         isSalesRep,

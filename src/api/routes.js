@@ -173,6 +173,57 @@ export function createApiRouter({ quotationService, repositories }) {
       return true;
     }
 
+    if (pathname === "/api/products" && method === "POST") {
+      try {
+        const body = await parseJsonRequestBody(req);
+        if (!body.name || !body.category) {
+          sendErrorResponse(res, 400, "Product name and category are required.");
+          return true;
+        }
+
+        const sku = body.sku || `SKU-${body.category.substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+        const existingProd = productRepository.findBySku ? productRepository.findBySku(sku) : null;
+        const id = body.id || (existingProd ? existingProd.id : `prod-${Date.now()}`);
+        const listPriceCents = body.listPriceCents !== undefined
+          ? Math.round(Number(body.listPriceCents))
+          : Math.round(Number(body.listPrice || 0) * 100);
+        const costPriceCents = body.costPriceCents !== undefined
+          ? Math.round(Number(body.costPriceCents))
+          : Math.round(Number(body.costPrice || 0) * 100);
+
+        const newProduct = {
+          id,
+          sku,
+          name: body.name.trim(),
+          category: body.category,
+          listPriceCents,
+          costPriceCents,
+          list_price_cents: listPriceCents,
+          cost_price_cents: costPriceCents,
+          minMarginFloorPct: body.minMarginFloorPct !== undefined ? Number(body.minMarginFloorPct) : 15,
+          unitDescription: body.unitDescription || 'Unit',
+          isSubscription: Boolean(body.isSubscription),
+          is_subscription: Boolean(body.isSubscription) ? 1 : 0,
+          billingFrequency: body.billingFrequency || null,
+          billing_frequency: body.billingFrequency || null,
+          active: body.active !== undefined ? (body.active ? 1 : 0) : 1,
+          description: body.description || `${body.name} (${body.category})`,
+          data_json: JSON.stringify({
+            unitDescription: body.unitDescription || 'Unit',
+            minMarginFloorPct: body.minMarginFloorPct !== undefined ? Number(body.minMarginFloorPct) : 15,
+            leadTimeDays: body.leadTimeDays || 3,
+          }),
+        };
+
+        const saved = productRepository.save(newProduct);
+        sendJsonResponse(res, 201, { product: saved });
+        return true;
+      } catch (err) {
+        sendErrorResponse(res, 400, `Failed to create product: ${err.message}`);
+        return true;
+      }
+    }
+
     // 4. Incentive Rules Endpoints
     if (pathname === "/api/incentives" && method === "GET") {
       const rules = incentiveRuleRepository.findAll();
@@ -190,6 +241,49 @@ export function createApiRouter({ quotationService, repositories }) {
       }));
       sendJsonResponse(res, 200, { count: warehouses.length, warehouses, inventory });
       return true;
+    }
+
+    if (pathname === "/api/warehouses" && method === "POST") {
+      try {
+        const body = await parseJsonRequestBody(req);
+        if (!body.code || !body.name) {
+          sendErrorResponse(res, 400, "Warehouse code and name are required.");
+          return true;
+        }
+
+        const code = body.code.toUpperCase().trim();
+        const existingWh = warehouseRepository.findByCode
+          ? warehouseRepository.findByCode(code)
+          : (warehouseRepository.findAll() || []).find((w) => w.code === code);
+        const id = body.id || (existingWh ? existingWh.id : `wh-${code.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
+        const newWarehouse = {
+          id,
+          code: body.code.toUpperCase().trim(),
+          name: body.name.trim(),
+          city: body.city || body.location || 'Central Hub',
+          state: body.state || 'IL',
+          country: body.country || 'USA',
+          isPrimaryHub: Boolean(body.isPrimaryHub),
+          is_primary_hub: Boolean(body.isPrimaryHub) ? 1 : 0,
+          active: body.active !== undefined ? (body.active ? 1 : 0) : 1,
+          capacityUnits: body.capacityUnits ? Number(body.capacityUnits) : 50000,
+          capacity_units: body.capacityUnits ? Number(body.capacityUnits) : 50000,
+          safetyBuffer: body.safetyBuffer ? Number(body.safetyBuffer) : 50,
+          shippingRatePerKgCents: body.shippingRatePerKgCents ? Number(body.shippingRatePerKgCents) : 150,
+          data_json: JSON.stringify({
+            safetyBuffer: body.safetyBuffer ? Number(body.safetyBuffer) : 50,
+            shippingRatePerKgCents: body.shippingRatePerKgCents ? Number(body.shippingRatePerKgCents) : 150,
+            location: body.location || `${body.city || 'Central'}, ${body.state || 'IL'}`,
+          }),
+        };
+
+        const saved = warehouseRepository.save(newWarehouse);
+        sendJsonResponse(res, 201, { warehouse: saved });
+        return true;
+      } catch (err) {
+        sendErrorResponse(res, 400, `Failed to create warehouse: ${err.message}`);
+        return true;
+      }
     }
 
     // 6. Pricing Real-Time Preview
@@ -757,6 +851,26 @@ export function createApiRouter({ quotationService, repositories }) {
       return true;
     }
 
+    // Standalone Mid-Cycle Proration Calculation (Simulator)
+    if (pathname === "/api/subscriptions/prorate" && method === "POST") {
+      try {
+        const body = await parseJsonRequestBody(req);
+        const { calculateProration } = await import("../domain/billing-engine.js");
+        const proration = calculateProration({
+          cycleStartDate: body.cycleStartDate || body.periodStartDate,
+          effectiveDate: body.effectiveDate,
+          cycleEndDate: body.cycleEndDate || body.periodEndDate,
+          currentPriceCents: body.currentPriceCents || 0,
+          newPriceCents: body.newPriceCents || body.monthlyRateCents || Math.round((body.monthlyRate || 0) * 100),
+        });
+        sendJsonResponse(res, 200, { proration });
+        return true;
+      } catch (err) {
+        sendErrorResponse(res, 400, err.message);
+        return true;
+      }
+    }
+
     // Calculate Mid-Cycle Proration
     const subProrateMatch = pathname.match(/^\/api\/subscriptions\/([^/]+)\/prorate$/);
     if (subProrateMatch && method === "POST") {
@@ -877,6 +991,223 @@ export function createApiRouter({ quotationService, repositories }) {
       } catch (err) {
         const status = err.statusCode || 400;
         sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // =========================================================================
+    // Database Telemetry & Live Inspector Endpoints
+    // =========================================================================
+
+    // Database Status & Table Summary
+    if (pathname === "/api/database/status" && method === "GET") {
+      try {
+        const { inspectDatabase } = await import("../../scripts/db-inspector.js");
+        const status = inspectDatabase();
+        sendJsonResponse(res, 200, status || { error: "Database not found" });
+        return true;
+      } catch (err) {
+        sendErrorResponse(res, 500, err.message);
+        return true;
+      }
+    }
+
+    // Table Schema & Paginated Records
+    const dbTableMatch = pathname.match(/^\/api\/database\/tables\/([^/]+)$/);
+    if (dbTableMatch && method === "GET") {
+      const tableName = dbTableMatch[1];
+      try {
+        const { DatabaseSync } = await import("node:sqlite");
+        const { join } = await import("node:path");
+        const dbPath = join(process.cwd(), "prisma", "dev.db");
+        const db = new DatabaseSync(dbPath);
+
+        const page = Math.max(1, parseInt(parsedUrl.searchParams.get("page") || "1", 10));
+        const limit = Math.min(100, Math.max(1, parseInt(parsedUrl.searchParams.get("limit") || "15", 10)));
+        const offset = (page - 1) * limit;
+
+        const countRow = db.prepare(`SELECT COUNT(*) as count FROM "${tableName}";`).get();
+        const columns = db.prepare(`PRAGMA table_info("${tableName}");`).all();
+        const rows = db.prepare(`SELECT * FROM "${tableName}" LIMIT ? OFFSET ?;`).all(limit, offset);
+
+        sendJsonResponse(res, 200, {
+          table: tableName,
+          totalRows: countRow.count,
+          page,
+          limit,
+          totalPages: Math.ceil(countRow.count / limit),
+          columns,
+          rows,
+        });
+        return true;
+      } catch (err) {
+        sendErrorResponse(res, 400, `Failed to query table '${tableName}': ${err.message}`);
+        return true;
+      }
+    }
+
+    // =========================================================================
+    // 11. Executive Analytics & Multi-Axis Reporting Engine (Section A7)
+    // =========================================================================
+    if (pathname === "/api/reports/analytics" && method === "GET") {
+      try {
+        const period = (parsedUrl.searchParams.get("period") || "all").toLowerCase();
+        const salesRepId = parsedUrl.searchParams.get("salesRepId") || undefined;
+        const statusFilter = parsedUrl.searchParams.get("status") || undefined;
+        const categoryFilter = parsedUrl.searchParams.get("category") || undefined;
+
+        // Fetch all quotations
+        const allQuotes = quotationService.listQuotations({});
+        const now = new Date();
+
+        let minDate = null;
+        if (period === "today") {
+          minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        } else if (period === "week") {
+          minDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (period === "month") {
+          minDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (period === "quarter") {
+          minDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        }
+
+        const filteredQuotes = allQuotes.filter((q) => {
+          if (minDate && q.createdAt) {
+            const qDate = new Date(q.createdAt);
+            if (qDate < minDate) return false;
+          }
+
+          if (salesRepId && salesRepId !== "all" && q.salesRepId !== salesRepId) {
+            return false;
+          }
+
+          if (statusFilter && statusFilter !== "all" && q.status !== statusFilter) {
+            return false;
+          }
+
+          if (categoryFilter && categoryFilter !== "all") {
+            const hasCat = (q.lines || []).some(
+              (l) => (l.category || "").toLowerCase() === categoryFilter.toLowerCase()
+            );
+            if (!hasCat) return false;
+          }
+
+          return true;
+        });
+
+        let totalRevenueCents = 0;
+        let totalBookedRevenueCents = 0;
+        let totalMarginCents = 0;
+        let confirmedOrdersCount = 0;
+        let nonDraftCount = 0;
+
+        const byStatusMap = {};
+        const byRepMap = {};
+        const byCategoryMap = {
+          Hardware: { category: 'Hardware', count: 0, revenueCents: 0 },
+          Service: { category: 'Service', count: 0, revenueCents: 0 },
+          Subscription: { category: 'Subscription', count: 0, revenueCents: 0 },
+        };
+        const byTierMap = {
+          Bronze: { tier: 'Bronze', count: 0, revenueCents: 0 },
+          Silver: { tier: 'Silver', count: 0, revenueCents: 0 },
+          Gold: { tier: 'Gold', count: 0, revenueCents: 0 },
+          Platinum: { tier: 'Platinum', count: 0, revenueCents: 0 },
+        };
+
+        for (const q of filteredQuotes) {
+          const rev = q.netTotalCents !== undefined ? q.netTotalCents : (q.totalCents || 0);
+          const margin = q.marginCents !== undefined ? q.marginCents : 0;
+
+          totalRevenueCents += rev;
+          totalMarginCents += margin;
+
+          if (q.status === "Confirmed") {
+            confirmedOrdersCount++;
+            totalBookedRevenueCents += rev;
+          }
+          if (q.status !== "Draft") {
+            nonDraftCount++;
+          }
+
+          // Status breakdown
+          const st = q.status || "Unknown";
+          if (!byStatusMap[st]) byStatusMap[st] = { status: st, count: 0, revenueCents: 0 };
+          byStatusMap[st].count++;
+          byStatusMap[st].revenueCents += rev;
+
+          // Sales Rep breakdown
+          const repId = q.salesRepId || "unassigned";
+          const repName = q.salesRepName || "Unassigned Rep";
+          if (!byRepMap[repId]) byRepMap[repId] = { salesRepId: repId, salesRepName: repName, count: 0, revenueCents: 0, marginCents: 0 };
+          byRepMap[repId].count++;
+          byRepMap[repId].revenueCents += rev;
+          byRepMap[repId].marginCents += margin;
+
+          // Category breakdown from line items
+          if (q.lines && q.lines.length > 0) {
+            for (const line of q.lines) {
+              const cat = line.category || "Hardware";
+              if (!byCategoryMap[cat]) byCategoryMap[cat] = { category: cat, count: 0, revenueCents: 0 };
+              byCategoryMap[cat].count += line.quantity || 1;
+              const lineRev = (line.quantity || 1) * (line.unitPriceCents || 0);
+              byCategoryMap[cat].revenueCents += lineRev;
+            }
+          }
+
+          // Customer Tier
+          const customer = customerRepository ? customerRepository.findById(q.customerId) : null;
+          const tier = customer?.tier || "Bronze";
+          if (byTierMap[tier]) {
+            byTierMap[tier].count++;
+            byTierMap[tier].revenueCents += rev;
+          }
+        }
+
+        const avgMarginPct = totalRevenueCents > 0
+          ? Number(((totalMarginCents / totalRevenueCents) * 100).toFixed(1))
+          : 0;
+
+        const winRatePct = nonDraftCount > 0
+          ? Number(((confirmedOrdersCount / nonDraftCount) * 100).toFixed(1))
+          : 0;
+
+        const byRepList = Object.values(byRepMap).map((r) => ({
+          ...r,
+          avgMarginPct: r.revenueCents > 0 ? Number(((r.marginCents / r.revenueCents) * 100).toFixed(1)) : 0,
+        }));
+
+        sendJsonResponse(res, 200, {
+          filters: { period, salesRepId, status: statusFilter, category: categoryFilter },
+          kpis: {
+            totalQuotations: filteredQuotes.length,
+            totalPipelineRevenueCents: totalRevenueCents,
+            totalBookedRevenueCents,
+            totalOrders: confirmedOrdersCount,
+            averageMarginPct: avgMarginPct,
+            winRatePct,
+          },
+          breakdowns: {
+            byStatus: Object.values(byStatusMap),
+            bySalesRep: byRepList,
+            byCategory: Object.values(byCategoryMap),
+            byTier: Object.values(byTierMap),
+          },
+          quotes: filteredQuotes.slice(0, 100).map((q) => ({
+            id: q.id,
+            quoteNumber: q.quoteNumber,
+            customerId: q.customerId,
+            salesRepName: q.salesRepName,
+            status: q.status,
+            netTotalCents: q.netTotalCents !== undefined ? q.netTotalCents : (q.totalCents || 0),
+            marginPercentage: q.marginPercentage || 0,
+            itemCount: (q.lines || []).length,
+            createdAt: q.createdAt,
+          })),
+        });
+        return true;
+      } catch (err) {
+        sendErrorResponse(res, 500, `Analytics calculation error: ${err.message}`);
         return true;
       }
     }

@@ -203,25 +203,39 @@ export function CustomerPortal({ quoteId, onBack }) {
 
   const handleSendChat = (e) => {
     e.preventDefault();
-    if (!newChatMessage.trim() || !activeQuoteId) return;
+    const msg = newChatMessage.trim();
+    if (!msg || !activeQuoteId) return;
 
-    sendChatMessage({
+    const payload = {
       quoteId: activeQuoteId,
       senderId: currentUser.id || 'cust-01',
       senderRole: 'Customer',
       senderName: currentUser.name || 'Sarah Jenkins',
-      message: newChatMessage.trim(),
-    });
+      message: msg,
+    };
 
+    // 1. Send over WebSocket gateway if available
+    if (typeof sendChatMessage === 'function') {
+      try {
+        sendChatMessage(payload);
+      } catch (err) {
+        console.warn('WebSocket send failed, falling back to HTTP:', err);
+      }
+    }
+
+    // 2. Persist to backend SQLite via REST API
+    fetch(`/api/quotes/${activeQuoteId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch((e) => console.warn('HTTP message sync error:', e));
+
+    // 3. Optimistic local UI update
     setChatMessages((prev) => [
       ...prev,
       {
         id: 'msg-local-' + Date.now(),
-        quoteId: activeQuoteId,
-        senderId: currentUser.id || 'cust-01',
-        senderRole: 'Customer',
-        senderName: currentUser.name || 'Sarah Jenkins',
-        message: newChatMessage.trim(),
+        ...payload,
         createdAt: new Date().toISOString(),
       },
     ]);

@@ -28,6 +28,8 @@ The explicit boundary of Phase 2 is request handling, input sanitization, real-t
 
 ## Technique 2: Visual Code Flow (The Call Graph)
 
+### Diagram A: The Request & Pricing Call Graph
+
 ```
 [Inbound Client HTTP Request]
              │
@@ -71,6 +73,50 @@ PricingGateway.calculateQuotationPreview()                        [POST /api/quo
                                                                                           │
                                                                                           ▼
                                                                               [HTTP 200/201: Success Payload]
+```
+
+### Diagram B: Quotation Lifecycle & Concurrency State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft: POST /api/quotes (Creates v1)
+
+    Draft --> Draft: POST /lines (Add line, v+1)
+    Draft --> Draft: PUT /lines/:id (Update line, v+1)
+    Draft --> Draft: DELETE /lines/:id (Remove line, v+1)
+
+    Draft --> Approved: POST /submit (Discount <= 10% & Margin >= 18% - Auto Approval)
+    Draft --> PendingApproval: POST /submit (Discount > 10% or High Risk - Escalation)
+    Draft --> HardBlocked: POST /submit (Discount > 35% or Margin < 18% - 400 Bad Request)
+
+    HardBlocked --> Draft: Revise line discounts or add high-margin accessories
+
+    PendingApproval --> Approved: POST /approve (Manager <= 20% or Finance <= 35%)
+    PendingApproval --> Approved: POST /reject (Fallback Engine restores Last Approved Best Offer)
+    PendingApproval --> Draft: POST /reject (No prior snapshot: reverts to catalog list price)
+
+    Approved --> Draft: Edit Lines (Safety Guard: Modifying approved quote revokes sign-off)
+    Approved --> PendingApproval: POST /counter (Customer counter-offer escalates for review)
+    Approved --> Confirmed: POST /confirm (Customer 1-click acceptance within validity period)
+
+    Confirmed --> [*]: Commercial contract binding & finalized
+```
+
+### Diagram C: Real-Time Pricing Gateway & Margin Recommendation Flow
+
+```mermaid
+flowchart TD
+    Client[Client / Sales UI / Customer Portal] -->|POST /api/pricing/preview| Gateway[Real-Time Pricing Gateway]
+    Gateway --> Recalc[QuotationCalculator: Compute Line & Quote Totals in Integer Cents]
+    Recalc --> Risk[EscalationEngine: Calculate Blended Risk Score & Margin]
+    Risk --> MarginCheck{Is Margin < 25.0%?}
+
+    MarginCheck -- "Yes (Low Margin Alert)" --> CatalogScan[Scan Product Catalog for High Margin Items]
+    CatalogScan --> UpsellGen[Generate High-Margin Accessory & SLA Support Recommendations]
+    UpsellGen --> Response[Return Real-Time Pricing Breakdown + Upsell Prompts]
+
+    MarginCheck -- "No (Healthy Margin)" --> Response
+    Response -->|HTTP 200 JSON| Client
 ```
 
 ---
@@ -180,5 +226,5 @@ Filtering out this transport noise allows immediate focus on the critical busine
 | **Phase 2 Contract Tests** | 37 / 37 Passed | Verified |
 | **Total Automated Tests** | 64 / 64 Passed | Verified (Exit Code 0) |
 | **Anti-Hallucination Shield** | 0 Ghost Dependencies Detected | Verified Clean |
-| **LaTeX Notation in Dossier** | 0 LaTeX Math Symbols ($...$, \le, \ge) | Fully Compliant |
+| **LaTeX Notation in Dossier** | 0 LaTeX Math Symbols (No dollar syntax or math macros) | Fully Compliant |
 | **Active Domain Lease** | `api` locked to Computer 2 (Alpha) | Active & In Force |

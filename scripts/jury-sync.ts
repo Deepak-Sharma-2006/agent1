@@ -127,9 +127,19 @@ export function publishToJury(customTag?: string): boolean {
     // Clear entire staging index
     execSync("git rm -rf --cached .", { stdio: "inherit" });
 
-    // Stage strictly whitelisted production files: ONLY src/
+    // Stage strictly whitelisted production files: ONLY src/ and frontend assets
     console.log("Staging strictly whitelisted production files (src/)...");
     execSync("git add src/", { stdio: "inherit" });
+
+    if (existsSync("dist")) {
+      console.log("Staging compiled production frontend bundle (dist/)...");
+      execSync("git add -f dist/", { stdio: "inherit" });
+    }
+
+    if (existsSync("client")) {
+      console.log("Staging frontend source files (client/)...");
+      execSync("git add client/", { stdio: "inherit" });
+    }
 
     // Generate clean production package.json without internal agent engine scripts
     const prodPackageJson = {

@@ -127,9 +127,9 @@ export function publishToJury(customTag?: string): boolean {
     // Clear entire staging index
     execSync("git rm -rf --cached .", { stdio: "inherit" });
 
-    // Stage strictly whitelisted production files: src/, .gitignore, README.md, LICENSE
-    console.log("Staging whitelisted production files (src/, .gitignore, README.md, LICENSE)...");
-    execSync("git add src/ .gitignore README.md LICENSE", { stdio: "inherit" });
+    // Stage strictly whitelisted production files: ONLY src/
+    console.log("Staging strictly whitelisted production files (src/)...");
+    execSync("git add src/", { stdio: "inherit" });
 
     // Generate clean production package.json without internal agent engine scripts
     const prodPackageJson = {
@@ -140,25 +140,36 @@ export function publishToJury(customTag?: string): boolean {
       main: "src/index.js",
       scripts: {
         start: "node src/index.js"
-      },
-      devDependencies: {
-        "@types/node": "^22.10.2"
       }
     };
     writeFileSync("package.json", JSON.stringify(prodPackageJson, null, 2) + "\n", "utf-8");
     execSync("git add package.json", { stdio: "inherit" });
 
     // Commit strictly the whitelisted production files
-    execSync(`git commit -m "feat(dealflow360): Phase 1 - Pure Production Application Core"`, { stdio: "inherit" });
+    execSync(`git commit -m "feat(dealflow360): Phase ${profile.phase} - Production Application Release"`, { stdio: "inherit" });
 
-    // Verify tree contains zero excluded files (/tests, /specs, .agents, scripts, docs, etc.)
+    // Verify tree contains zero excluded files (/tests, /specs, .agents, scripts, docs, README, LICENSE, etc.)
     const committedFiles = execCommand(`git ls-tree -r --name-only HEAD`).split("\n").map(s => s.trim()).filter(Boolean);
     console.log(`\nVerified ${committedFiles.length} production files in release commit:`);
     for (const f of committedFiles) {
       console.log(`  📦 ${f}`);
     }
 
-    const forbiddenPrefixes = ["tests/", "specs/", ".agents/", "scripts/", "docs/", "AGENTS.md", "GEMINI.md", ".env", "implementation_"];
+    const forbiddenPrefixes = [
+      "tests/",
+      "specs/",
+      ".agents/",
+      "scripts/",
+      "docs/",
+      "AGENTS.md",
+      "GEMINI.md",
+      ".env",
+      "implementation_",
+      "README.md",
+      "LICENSE",
+      "tsconfig.json",
+      "package-lock.json",
+    ];
     const leaks = committedFiles.filter(f => forbiddenPrefixes.some(p => f.startsWith(p) || f === p));
     if (leaks.length > 0) {
       throw new Error(`Exclusion check failed! Forbidden files detected in release branch: ${leaks.join(", ")}`);

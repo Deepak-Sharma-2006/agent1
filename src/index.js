@@ -1,21 +1,15 @@
-import { createServer as createHttpServer, IncomingMessage, ServerResponse, Server } from "http";
+import { createServer as createHttpServer } from "node:http";
+import { fileURLToPath } from "node:url";
 
-export interface ServerConfig {
-  port: number;
-  environment: string;
-  serviceName: string;
-  version: string;
-}
-
-export const defaultConfig: ServerConfig = {
+export const defaultConfig = {
   port: parseInt(process.env.PORT || "3000", 10),
   environment: process.env.NODE_ENV || "development",
-  serviceName: "antigravity-enterprise-service",
+  serviceName: "dealflow360-enterprise-service",
   version: "1.0.0",
 };
 
-export function createServer(config: ServerConfig = defaultConfig): Server {
-  return createHttpServer((req: IncomingMessage, res: ServerResponse) => {
+export function createServer(config = defaultConfig) {
+  return createHttpServer((req, res) => {
     const url = req.url || "/";
 
     if (url === "/health" || url === "/api/health") {
@@ -50,11 +44,8 @@ export function createServer(config: ServerConfig = defaultConfig): Server {
   });
 }
 
-import { fileURLToPath } from "node:url";
-
 const isMain = process.argv[1] && (
   fileURLToPath(import.meta.url) === process.argv[1] ||
-  process.argv[1].endsWith("index.ts") ||
   process.argv[1].endsWith("index.js")
 );
 

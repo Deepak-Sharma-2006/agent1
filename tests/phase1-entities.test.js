@@ -1,36 +1,27 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type {
-  Customer,
-  DiscountRule,
-  IncentiveRule,
-  Product,
-  Quotation,
-} from "../src/domain/index.ts";
 import {
   EscalationEngine,
   FallbackEngine,
   IncentiveEngine,
   QuotationCalculator,
   TierEngine,
-} from "../src/domain/index.ts";
+} from "../src/domain/index.js";
 import {
   CustomerRepository,
-  DiscountRuleRepository,
   IncentiveRuleRepository,
   InventoryRepository,
-  MemoryStore,
   ProductRepository,
   WarehouseRepository,
-} from "../src/db/memory-store.ts";
-import { seedDatabase } from "../src/db/seed.ts";
+} from "../src/db/memory-store.js";
+import { seedDatabase } from "../src/db/seed.js";
 
-test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
+test("Phase 1: Domain Entities & In-Memory Store Architecture (JavaScript Edition)", async (t) => {
 
   await t.test("1. Dynamic Customer Tier Progression & Degradation Engine", async (st) => {
     
     await st.test("Upgrades customer to Platinum when enterprise spend and credit criteria are satisfied", () => {
-      const candidate: Customer = {
+      const candidate = {
         id: "cust-plat-test",
         customerNumber: "CUST-9901",
         name: "Enterprise Core Inc",
@@ -65,7 +56,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
     });
 
     await st.test("Upgrades customer to Gold based on high cadence (weekly replenishment)", () => {
-      const candidate: Customer = {
+      const candidate = {
         id: "cust-cadence-test",
         customerNumber: "CUST-9902",
         name: "Weekly Wholesale LLC",
@@ -99,7 +90,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
     });
 
     await st.test("Degrades Gold account to Silver when dormant for > 60 days", () => {
-      const dormantGold: Customer = {
+      const dormantGold = {
         id: "cust-dormant-gold",
         customerNumber: "CUST-9903",
         name: "Dormant Systems Co",
@@ -133,7 +124,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
     });
 
     await st.test("Critical credit degradation: Invoice overdue > 45 days immediately demotes to Bronze", () => {
-      const delinquentAccount: Customer = {
+      const delinquentAccount = {
         id: "cust-delinquent",
         customerNumber: "CUST-9904",
         name: "Delinquent Hardware Corp",
@@ -168,7 +159,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
   });
 
   await t.test("2. Admin Historical Incentive & Rebate Engine", async (st) => {
-    const customerWithHistory: Customer = {
+    const customerWithHistory = {
       id: "cust-hist-01",
       customerNumber: "CUST-8001",
       name: "High Growth Logistics",
@@ -215,7 +206,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
       updatedAt: new Date().toISOString(),
     };
 
-    const volumeSpikeRule: IncentiveRule = {
+    const volumeSpikeRule = {
       id: "inc-vol",
       code: "VOL_SPIKE_2X",
       name: "Volume Spike 2x",
@@ -244,7 +235,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
     });
 
     await st.test("Manager can approve incentive within discretion ($5,000 / 20%)", () => {
-      const mockQuotation: Quotation = {
+      const mockQuotation = {
         id: "q-1",
         quoteNumber: "QT-2026-001",
         customerId: customerWithHistory.id,
@@ -279,7 +270,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
     });
 
     await st.test("Manager escalates to Finance when requested incentive exceeds $5,000", () => {
-      const mockQuotation: Quotation = {
+      const mockQuotation = {
         id: "q-2",
         quoteNumber: "QT-2026-002",
         customerId: customerWithHistory.id,
@@ -316,7 +307,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
   });
 
   await t.test("3. Hard Negotiation Caps & Escalation Tier Determination", async (st) => {
-    const mockRules: DiscountRule[] = [
+    const mockRules = [
       {
         id: "r-hw",
         category: "Hardware",
@@ -326,7 +317,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
       },
     ];
 
-    const customer: Customer = {
+    const customer = {
       id: "cust-test",
       customerNumber: "CUST-1",
       name: "Acme",
@@ -352,7 +343,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
       updatedAt: new Date().toISOString(),
     };
 
-    const product: Product = {
+    const product = {
       id: "p1",
       sku: "SKU-1",
       name: "Server",
@@ -373,7 +364,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
         discountPct: 8, // 8% <= 10% (Silver ceiling is 10%)
       });
 
-      const quote: Quotation = {
+      const quote = {
         id: "q1",
         quoteNumber: "QT-01",
         customerId: customer.id,
@@ -410,7 +401,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
         discountPct: 15, // 15% > 10% (Requires Manager)
       });
 
-      const quote: Quotation = {
+      const quote = {
         id: "q2",
         quoteNumber: "QT-02",
         customerId: customer.id,
@@ -447,7 +438,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
         discountPct: 25, // 25% > 20% (Requires Finance)
       });
 
-      const quote: Quotation = {
+      const quote = {
         id: "q3",
         quoteNumber: "QT-03",
         customerId: customer.id,
@@ -484,7 +475,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
         discountPct: 40, // 40% > 35% Hard ceiling!
       });
 
-      const quote: Quotation = {
+      const quote = {
         id: "q4",
         quoteNumber: "QT-04",
         customerId: customer.id,
@@ -514,8 +505,8 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
     });
 
     await st.test("Hard blocks transaction if gross margin breaches mandatory 18% floor", () => {
-      // High cost product where 30% discount reduces margin to 12.5%
-      const expensiveProduct: Product = {
+      // High cost product where 25% discount reduces margin to 6.7%
+      const expensiveProduct = {
         id: "p2",
         sku: "SKU-2",
         name: "Low Margin Server",
@@ -535,7 +526,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
         discountPct: 25, // Net price = $750. Cost = $700. Margin = $50 / $750 = 6.7% (< 18%)
       });
 
-      const quote: Quotation = {
+      const quote = {
         id: "q5",
         quoteNumber: "QT-05",
         customerId: customer.id,
@@ -566,7 +557,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
   });
 
   await t.test("4. Graceful Fallback Strategy: Last Approved Best Offer", async (st) => {
-    const product: Product = {
+    const product = {
       id: "p10",
       sku: "SKU-10",
       name: "Enterprise Rack",
@@ -587,7 +578,7 @@ test("Phase 1: Domain Entities & In-Memory Store Architecture", async (t) => {
       discountPct: 15,
     });
 
-    const quotation: Quotation = {
+    const quotation = {
       id: "q-fb",
       quoteNumber: "QT-FALLBACK-01",
       customerId: "cust-1",

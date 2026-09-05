@@ -1,5 +1,5 @@
 /**
- * DealFlow360 - Dynamic Customer Tier Progression Engine
+ * DealFlow360 - Dynamic Customer Tier Progression Engine (JavaScript Edition)
  * Phase 1: Core Domain Entities
  * 
  * Implements real-world enterprise B2B progression and degradation rules
@@ -7,26 +7,16 @@
  * and overdue invoice aging.
  */
 
-import type { Customer, CustomerTier, PaymentTerms } from "./types.ts";
-
-export interface TierEvaluationResult {
-  currentTier: CustomerTier;
-  recommendedTier: CustomerTier;
-  upgraded: boolean;
-  degraded: boolean;
-  reason: string;
-  recommendedPaymentTerms: PaymentTerms;
-  discretionaryDiscountCeilingPct: number;
-}
-
 export class TierEngine {
   /**
    * Evaluates a customer's purchasing history and credit hygiene to determine
    * their dynamic tier progression or degradation.
+   * @param {Object} customer
+   * @returns {Object} TierEvaluationResult
    */
-  public static evaluateCustomerTier(customer: Customer): TierEvaluationResult {
+  static evaluateCustomerTier(customer) {
     const current = customer.tier;
-    let recommended: CustomerTier = current;
+    let recommended = current;
     let reason = "Account tier confirmed based on ongoing performance metrics.";
 
     // -------------------------------------------------------------------------
@@ -143,7 +133,7 @@ export class TierEngine {
     return this.buildResult(current, recommended, reason);
   }
 
-  public static getTierPaymentTerms(tier: CustomerTier): PaymentTerms {
+  static getTierPaymentTerms(tier) {
     switch (tier) {
       case 'Platinum':
         return 'Net45';
@@ -157,7 +147,7 @@ export class TierEngine {
     }
   }
 
-  public static getTierDiscretionaryDiscountCeiling(tier: CustomerTier): number {
+  static getTierDiscretionaryDiscountCeiling(tier) {
     switch (tier) {
       case 'Platinum':
         return 20; // 20%
@@ -171,16 +161,16 @@ export class TierEngine {
     }
   }
 
-  private static buildResult(current: CustomerTier, recommended: CustomerTier, reason: string): TierEvaluationResult {
-    const tierRanks: Record<CustomerTier, number> = {
+  static buildResult(current, recommended, reason) {
+    const tierRanks = {
       Bronze: 1,
       Silver: 2,
       Gold: 3,
       Platinum: 4,
     };
 
-    const currentRank = tierRanks[current];
-    const recRank = tierRanks[recommended];
+    const currentRank = tierRanks[current] || 1;
+    const recRank = tierRanks[recommended] || 1;
 
     return {
       currentTier: current,

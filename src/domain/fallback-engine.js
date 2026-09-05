@@ -1,5 +1,5 @@
 /**
- * DealFlow360 - Graceful Fallback Engine
+ * DealFlow360 - Graceful Fallback Engine (JavaScript Edition)
  * Phase 1: Core Domain Entities
  * 
  * Implements "Last Approved Best Offer" fallback logic. When higher-tier approvers
@@ -7,29 +7,20 @@
  * cleanly reverts to the previously authorized terms rather than terminating into churn.
  */
 
-import type { FallbackSnapshot, Quotation, UserRole } from "./types.ts";
-
-export interface FallbackReversionResult {
-  quotation: Quotation;
-  reverted: boolean;
-  explanation: string;
-  fallbackSnapshot?: FallbackSnapshot;
-}
-
 export class FallbackEngine {
   /**
    * Captures an immutable snapshot of an approved quotation state to serve
    * as the guaranteed fallback terms if future escalations or counter-offers fail.
+   * @param {Object} quotation
+   * @param {string} approverRole
+   * @param {string} approverName
+   * @param {string} reason
+   * @returns {Object} FallbackSnapshot
    */
-  public static captureSnapshot(
-    quotation: Quotation,
-    approverRole: UserRole,
-    approverName: string,
-    reason: string
-  ): FallbackSnapshot {
-    // Average line discount
-    const totalLineSubtotal = quotation.lines.reduce((sum, l) => sum + (l.quantity * l.unitListPriceCents), 0);
-    const totalLineNet = quotation.lines.reduce((sum, l) => sum + l.lineSubtotalCents, 0);
+  static captureSnapshot(quotation, approverRole, approverName, reason) {
+    const lines = quotation.lines || [];
+    const totalLineSubtotal = lines.reduce((sum, l) => sum + (l.quantity * l.unitListPriceCents), 0);
+    const totalLineNet = lines.reduce((sum, l) => sum + l.lineSubtotalCents, 0);
     const avgDiscountPct = totalLineSubtotal > 0
       ? Math.round(((totalLineSubtotal - totalLineNet) / totalLineSubtotal) * 100)
       : 0;
@@ -38,7 +29,7 @@ export class FallbackEngine {
       snapshotId: `snap-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       quotationId: quotation.id,
       approvedDiscountPct: avgDiscountPct,
-      approvedIncentiveCents: quotation.incentiveTotalCents,
+      approvedIncentiveCents: quotation.incentiveTotalCents || 0,
       approvedSubtotalCents: quotation.subtotalCents,
       approvedNetTotalCents: quotation.netTotalCents,
       approvedMarginPct: quotation.grossMarginPct,
@@ -52,14 +43,23 @@ export class FallbackEngine {
   /**
    * Gracefully reverts a rejected escalated quotation to the Last Approved Best Offer.
    * If a snapshot exists, restores pricing, logs the event, and makes quote actionable for the customer.
+   * @param {Object} quotation
+   * @param {string} rejecterRole
+   * @param {string} rejecterName
+   * @param {string} rejectionReason
+   * @returns {Object} FallbackReversionResult
    */
-  public static revertToLastApprovedOffer(
-    quotation: Quotation,
-    rejecterRole: UserRole,
-    rejecterName: string,
-    rejectionReason: string
-  ): FallbackReversionResult {
+  static revertToLastApprovedOffer(
+    quotation,
+    rejecterRole,
+    rejecterName,
+    rejectionReason
+  ) {
     const snapshot = quotation.fallbackSnapshot;
+
+    if (!quotation.approvalChain) {
+      quotation.approvalChain = [];
+    }
 
     if (!snapshot) {
       // No fallback snapshot available; quotation must mark as rejected
@@ -85,7 +85,7 @@ export class FallbackEngine {
     }
 
     // Restore line discounts proportionally to snapshot discount pct
-    for (const line of quotation.lines) {
+    for (const line of (quotation.lines || [])) {
       line.discountPct = snapshot.approvedDiscountPct;
       line.discountAmountCents = Math.round(line.unitListPriceCents * (line.discountPct / 100));
       line.netUnitPriceCents = line.unitListPriceCents - line.discountAmountCents;

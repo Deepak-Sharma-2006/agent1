@@ -16,3 +16,8 @@ build/
 .agents/state/metrics/*.json
 .agents/security/pentest-report.json
 *.log
+
+# Operator working notes & scratchpads
+scripts_transcripts*
+How to Read Code*
+

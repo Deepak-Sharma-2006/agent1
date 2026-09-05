@@ -119,9 +119,9 @@ During Pass 1 code comprehension and architectural reviews, the following non-bl
 ---
 
 ### Phase 1 Certification Summary
-- **Unit Tests Passing**: 24 / 24 domain tests pass (`tests/phase1-entities.test.ts`).
+- **Language & Runtime**: Modern Native Node.js ES Modules (`.js`), Zero-Transpilation Architecture.
+- **Unit Tests Passing**: 27 / 27 unit and domain tests pass (`tests/bootstrap.test.js` & `tests/phase1-entities.test.js`).
 - **Behavioral Golden Evals**: 4 / 4 harness contracts validated (`.agents/harness/eval-runner.ts`).
-- **TypeScript Static Verification**: `tsc --noEmit` exited with 0 errors (`strict: true`).
 - **Anti-Hallucination Shield**: 0 ghost packages detected across `scripts/`, `src/`, and `tests/`.
 - **DAST Pentest Verification**: Strix AI pentest passed with 0 unverified exploits.
 - **Ready for Beta Audit**: Certified by Computer 1 (Alpha).

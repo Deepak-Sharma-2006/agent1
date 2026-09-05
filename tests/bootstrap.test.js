@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createServer, defaultConfig } from "../src/index.ts";
+import { createServer, defaultConfig } from "../src/index.js";
 
-test("Bootstrap Server Test Suite", async (t) => {
+test("Bootstrap Server Test Suite (JavaScript Edition)", async (t) => {
   const server = createServer();
 
   await t.test("defaultConfig should have valid baseline properties", () => {

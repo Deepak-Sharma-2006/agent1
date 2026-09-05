@@ -1,5 +1,5 @@
 /**
- * DealFlow360 - Escalation & Authorization Engine
+ * DealFlow360 - Escalation & Authorization Engine (JavaScript Edition)
  * Phase 1: Core Domain Entities
  * 
  * Enforces hard negotiation caps per tier (Rep <= 10%, Manager <= 20%, Finance <= 35%)
@@ -7,55 +7,41 @@
  * Eliminates Executive VP: Finance acts as the apex fiscal authority.
  */
 
-import type { Customer, DiscountRule, EscalationTier, Quotation } from "./types.ts";
-
-export interface EscalationAssessment {
-  currentTier: EscalationTier;
-  requiredTier: EscalationTier;
-  isEscalationRequired: boolean;
-  blendedRiskScore: number;
-  isHardBlocked: boolean;
-  blockReason?: string;
-  violations: string[];
-  maxAuthorizedDiscountPct: number;
-  maxAuthorizedRebateCents: number;
-}
-
 export class EscalationEngine {
   // Hard Discretionary Discount Limits
-  public static readonly SALES_REP_MAX_DISCOUNT_PCT = 10;
-  public static readonly SALES_REP_MAX_REBATE_CENTS = 0;
+  static SALES_REP_MAX_DISCOUNT_PCT = 10;
+  static SALES_REP_MAX_REBATE_CENTS = 0;
 
-  public static readonly SALES_MANAGER_MAX_DISCOUNT_PCT = 20;
-  public static readonly SALES_MANAGER_MAX_REBATE_CENTS = 500000; // $5,000.00
+  static SALES_MANAGER_MAX_DISCOUNT_PCT = 20;
+  static SALES_MANAGER_MAX_REBATE_CENTS = 500000; // $5,000.00
 
-  public static readonly FINANCE_MAX_DISCOUNT_PCT = 35;
-  public static readonly MINIMUM_MARGIN_FLOOR_PCT = 18.0; // 18% hard margin floor
+  static FINANCE_MAX_DISCOUNT_PCT = 35;
+  static MINIMUM_MARGIN_FLOOR_PCT = 18.0; // 18% hard margin floor
 
   /**
    * Computes the Blended Risk Score for a quotation across all line items and customer tier.
+   * @param {Object} quotation
+   * @param {Object} customer
+   * @param {Array} rules
+   * @returns {number}
    */
-  public static computeBlendedRiskScore(
-    quotation: Quotation,
-    customer: Customer,
-    rules: DiscountRule[]
-  ): number {
+  static computeBlendedRiskScore(quotation, customer, rules) {
     let totalRiskPoints = 0;
 
     // Build lookup for category rules
-    const ruleMap = new Map(rules.map(r => [r.category, r]));
+    const ruleMap = new Map((rules || []).map(r => [r.category, r]));
 
     // Customer tier sensitivity weight
     let tierRiskMultiplier = 1.0;
     if (customer.tier === 'Platinum' || customer.tier === 'Gold') {
       tierRiskMultiplier = 0.8; // Established trust reduces risk sensitivity
-    } else if (customer.tier === 'Bronze' || customer.maxOverdueDays > 15 || customer.defaultCount > 0) {
+    } else if (customer.tier === 'Bronze' || (customer.maxOverdueDays || 0) > 15 || (customer.defaultCount || 0) > 0) {
       tierRiskMultiplier = 1.4; // Untrusted or degraded accounts have higher risk multiplier
     }
 
-    for (const line of quotation.lines) {
+    for (const line of (quotation.lines || [])) {
       const rule = ruleMap.get(line.category);
-      const standardCeiling = rule ? rule.tierCeilings[customer.tier] || rule.standardCeilingPct : 10;
+      const standardCeiling = rule ? (rule.tierCeilings?.[customer.tier] ?? rule.standardCeilingPct) : 10;
 
       if (line.discountPct > standardCeiling) {
         const excessDiscount = line.discountPct - standardCeiling;
@@ -76,22 +62,22 @@ export class EscalationEngine {
 
   /**
    * Assesses a quotation against role negotiation caps, blended risk, and margin floors.
+   * @param {Object} quotation
+   * @param {Object} customer
+   * @param {Array} rules
+   * @returns {Object} EscalationAssessment
    */
-  public static assessEscalation(
-    quotation: Quotation,
-    customer: Customer,
-    rules: DiscountRule[]
-  ): EscalationAssessment {
-    const violations: string[] = [];
+  static assessEscalation(quotation, customer, rules) {
+    const violations = [];
     const blendedRiskScore = this.computeBlendedRiskScore(quotation, customer, rules);
     
     // Check maximum line discount in the quote
-    const maxLineDiscountPct = quotation.lines.length > 0 
+    const maxLineDiscountPct = (quotation.lines && quotation.lines.length > 0)
       ? Math.max(...quotation.lines.map(l => l.discountPct))
       : 0;
 
-    const requestedRebateCents = quotation.incentiveTotalCents;
-    const dealMarginPct = quotation.grossMarginPct;
+    const requestedRebateCents = quotation.incentiveTotalCents || 0;
+    const dealMarginPct = quotation.grossMarginPct || 0;
 
     // 1. HARD BLOCKS (Finance Apex Boundary)
     if (maxLineDiscountPct > this.FINANCE_MAX_DISCOUNT_PCT) {
@@ -123,11 +109,11 @@ export class EscalationEngine {
     }
 
     // 2. FINANCE TIER ESCALATION
-    // Required if: Discount > 20%, OR Rebate > $5,000, OR Blended Risk Score > 15
+    // Required if: Discount > 20%, OR Rebate > $5,000, OR Blended Risk Score > 20
     if (
       maxLineDiscountPct > this.SALES_MANAGER_MAX_DISCOUNT_PCT ||
       requestedRebateCents > this.SALES_MANAGER_MAX_REBATE_CENTS ||
-      blendedRiskScore > 15
+      blendedRiskScore > 20
     ) {
       if (maxLineDiscountPct > this.SALES_MANAGER_MAX_DISCOUNT_PCT) {
         violations.push(`Discount of ${maxLineDiscountPct}% exceeds Sales Manager discretionary cap (${this.SALES_MANAGER_MAX_DISCOUNT_PCT}%).`);
@@ -135,7 +121,7 @@ export class EscalationEngine {
       if (requestedRebateCents > this.SALES_MANAGER_MAX_REBATE_CENTS) {
         violations.push(`Rebate of $${(requestedRebateCents / 100).toFixed(2)} exceeds Sales Manager limit ($5,000.00).`);
       }
-      if (blendedRiskScore > 15) {
+      if (blendedRiskScore > 20) {
         violations.push(`Blended Risk Score (${blendedRiskScore}) requires executive Finance oversight.`);
       }
 

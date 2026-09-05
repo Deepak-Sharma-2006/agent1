@@ -1,5 +1,5 @@
 /**
- * DealFlow360 - Database Seed Fixtures
+ * DealFlow360 - Database Seed Fixtures (JavaScript Edition)
  * Phase 1: Core Domain Entities
  * 
  * Populates realistic B2B enterprise data across Customers, Products,
@@ -14,9 +14,9 @@ import {
   MemoryStore,
   ProductRepository,
   WarehouseRepository,
-} from "./memory-store.ts";
+} from "./memory-store.js";
 
-export function seedDatabase(): void {
+export function seedDatabase() {
   const store = MemoryStore.getInstance();
   store.clear();
 

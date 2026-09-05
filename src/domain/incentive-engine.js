@@ -1,5 +1,5 @@
 /**
- * DealFlow360 - Admin Historical Condition-Based Incentive Engine
+ * DealFlow360 - Admin Historical Condition-Based Incentive Engine (JavaScript Edition)
  * Phase 1: Core Domain Entities
  * 
  * Evaluates Admin-configured incentive and rebate rules requiring customer
@@ -7,41 +7,16 @@
  * Provides Manager negotiation assessment and Finance escalation triggers.
  */
 
-import type { Customer, IncentiveRule, Quotation } from "./types.ts";
-
-export interface IncentiveEvaluationResult {
-  ruleId: string;
-  ruleCode: string;
-  ruleName: string;
-  eligible: boolean;
-  bonusDiscountPct: number;
-  flatRebateCents: number;
-  reason: string;
-}
-
-export interface ManagerIncentiveNegotiationDecision {
-  canManagerApprove: boolean;
-  requiresFinanceEscalation: boolean;
-  maxManagerDiscretionCents: number;
-  justificationNotes: string;
-  customerHistorySummary: {
-    historicalAOVcents: number;
-    totalOrders: number;
-    onTimePaymentRatePct: number;
-    hasDefaults: boolean;
-  };
-}
-
 export class IncentiveEngine {
   /**
    * Evaluates an Admin-configured incentive rule against a customer's verified historical order logs
    * and the current quotation subtotal.
+   * @param {Object} customer
+   * @param {number} quotationSubtotalCents
+   * @param {Object} rule
+   * @returns {Object} IncentiveEvaluationResult
    */
-  public static evaluateRule(
-    customer: Customer,
-    quotationSubtotalCents: number,
-    rule: IncentiveRule
-  ): IncentiveEvaluationResult {
+  static evaluateRule(customer, quotationSubtotalCents, rule) {
     if (!rule.active) {
       return {
         ruleId: rule.id,
@@ -70,7 +45,7 @@ export class IncentiveEngine {
     switch (rule.conditionType) {
       case 'VolumeSpike': {
         // Condition: Current order subtotal >= 2x customer historical 6-month average order value (AOV)
-        const history = customer.orderHistory;
+        const history = customer.orderHistory || [];
         if (history.length === 0) {
           return {
             ruleId: rule.id,
@@ -112,8 +87,8 @@ export class IncentiveEngine {
 
       case 'MilestoneLoyalty': {
         // Condition: Customer has >= rule.minHistoryOrders paid orders with 0 defaults
-        const paidOrders = customer.totalPaidOrders;
-        const hasNoDefaults = customer.defaultCount === 0;
+        const paidOrders = customer.totalPaidOrders || 0;
+        const hasNoDefaults = (customer.defaultCount || 0) === 0;
 
         if (paidOrders >= rule.minHistoryOrders && hasNoDefaults) {
           return {
@@ -175,6 +150,17 @@ export class IncentiveEngine {
           reason: "Bundled cross-category incentive qualified.",
         };
       }
+
+      default:
+        return {
+          ruleId: rule.id,
+          ruleCode: rule.code,
+          ruleName: rule.name,
+          eligible: false,
+          bonusDiscountPct: 0,
+          flatRebateCents: 0,
+          reason: `Unknown condition type: ${rule.conditionType}`,
+        };
     }
   }
 
@@ -182,14 +168,19 @@ export class IncentiveEngine {
    * Assesses a Sales Manager's authority to negotiate higher customer incentive requests.
    * If request exceeds Manager limit ($5,000 rebate / 500,000 cents) OR if order is much higher + good history,
    * flags mandatory escalation to Finance.
+   * @param {Object} customer
+   * @param {Object} quotation
+   * @param {number} requestedRebateCents
+   * @param {number} requestedDiscountPct
+   * @returns {Object} ManagerIncentiveNegotiationDecision
    */
-  public static assessManagerNegotiation(
-    customer: Customer,
-    quotation: Quotation,
-    requestedRebateCents: number,
-    requestedDiscountPct: number
-  ): ManagerIncentiveNegotiationDecision {
-    const history = customer.orderHistory;
+  static assessManagerNegotiation(
+    customer,
+    quotation,
+    requestedRebateCents,
+    requestedDiscountPct
+  ) {
+    const history = customer.orderHistory || [];
     const totalHistoricalSpend = history.reduce((sum, ord) => sum + ord.totalCents, 0);
     const historicalAOV = history.length > 0 ? Math.round(totalHistoricalSpend / history.length) : 0;
     const onTimeOrders = history.filter(o => o.paidOnTime).length;
@@ -199,7 +190,7 @@ export class IncentiveEngine {
       historicalAOVcents: historicalAOV,
       totalOrders: history.length,
       onTimePaymentRatePct: onTimeRate,
-      hasDefaults: customer.defaultCount > 0,
+      hasDefaults: (customer.defaultCount || 0) > 0,
     };
 
     // Manager Discretion Limit: up to $5,000 rebate (500,000 cents) and up to 20% discount
@@ -211,7 +202,7 @@ export class IncentiveEngine {
     const isHighOrderGoodHistory = 
       quotation.subtotalCents >= 10000000 &&
       onTimeRate >= 90 &&
-      customer.defaultCount === 0;
+      (customer.defaultCount || 0) === 0;
 
     if (requestedRebateCents > MAX_MANAGER_REBATE_CENTS || requestedDiscountPct > MAX_MANAGER_DISCOUNT_PCT) {
       return {

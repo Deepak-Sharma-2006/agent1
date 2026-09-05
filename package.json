@@ -4,9 +4,9 @@
   "description": "Enterprise 2-Person / 2-Computer Shared Context Autonomous Agentic Workflow",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node --experimental-strip-types src/index.ts",
-    "test:unit": "node --experimental-strip-types --test tests/bootstrap.test.ts tests/phase1-entities.test.ts",
+    "build": "node -e \"console.log('Build complete (Pure Native ES Modules)')\"",
+    "start": "node src/index.js",
+    "test:unit": "node --test tests/bootstrap.test.js tests/phase1-entities.test.js",
     "test": "npm run test:unit && npm run harness:eval",
     "role:status": "node --experimental-strip-types scripts/role-switch.ts status",
     "role:alpha": "node --experimental-strip-types scripts/role-switch.ts alpha",

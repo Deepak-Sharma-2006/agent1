@@ -1,35 +1,25 @@
 /**
- * DealFlow360 - Quotation Calculator Engine
+ * DealFlow360 - Quotation Calculator Engine (JavaScript Edition)
  * Phase 1: Core Domain Entities
  * 
  * Performs deterministic integer-cents calculations for line items,
  * discounts, rebates, taxes, and real-time gross margin percentages.
  */
 
-import type { Product, Quotation, QuotationLine } from "./types.ts";
-
-export interface CreateLineInput {
-  product: Product;
-  quantity: number;
-  discountPct: number;
-  allocatedWarehouseId?: string;
-  variantId?: string;
-}
-
 export class QuotationCalculator {
   /**
    * Builds and calculates a QuotationLine with integer cents precision.
+   * @param {string} quotationId
+   * @param {string} lineId
+   * @param {Object} input
+   * @returns {Object} QuotationLine
    */
-  public static createLine(
-    quotationId: string,
-    lineId: string,
-    input: CreateLineInput
-  ): QuotationLine {
+  static createLine(quotationId, lineId, input) {
     const { product, quantity, discountPct, allocatedWarehouseId, variantId } = input;
     
     // Check variant price offset
     let unitListPriceCents = product.listPriceCents;
-    if (variantId) {
+    if (variantId && product.variants) {
       const variant = product.variants.find(v => v.id === variantId);
       if (variant) {
         unitListPriceCents += variant.priceDeltaCents;
@@ -72,13 +62,15 @@ export class QuotationCalculator {
 
   /**
    * Recalculates whole-order subtotals, margins, and totals in integer cents.
+   * @param {Object} quotation
+   * @returns {Object}
    */
-  public static recalculateQuotation(quotation: Quotation): Quotation {
+  static recalculateQuotation(quotation) {
     let listSubtotalCents = 0;
     let netLineSubtotalCents = 0;
     let costTotalCents = 0;
 
-    for (const line of quotation.lines) {
+    for (const line of (quotation.lines || [])) {
       listSubtotalCents += line.quantity * line.unitListPriceCents;
       netLineSubtotalCents += line.lineSubtotalCents;
       costTotalCents += line.lineCostCents;

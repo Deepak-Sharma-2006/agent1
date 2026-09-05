@@ -1,41 +1,32 @@
 /**
- * DealFlow360 - Type-Safe In-Memory Store & Repositories
+ * DealFlow360 - In-Memory Store & Repositories (JavaScript Edition)
  * Phase 1: Core Domain Entities
  * 
  * Provides atomic, isolated data structures for Customers, Products,
  * Warehouses, Inventory, Rules, and Quotations.
  */
 
-import type {
-  Customer,
-  DiscountRule,
-  IncentiveRule,
-  InventoryItem,
-  Product,
-  Quotation,
-  Warehouse,
-} from "../domain/types.ts";
-
 export class MemoryStore {
-  public customers: Map<string, Customer> = new Map();
-  public products: Map<string, Product> = new Map();
-  public warehouses: Map<string, Warehouse> = new Map();
-  public inventory: Map<string, InventoryItem> = new Map();
-  public discountRules: Map<string, DiscountRule> = new Map();
-  public incentiveRules: Map<string, IncentiveRule> = new Map();
-  public quotations: Map<string, Quotation> = new Map();
+  constructor() {
+    this.customers = new Map();
+    this.products = new Map();
+    this.warehouses = new Map();
+    this.inventory = new Map();
+    this.discountRules = new Map();
+    this.incentiveRules = new Map();
+    this.quotations = new Map();
+  }
 
-  // Singleton instance
-  private static instance: MemoryStore;
+  static instance = null;
 
-  public static getInstance(): MemoryStore {
+  static getInstance() {
     if (!MemoryStore.instance) {
       MemoryStore.instance = new MemoryStore();
     }
     return MemoryStore.instance;
   }
 
-  public clear(): void {
+  clear() {
     this.customers.clear();
     this.products.clear();
     this.warehouses.clear();
@@ -50,30 +41,32 @@ export class MemoryStore {
 // Customer Repository
 // -----------------------------------------------------------------------------
 export class CustomerRepository {
-  private store = MemoryStore.getInstance();
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
 
-  public findById(id: string): Customer | undefined {
+  findById(id) {
     return this.store.customers.get(id);
   }
 
-  public findByEmail(email: string): Customer | undefined {
+  findByEmail(email) {
     for (const c of this.store.customers.values()) {
       if (c.email.toLowerCase() === email.toLowerCase()) return c;
     }
     return undefined;
   }
 
-  public findAll(): Customer[] {
+  findAll() {
     return Array.from(this.store.customers.values());
   }
 
-  public save(customer: Customer): Customer {
+  save(customer) {
     customer.updatedAt = new Date().toISOString();
     this.store.customers.set(customer.id, customer);
     return customer;
   }
 
-  public delete(id: string): boolean {
+  delete(id) {
     return this.store.customers.delete(id);
   }
 }
@@ -82,24 +75,26 @@ export class CustomerRepository {
 // Product Repository
 // -----------------------------------------------------------------------------
 export class ProductRepository {
-  private store = MemoryStore.getInstance();
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
 
-  public findById(id: string): Product | undefined {
+  findById(id) {
     return this.store.products.get(id);
   }
 
-  public findBySku(sku: string): Product | undefined {
+  findBySku(sku) {
     for (const p of this.store.products.values()) {
       if (p.sku === sku) return p;
     }
     return undefined;
   }
 
-  public findAll(): Product[] {
+  findAll() {
     return Array.from(this.store.products.values());
   }
 
-  public save(product: Product): Product {
+  save(product) {
     product.updatedAt = new Date().toISOString();
     this.store.products.set(product.id, product);
     return product;
@@ -110,33 +105,37 @@ export class ProductRepository {
 // Warehouse & Inventory Repositories
 // -----------------------------------------------------------------------------
 export class WarehouseRepository {
-  private store = MemoryStore.getInstance();
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
 
-  public findById(id: string): Warehouse | undefined {
+  findById(id) {
     return this.store.warehouses.get(id);
   }
 
-  public findPrimaryHub(): Warehouse | undefined {
+  findPrimaryHub() {
     for (const w of this.store.warehouses.values()) {
       if (w.isPrimaryHub && w.active) return w;
     }
     return undefined;
   }
 
-  public findAll(): Warehouse[] {
+  findAll() {
     return Array.from(this.store.warehouses.values());
   }
 
-  public save(warehouse: Warehouse): Warehouse {
+  save(warehouse) {
     this.store.warehouses.set(warehouse.id, warehouse);
     return warehouse;
   }
 }
 
 export class InventoryRepository {
-  private store = MemoryStore.getInstance();
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
 
-  public findByProductAndWarehouse(productId: string, warehouseId: string): InventoryItem | undefined {
+  findByProductAndWarehouse(productId, warehouseId) {
     for (const item of this.store.inventory.values()) {
       if (item.productId === productId && item.warehouseId === warehouseId) {
         return item;
@@ -145,15 +144,15 @@ export class InventoryRepository {
     return undefined;
   }
 
-  public findByProductId(productId: string): InventoryItem[] {
-    const results: InventoryItem[] = [];
+  findByProductId(productId) {
+    const results = [];
     for (const item of this.store.inventory.values()) {
       if (item.productId === productId) results.push(item);
     }
     return results;
   }
 
-  public save(item: InventoryItem): InventoryItem {
+  save(item) {
     item.updatedAt = new Date().toISOString();
     this.store.inventory.set(item.id, item);
     return item;
@@ -164,33 +163,37 @@ export class InventoryRepository {
 // Rule Repositories
 // -----------------------------------------------------------------------------
 export class DiscountRuleRepository {
-  private store = MemoryStore.getInstance();
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
 
-  public findAll(): DiscountRule[] {
+  findAll() {
     return Array.from(this.store.discountRules.values());
   }
 
-  public save(rule: DiscountRule): DiscountRule {
+  save(rule) {
     this.store.discountRules.set(rule.id, rule);
     return rule;
   }
 }
 
 export class IncentiveRuleRepository {
-  private store = MemoryStore.getInstance();
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
 
-  public findAll(): IncentiveRule[] {
+  findAll() {
     return Array.from(this.store.incentiveRules.values());
   }
 
-  public findByCode(code: string): IncentiveRule | undefined {
+  findByCode(code) {
     for (const r of this.store.incentiveRules.values()) {
       if (r.code === code) return r;
     }
     return undefined;
   }
 
-  public save(rule: IncentiveRule): IncentiveRule {
+  save(rule) {
     this.store.incentiveRules.set(rule.id, rule);
     return rule;
   }
@@ -200,25 +203,27 @@ export class IncentiveRuleRepository {
 // Quotation Repository
 // -----------------------------------------------------------------------------
 export class QuotationRepository {
-  private store = MemoryStore.getInstance();
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
 
-  public findById(id: string): Quotation | undefined {
+  findById(id) {
     return this.store.quotations.get(id);
   }
 
-  public findByCustomerId(customerId: string): Quotation[] {
-    const results: Quotation[] = [];
+  findByCustomerId(customerId) {
+    const results = [];
     for (const q of this.store.quotations.values()) {
       if (q.customerId === customerId) results.push(q);
     }
     return results;
   }
 
-  public findAll(): Quotation[] {
+  findAll() {
     return Array.from(this.store.quotations.values());
   }
 
-  public save(quotation: Quotation): Quotation {
+  save(quotation) {
     quotation.updatedAt = new Date().toISOString();
     this.store.quotations.set(quotation.id, quotation);
     return quotation;

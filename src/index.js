@@ -1,9 +1,27 @@
 import { createServer as createHttpServer } from "node:http";
 import { fileURLToPath } from "node:url";
+import { createReadStream, existsSync, statSync } from "node:fs";
+import { join, extname, resolve } from "node:path";
 import { getRepositories } from "./db/database-factory.js";
 import { QuotationService } from "./services/quotation-service.js";
 import { createApiRouter } from "./api/routes.js";
 import { NativeWebSocketServer, ChannelManager, EventBroadcaster } from "./realtime/index.js";
+
+const MIME_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".mjs": "application/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+};
 
 export const defaultConfig = {
   port: parseInt(process.env.PORT || "3000", 10),
@@ -112,6 +130,53 @@ export function createServer(config = defaultConfig, customDependencies = null) 
           })
         );
         return;
+      }
+
+      const pathname = url.split("?")[0];
+
+      // WebSocket endpoint requires upgrade header; standard HTTP request returns 400
+      if (pathname === "/ws" || pathname.startsWith("/ws/")) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, error: "WebSocket upgrade required" }));
+        return;
+      }
+
+      // Static Asset & SPA Fallback Serving
+      if (req.method === "GET" || req.method === "HEAD") {
+        const distDir = resolve(process.cwd(), "dist");
+        if (existsSync(distDir)) {
+          let filePath = resolve(distDir, pathname.replace(/^\//, ""));
+
+          if (filePath.startsWith(distDir) && existsSync(filePath) && statSync(filePath).isFile()) {
+            const ext = extname(filePath).toLowerCase();
+            const contentType = MIME_TYPES[ext] || "application/octet-stream";
+            res.writeHead(200, {
+              "Content-Type": contentType,
+              "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
+            });
+            if (req.method === "HEAD") {
+              res.end();
+            } else {
+              createReadStream(filePath).pipe(res);
+            }
+            return;
+          }
+
+          // SPA Fallback for client-side routing
+          const indexPath = join(distDir, "index.html");
+          if (!pathname.startsWith("/api") && !extname(pathname) && existsSync(indexPath)) {
+            res.writeHead(200, {
+              "Content-Type": "text/html; charset=utf-8",
+              "Cache-Control": "no-cache",
+            });
+            if (req.method === "HEAD") {
+              res.end();
+            } else {
+              createReadStream(indexPath).pipe(res);
+            }
+            return;
+          }
+        }
       }
 
       res.writeHead(404, { "Content-Type": "application/json" });

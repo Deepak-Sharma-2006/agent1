@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "fs";
+import { existsSync, readdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
 import { runBetaAudit } from "./beta-audit-runner.ts";
@@ -88,6 +88,8 @@ export function setJuryRemote(url: string): boolean {
   }
 }
 
+const DEFAULT_JURY_REMOTE = "https://github.com/Infinity915/575_final.git";
+
 export function publishToJury(customTag?: string): boolean {
   console.log(`\n🚀 [Jury Release Pipeline] Initiating pre-publish gate barrier...`);
 
@@ -107,11 +109,11 @@ export function publishToJury(customTag?: string): boolean {
     return false;
   }
 
-  // Step 2: Check jury remote
+  // Step 2: Check / auto-configure jury remote
   const remotes = execCommand("git remote").split("\n");
   if (!remotes.includes("jury")) {
-    console.error(`\n❌ [Publish Aborted] Git remote 'jury' is not configured. Run 'npm run jury:set-remote -- <URL>' first.\n`);
-    return false;
+    console.log(`ℹ️ [Jury Remote Setup] Configuring 'jury' remote to: ${DEFAULT_JURY_REMOTE}`);
+    setJuryRemote(DEFAULT_JURY_REMOTE);
   }
 
   const tag = customTag || `v1.0-phase-${profile.phase}`;
@@ -119,17 +121,47 @@ export function publishToJury(customTag?: string): boolean {
   const cleanReleaseBranch = `jury-release-phase-${profile.phase}`;
 
   try {
-    console.log(`\nStep 2: Preparing clean submission branch '${cleanReleaseBranch}' (excluding docs/dossiers/)...`);
+    console.log(`\nStep 2: Preparing isolated clean production branch '${cleanReleaseBranch}'...`);
     execSync(`git checkout -B ${cleanReleaseBranch}`, { stdio: "inherit" });
 
-    // Remove internal dossiers from the jury submission branch
-    if (existsSync(join(process.cwd(), "docs/dossiers"))) {
-      try {
-        execSync("git rm -rf --cached docs/dossiers", { stdio: "inherit" });
-        execSync('git commit -m "chore: exclude internal cognitive dossiers from jury submission" --allow-empty', { stdio: "inherit" });
-      } catch {
-        // In case nothing was staged
+    // Clear entire staging index
+    execSync("git rm -rf --cached .", { stdio: "inherit" });
+
+    // Stage strictly whitelisted production files: src/, .gitignore, README.md, LICENSE
+    console.log("Staging whitelisted production files (src/, .gitignore, README.md, LICENSE)...");
+    execSync("git add src/ .gitignore README.md LICENSE", { stdio: "inherit" });
+
+    // Generate clean production package.json without internal agent engine scripts
+    const prodPackageJson = {
+      name: "dealflow360",
+      version: "1.0.0",
+      description: "DealFlow360 - Autonomous Enterprise Sales Operations & CPQ Platform",
+      type: "module",
+      main: "src/index.js",
+      scripts: {
+        start: "node src/index.js"
+      },
+      devDependencies: {
+        "@types/node": "^22.10.2"
       }
+    };
+    writeFileSync("package.json", JSON.stringify(prodPackageJson, null, 2) + "\n", "utf-8");
+    execSync("git add package.json", { stdio: "inherit" });
+
+    // Commit strictly the whitelisted production files
+    execSync(`git commit -m "feat(dealflow360): Phase 1 - Pure Production Application Core"`, { stdio: "inherit" });
+
+    // Verify tree contains zero excluded files (/tests, /specs, .agents, scripts, docs, etc.)
+    const committedFiles = execCommand(`git ls-tree -r --name-only HEAD`).split("\n").map(s => s.trim()).filter(Boolean);
+    console.log(`\nVerified ${committedFiles.length} production files in release commit:`);
+    for (const f of committedFiles) {
+      console.log(`  📦 ${f}`);
+    }
+
+    const forbiddenPrefixes = ["tests/", "specs/", ".agents/", "scripts/", "docs/", "AGENTS.md", "GEMINI.md", ".env", "implementation_"];
+    const leaks = committedFiles.filter(f => forbiddenPrefixes.some(p => f.startsWith(p) || f === p));
+    if (leaks.length > 0) {
+      throw new Error(`Exclusion check failed! Forbidden files detected in release branch: ${leaks.join(", ")}`);
     }
 
     console.log(`\nStep 3: Tagging release commit with '${tag}'...`);
@@ -140,13 +172,14 @@ export function publishToJury(customTag?: string): boolean {
     execSync(`git push jury ${tag} --force`, { stdio: "inherit" });
 
     // Restore working branch
-    execSync(`git checkout ${currentBranch}`, { stdio: "inherit" });
+    execSync(`git checkout -f ${currentBranch}`, { stdio: "inherit" });
+    execSync(`git branch -D ${cleanReleaseBranch}`, { stdio: "inherit" });
 
-    console.log(`\n🎉 [Jury Release Published] Successfully deployed ${tag} to hackathon repository without internal dossiers!`);
+    console.log(`\n🎉 [Jury Release Published] Successfully deployed pure production Phase ${profile.phase} code to hackathon repository!`);
     console.log(`Repository URL: https://github.com/Infinity915/575_final\n`);
     return true;
   } catch (err) {
-    execSync(`git checkout ${currentBranch}`, { stdio: "inherit" });
+    execSync(`git checkout -f ${currentBranch}`, { stdio: "inherit" });
     console.error(`\n❌ Failed to push release to jury remote:`, err);
     return false;
   }

@@ -1,0 +1,8 @@
+{
+  "domain": "inventory",
+  "operator": "Computer1",
+  "role": "Alpha",
+  "acquiredAt": "2026-09-05T11:22:41.577Z",
+  "expiresAt": "2026-09-05T13:22:41.577Z",
+  "ttlSeconds": 7200
+}

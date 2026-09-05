@@ -79,9 +79,13 @@ Beyond standard quote-to-invoice forms, DealFlow360 acts as an **autonomous, sel
 │ Architectural Core │ Clean Hexagonal / Onion Architecture (Strict Domain Isolation)   │
 │ State Machine      │ Event-Driven Deterministic Transition Engine                      │
 │ Data Precision     │ Integer Cents Accounting ($1.00 = 100 cents, Zero IEEE-754 Floats)│
-│ Persistence        │ In-Memory Relational Repositories + IndexedDB (Client PWA)        │
-│ Client UI          │ Vanilla HTML5 + Vanilla CSS (Design Tokens, Dark Glassmorphism)   │
-│ Client Logic       │ Pure Modern JavaScript ES Modules (Fast boot, zero bundle bloat) │
+│ Persistence (DB)   │ Serverless Local SQL: SQLite + Prisma ORM (`prisma`, `dev.db`)   │
+│ In-Memory Fallback │ Atomic Map-based Repositories for zero-latency local testing      │
+│ Real-Time Layer    │ WebSockets (`ws` server + browser WebSocket client)               │
+│ Client Frontend    │ Vite + React 18/19 SPA (Component architecture, fast HMR)         │
+│ Data Visualization │ Chart.js (`chart.js`, `react-chartjs-2`: Margin & Risk Gauges)   │
+│ UI Iconography     │ Lucide Icons (`lucide-react`: Enterprise status badges & tools)   │
+│ Client Styling     │ Modern CSS Design Tokens + Dark Glassmorphism + Micro-animations  │
 │ Offline Engine     │ Service Worker + IndexedDB + Optimistic Concurrency Sync (OCC)    │
 │ Security Shield    │ Constant-time comparisons, strict input sanitization, DAST checks │
 │ Test Framework     │ Native `node:test` + `node:assert/strict`                         │
@@ -97,20 +101,24 @@ Beyond standard quote-to-invoice forms, DealFlow360 acts as an **autonomous, sel
 │                        HEXAGONAL (PORTS & ADAPTERS) ARCHITECTURE                       │
 ├────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                        │
-│   [PRIMARY ADAPTERS]                                                                   │
-│   • Field Sales PWA (Offline Draft Builder)                                            │
-│   • Customer Portal (Counter-offer & 1-Click Accept)                                  │
+│   [PRIMARY ADAPTERS - FRONTEND & REAL-TIME]                                            │
+│   • Vite + React 18/19 CPQ Studio (Interactive Quotation Builder)                      │
+│   • Chart.js Interactive Canvas (Gross Margin Gauge & Tier Velocity Curve)             │
+│   • Customer Negotiation Portal (Live Counter-offers & 1-Click Accept)                 │
 │   • Warehouse Scanner UI (Pick/Pack Checklist)                                         │
-│   • REST & WebSocket Gateway                                                           │
+│   • Native REST API Gateway (`node:http` with 1MB Payload DoS Ceiling)                │
+│   • Real-Time WebSocket Gateway (`ws` Multi-Party Negotiation Pub/Sub)                │
+│   • Field Sales PWA (Offline Draft Builder + Service Worker)                           │
 │                        │                                                               │
-│                        ▼ (DTOs / Command Invocations)                                  │
+│                        ▼ (DTOs / Command Invocations / WebSocket Events)               │
 │   ┌────────────────────────────────────────────────────────────────────────────────┐   │
 │   │                         APPLICATION SERVICES LAYER                              │   │
 │   │  • QuoteAuthoringService   • ApprovalWorkflowEngine   • WarehouseSplitRouter    │   │
 │   │  • SubscriptionManager     • AnomalySurveillance      • OfflineSyncResolver     │   │
+│   │  • RealTimeBroadcastService (WebSocket Event Egress)                            │   │
 │   └────────────────────────────────────────────────────────────────────────────────┘   │
 │                        │                                                               │
-│                        ▼ (Invariants, Domain Events, Formulas)                         │
+│                        ▼ (Invariants, Domain Events, Mathematical Formulas)            │
 │   ┌────────────────────────────────────────────────────────────────────────────────┐   │
 │   │                           CORE DOMAIN LAYER (PURE JS)                          │   │
 │   │  • TierEngine (Dynamic B2B Progression / Degradation)                          │   │
@@ -120,10 +128,10 @@ Beyond standard quote-to-invoice forms, DealFlow360 acts as an **autonomous, sel
 │   │  • QuotationCalculator (Integer Cents Subtotals, Line Margins & Risk Score)    │   │
 │   └────────────────────────────────────────────────────────────────────────────────┘   │
 │                        │                                                               │
-│                        ▼ (Repository Ports)                                            │
-│   [SECONDARY ADAPTERS]                                                                 │
-│   • CustomerRepository  • ProductRepository  • WarehouseRepository                    │
-│   • InventoryRepository • DiscountRuleRepo   • QuotationRepository                     │
+│                        ▼ (Repository Ports & Data Persistence)                         │
+│   [SECONDARY ADAPTERS - PERSISTENCE & STORAGE]                                         │
+│   • SQLite + Prisma ORM Repositories (`file:./prisma/dev.db` Serverless Local SQL)    │
+│   • In-Memory MemoryStore Fallback (Fast test execution & zero-setup runtime)          │
 │   • IndexedDB Client Storage (`dealflow_catalog`, `dealflow_mutation_queue`)           │
 │                                                                                        │
 └────────────────────────────────────────────────────────────────────────────────────────┘
@@ -495,24 +503,79 @@ Aside from the multi-factor Blended Risk Score, each role operates under strict,
 
 ---
 
-## 6. The Real-Life Senior Engineer 10-Phase Roadmap
+## 6. The Real-Life Senior Engineer 10-Phase Roadmap (Updated Tech Stack)
 
 ```
-┌────────┬────────────────────────────────────────────┬─────────────┬─────────────┬────────────────┐
-│ Phase  │ Real-World Engineering Objective           │ Alpha Build │ Beta Audit  │ Hackathon Push │
-├────────┼────────────────────────────────────────────┼─────────────┼─────────────┼────────────────┤
-│ Phase 1│ Domain Entities, DB Schema & Migrations    │ Computer 1  │ Computer 2  │ 575_final v1.0 │
-│ Phase 2│ Core Domain Logic, Repos & State Engines   │ Computer 2  │ Computer 1  │ 575_final v1.1 │
-│ Phase 3│ Secure REST/RPC API Endpoints & RBAC Auth  │ Computer 1  │ Computer 2  │ 575_final v1.2 │
-│ Phase 4│ Design System Tokens, UI Shell & Router    │ Computer 2  │ Computer 1  │ 575_final v1.3 │
-│ Phase 5│ Primary "Golden Path" Interactive Workflow │ Computer 1  │ Computer 2  │ 575_final v1.4 │
-│ Phase 6│ Multi-Warehouse Splitting (5+ Warehouses)  │ Computer 2  │ Computer 1  │ 575_final v1.5 │
-│ Phase 7│ Hybrid Billing Engine & Proration          │ Computer 1  │ Computer 2  │ 575_final v1.6 │
-│ Phase 8│ Customer Portal & Deal Health Surveillance │ Computer 2  │ Computer 1  │ 575_final v1.7 │
-│ Phase 9│ Strix Dynamic Red-Team DAST Security Scan  │ Computer 1  │ Computer 2  │ 575_final v1.8 │
-│ Phase10│ Production Dockerization & Jury Demo Polish│ Computer 2  │ Computer 1  │ 575_final v2.0 │
-└────────┴────────────────────────────────────────────┴─────────────┴─────────────┴────────────────┘
+┌────────┬────────────────────────────────────────────────────────────┬─────────────┬─────────────┬────────────────┐
+│ Phase  │ Real-World Engineering Objective                           │ Alpha Build │ Beta Audit  │ Hackathon Push │
+├────────┼────────────────────────────────────────────────────────────┼─────────────┼─────────────┼────────────────┤
+│ Phase 1│ Domain Entities, Business Invariants & Precision Math (JS) │ Computer 1  │ Computer 2  │ 575_final v1.0 │
+│ Phase 2│ REST API, Real-Time Pricing Gateway & OCC State Machine    │ Computer 2  │ Computer 1  │ 575_final v1.1 │
+│ Phase 3│ Serverless Local SQL: SQLite + Prisma ORM Repositories     │ Computer 1  │ Computer 2  │ 575_final v1.2 │
+│ Phase 4│ Real-Time Collaboration: WebSocket Gateway (`ws`) Pub/Sub   │ Computer 2  │ Computer 1  │ 575_final v1.3 │
+│ Phase 5│ Frontend Shell: Vite + React 18/19 SPA & Lucide Icons     │ Computer 1  │ Computer 2  │ 575_final v1.4 │
+│ Phase 6│ CPQ Quotation Studio & Chart.js Real-Time Margin Gauges    │ Computer 2  │ Computer 1  │ 575_final v1.5 │
+│ Phase 7│ Customer Negotiation Portal & Fallback Reversion UI       │ Computer 1  │ Computer 2  │ 575_final v1.6 │
+│ Phase 8│ Multi-Warehouse Splitting (5+ Warehouses Allocation Engine)│ Computer 2  │ Computer 1  │ 575_final v1.7 │
+│ Phase 9│ Offline-First PWA Sync (Service Worker + IndexedDB + OCC)  │ Computer 1  │ Computer 2  │ 575_final v1.8 │
+│ Phase10│ Strix Dynamic AI DAST Pentest & Production Release Polish │ Computer 2  │ Computer 1  │ 575_final v2.0 │
+└────────┴────────────────────────────────────────────────────────────┴─────────────┴─────────────┴────────────────┘
 ```
+
+### Detailed Breakdown of the 10 Phases:
+
+1. **Phase 1 (Completed)**: *Domain Entities, Business Invariants & Precision Math Engine*
+   - **Stack**: Pure Native JavaScript ES Modules, zero external runtime dependencies.
+   - **Deliverables**: `QuotationCalculator` (integer cents accounting), `TierEngine` (dynamic B2B customer tier progression/degradation), `IncentiveEngine` (Admin historical order rules), `EscalationEngine` (three-tier approval caps: Rep 10%, Mgr 20%, Fin 35%, and mandatory 18% gross margin floor), and `FallbackEngine` (Last Approved Best Offer reversion).
+   - **Verification**: 27/27 unit tests pass, 4/4 behavioral harness contracts pass. Single comprehensive dossier: `docs/dossiers/phase-1-entities.md`.
+
+2. **Phase 2 (Completed)**: *Native REST API, OCC Concurrency & Real-Time Pricing Gateway*
+   - **Stack**: Native Node.js `node:http`, pure JavaScript ES Modules.
+   - **Deliverables**: Zero-dependency REST API router with 1MB payload DoS shield, Optimistic Concurrency Control (OCC) with integer versioning and HTTP `If-Match`, `PricingGateway` (read-only real-time margin & blended risk calculator with high-margin upsell recommender), and `QuotationService` (full state machine lifecycle: Draft -> PendingApproval -> Approved -> Confirmed / Fallback).
+   - **Verification**: 37/37 contract tests pass (total 64/64 tests pass). Phase 2 dossier: `docs/dossiers/phase-2-api.md`.
+
+3. **Phase 3 (Next)**: *Persistence Layer — Serverless Local SQL with SQLite + Prisma ORM*
+   - **Stack**: `prisma`, `@prisma/client`, SQLite (`file:./prisma/dev.db`), and in-memory repository fallback.
+   - **Deliverables**: Relational database schemas for Customer, Product, Variant, PriceRule, Warehouse, StockInventory, Quotation, QuotationLine, and VersionedApprovalSnapshot. Prisma client repository adapters implementing secondary ports for `QuotationService` and `PricingGateway` with ACID transaction integrity.
+   - **Verification**: Database migration tests, relational cascade tests, and zero data corruption during concurrent writes.
+
+4. **Phase 4**: *Real-Time Collaboration — WebSocket Gateway (`ws`) Pub/Sub Engine*
+   - **Stack**: Native Node.js `ws` library mounted on the existing `node:http` server port.
+   - **Deliverables**: Event-driven real-time channel broadcasting quotation updates (`QUOTE_UPDATED`, `APPROVAL_REQUIRED`, `COUNTER_OFFER_RECEIVED`, `APPROVAL_GRANTED`, `FALLBACK_TRIGGERED`). Multi-client synchronization between Sales Rep, Sales Manager, and Customer Portal without polling.
+   - **Verification**: Multi-client WebSocket concurrency test, reconnection resilience, and packet drop recovery.
+
+5. **Phase 5**: *Frontend UI Foundation — Vite + React 18/19 SPA & Lucide Icons*
+   - **Stack**: Vite, React 18/19, Lucide Icons (`lucide-react`), Modern CSS Design System.
+   - **Deliverables**: Lightning-fast SPA shell with role-based routing (Admin, Sales Rep, Sales Manager, Finance Controller, Customer, Warehouse Picker), dark glassmorphism design tokens (`backdrop-filter`), responsive layout shell, and enterprise Lucide iconography for status badges and actions.
+   - **Verification**: Vite dev server instant HMR (<50ms), bundle size audit, and accessibility compliance.
+
+6. **Phase 6**: *Interactive CPQ Quotation Studio & Chart.js Real-Time Visualizations*
+   - **Stack**: React 18/19, `chart.js`, `react-chartjs-2`, Lucide Icons.
+   - **Deliverables**: Dynamic Quotation Builder with real-time integer-cents calculation as reps type. Interactive Chart.js widgets:
+     - **Speedometer Gross Margin Gauge**: Visual indicator showing current deal margin against the 18.0% red-line floor and 25.0% target.
+     - **Dynamic Tier Spend Curve**: Visual historical spend velocity chart explaining customer tier badges.
+     - **Blended Risk Radar**: Multi-axis radar chart showing line-item delivery risk and margin distribution.
+   - **Verification**: Sub-millisecond keystroke recalculation, chart rendering performance, and margin floor visual alerts.
+
+7. **Phase 7**: *Customer Negotiation Portal & Fallback Reversion UI*
+   - **Stack**: React 18/19, WebSockets, Lucide Icons.
+   - **Deliverables**: Secure customer-facing portal view (`/portal/:quoteId?token=...`). Counter-discount request sliders, line-by-line commercial chat, one-click binding acceptance, and real-time visual demonstration of the Graceful Fallback rollback when an aggressive counter-offer is rejected by Finance.
+   - **Verification**: Live negotiation simulation between sales rep and buyer tabs with instant WebSocket synchronization.
+
+8. **Phase 8**: *Multi-Warehouse Splitting (5+ Warehouses Allocation Engine)*
+   - **Stack**: Pure JS domain algorithms + React interactive fulfillment board.
+   - **Deliverables**: Greedy $O(W \cdot K)$ warehouse routing algorithm optimizing stock allocation across 5+ regional depots (Main, East, West, Central, Express Depot). Stock reservation, split shipment generation, backorder handling, and warehouse picker checklist UI.
+   - **Verification**: Multi-warehouse allocation tests, partial shipment tracking, and delivery date estimation logic.
+
+9. **Phase 9**: *Offline-First PWA Synchronization (Service Worker + IndexedDB + OCC)*
+   - **Stack**: Native Web Service Worker, IndexedDB (`dealflow_catalog`, `dealflow_mutation_queue`), Cache API.
+   - **Deliverables**: Complete offline quoting in cellular dead zones. Local catalog lookup, local pricing calculation, offline draft creation, background mutation queue, and optimistic concurrency conflict reconciliation (diff modal on `409 Conflict`).
+   - **Verification**: Offline network simulation tests, background sync trigger, and zero lost updates during reconnect.
+
+10. **Phase 10**: *Full Red-Team Strix DAST Pentest, Performance Polish & Jury Release*
+    - **Stack**: Strix AI Autonomous Pentesting Agent (`strix-agent`), Docker.
+    - **Deliverables**: Automated dynamic penetration testing against live container, zero verified exploits, Docker containerization (`Dockerfile`, `docker-compose.yml`), complete jury demonstration walkthrough, and final audited release push to `Infinity915/575_final`.
+    - **Verification**: 5/5 Beta audit layers pass, clean Strix security scorecard, and verified deployment on jury workstation.
 
 ---
 

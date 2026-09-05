@@ -7,9 +7,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "types": ["node"]
   },
   "include": [
+    "src/**/*",
+    "tests/**/*",
     "scripts/**/*",
     ".agents/**/*"
   ]

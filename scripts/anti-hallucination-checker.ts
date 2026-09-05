@@ -9,7 +9,7 @@ const NODE_BUILTINS = new Set([
   "process", "punycode", "querystring", "readline", "repl", "stream",
   "stream/promises", "stream/web", "string_decoder", "sys", "timers",
   "timers/promises", "tls", "trace_events", "tty", "url", "util",
-  "util/types", "v8", "vm", "wasi", "worker_threads", "zlib"
+  "util/types", "v8", "vm", "wasi", "worker_threads", "zlib", "test"
 ]);
 
 function getDeclaredDependencies(projectRoot: string): Set<string> {
@@ -148,7 +148,17 @@ const isMain = process.argv[1] && (
 if (isMain) {
   const root = process.cwd();
   const declared = getDeclaredDependencies(root);
-  const targetDir = process.argv[2] || "scripts";
-  const ok = scanDirectory(join(root, targetDir), declared);
-  process.exit(ok ? 0 : 1);
+  const rawArgs = process.argv.slice(2);
+  const targets = rawArgs.length > 0 ? rawArgs : ["scripts", "src", "tests", ".agents"];
+  let allOk = true;
+
+  for (const t of targets) {
+    const fullPath = join(root, t);
+    if (existsSync(fullPath)) {
+      const ok = scanDirectory(fullPath, declared);
+      if (!ok) allOk = false;
+    }
+  }
+
+  process.exit(allOk ? 0 : 1);
 }

@@ -489,6 +489,48 @@ export function createApiRouter({ quotationService, repositories }) {
       }
     }
 
+    // 8. Commercial Negotiation Chat Endpoints (Phase 4 Real-Time & Phase 7 Portal)
+    const messagesMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/messages$/);
+    if (messagesMatch && method === "GET") {
+      const quoteId = messagesMatch[1];
+      try {
+        const messages = quotationService.getNegotiationMessages(quoteId);
+        sendJsonResponse(res, 200, { count: messages.length, messages });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    if (messagesMatch && method === "POST") {
+      const quoteId = messagesMatch[1];
+      try {
+        const body = await parseJsonRequestBody(req);
+        if (!body.message || typeof body.message !== "string" || !body.message.trim()) {
+          sendErrorResponse(res, 400, "message is required and must be non-empty.");
+          return true;
+        }
+
+        const messageRecord = quotationService.addNegotiationMessage({
+          quoteId,
+          senderId: body.senderId || "anonymous",
+          senderRole: body.senderRole || "Customer",
+          senderName: body.senderName || body.senderRole || "Participant",
+          message: body.message,
+          proposedDiscountPercent: body.proposedDiscountPercent,
+        });
+
+        sendJsonResponse(res, 201, { message: messageRecord });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
     // Route not handled by API
     return false;
   };

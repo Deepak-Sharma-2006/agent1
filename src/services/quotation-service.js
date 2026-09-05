@@ -45,7 +45,8 @@ export class QuotationService {
    * @param {Object} repositories.customerRepository
    * @param {Object} repositories.productRepository
    * @param {Object} repositories.incentiveRuleRepository
-   * @param {Object} repositories.inventoryRepository
+   * @param {Object} [repositories.eventBroadcaster=null]
+   * @param {Object} [repositories.database=null]
    */
   constructor({
     quotationRepository,
@@ -53,12 +54,17 @@ export class QuotationService {
     productRepository,
     incentiveRuleRepository,
     inventoryRepository,
+    eventBroadcaster = null,
+    database = null,
   }) {
     this.quotationRepository = quotationRepository;
     this.customerRepository = customerRepository;
     this.productRepository = productRepository;
     this.incentiveRuleRepository = incentiveRuleRepository;
     this.inventoryRepository = inventoryRepository;
+    this.eventBroadcaster = eventBroadcaster;
+    this.database = database;
+    this.inMemoryMessages = new Map();
   }
 
   /**
@@ -182,6 +188,11 @@ export class QuotationService {
     };
 
     this.quotationRepository.save(initialQuotation);
+
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitQuoteUpdated(initialQuotation, "CREATED");
+    }
+
     return initialQuotation;
   }
 
@@ -301,6 +312,10 @@ export class QuotationService {
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
 
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitQuoteUpdated(quotation, "LINE_ADDED");
+    }
+
     return quotation;
   }
 
@@ -379,6 +394,10 @@ export class QuotationService {
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
 
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitQuoteUpdated(quotation, "LINE_UPDATED");
+    }
+
     return quotation;
   }
 
@@ -420,6 +439,10 @@ export class QuotationService {
     this._syncCompatibilityAliases(quotation);
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
+
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitQuoteUpdated(quotation, "LINE_REMOVED");
+    }
 
     return quotation;
   }
@@ -485,6 +508,10 @@ export class QuotationService {
     this._syncCompatibilityAliases(quotation);
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
+
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitQuoteUpdated(quotation, "INCENTIVE_APPLIED");
+    }
 
     return quotation;
   }
@@ -564,6 +591,17 @@ export class QuotationService {
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
 
+    if (this.eventBroadcaster) {
+      if (quotation.status === "Approved") {
+        this.eventBroadcaster.emitApprovalGranted(quotation, {
+          approverRole: "SalesRep",
+          approverName: quotation.salesRepName,
+        });
+      } else {
+        this.eventBroadcaster.emitApprovalRequired(quotation, assessment);
+      }
+    }
+
     return quotation;
   }
 
@@ -621,6 +659,10 @@ export class QuotationService {
     this._syncCompatibilityAliases(quotation);
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
+
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitApprovalGranted(quotation, { approverRole, approverName });
+    }
 
     return quotation;
   }
@@ -705,6 +747,10 @@ export class QuotationService {
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
 
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitFallbackReverted(quotation, quotation.fallbackSnapshot || {});
+    }
+
     return quotation;
   }
 
@@ -767,6 +813,13 @@ export class QuotationService {
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
 
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitCounterOffer(quotation, {
+        counterDiscountPct: clampedRequestedDiscount,
+        note: customerNotes,
+      });
+    }
+
     return quotation;
   }
 
@@ -820,6 +873,116 @@ export class QuotationService {
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
 
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitQuoteConfirmed(quotation);
+    }
+
     return quotation;
+  }
+
+  /**
+   * Adds and persists a commercial negotiation chat message on a quotation.
+   * Atomic persistence to SQLite before real-time WebSocket egress.
+   * 
+   * @param {Object} params
+   * @param {string} params.quoteId
+   * @param {string} params.senderId
+   * @param {string} params.senderRole
+   * @param {string} [params.senderName]
+   * @param {string} params.message
+   * @returns {Object} Persisted message record
+   */
+  addNegotiationMessage({ quoteId, senderId, senderRole, senderName, message }) {
+    const quotation = this.getQuotationById(quoteId);
+    if (!quotation) {
+      throw new NotFoundError(`Quotation '${quoteId}' not found.`);
+    }
+
+    if (!message || typeof message !== "string" || !message.trim()) {
+      throw new ValidationError("Message body cannot be empty.");
+    }
+
+    const messageRecord = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      quotationId: quoteId,
+      senderId: senderId || "anonymous",
+      senderRole: senderRole || "Customer",
+      senderName: senderName || senderRole || "Participant",
+      message: message.trim(),
+      quoteVersion: quotation.version || 1,
+      sentAt: new Date().toISOString(),
+    };
+
+    // 1. Persist to SQLite if available
+    if (this.database && this.database.db && typeof this.database.db.prepare === "function") {
+      try {
+        const stmt = this.database.db.prepare(`
+          INSERT INTO negotiation_messages (
+            id, quotation_id, sender_role, sender_name, proposed_discount_percent, message_text, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        stmt.run(
+          messageRecord.id,
+          messageRecord.quotationId,
+          messageRecord.senderRole,
+          messageRecord.senderName,
+          messageRecord.proposedDiscountPercent || null,
+          messageRecord.message,
+          messageRecord.sentAt
+        );
+      } catch (err) {
+        console.error("Failed to insert negotiation_message into SQLite:", err);
+      }
+    }
+
+    // In-memory array fallback
+    if (!this.inMemoryMessages.has(quoteId)) {
+      this.inMemoryMessages.set(quoteId, []);
+    }
+    this.inMemoryMessages.get(quoteId).push(messageRecord);
+
+    // 2. Real-time WebSocket egress
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitChatMessage(messageRecord);
+    }
+
+    return messageRecord;
+  }
+
+  /**
+   * Retrieves all negotiation chat messages for a quotation.
+   * 
+   * @param {string} quoteId
+   * @returns {Array<Object>}
+   */
+  getNegotiationMessages(quoteId) {
+    if (this.database && this.database.db && typeof this.database.db.prepare === "function") {
+      try {
+        const stmt = this.database.db.prepare(`
+          SELECT * FROM negotiation_messages
+          WHERE quotation_id = ?
+          ORDER BY created_at ASC
+        `);
+        const rows = stmt.all(quoteId);
+        if (rows && rows.length > 0) {
+          return rows.map(r => ({
+            id: r.id,
+            quotationId: r.quotation_id,
+            senderId: r.sender_role,
+            senderRole: r.sender_role,
+            senderName: r.sender_name,
+            proposedDiscountPercent: r.proposed_discount_percent,
+            message: r.message_text,
+            messageText: r.message_text,
+            sentAt: r.created_at,
+            createdAt: r.created_at,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to query negotiation_messages from SQLite:", err);
+      }
+    }
+
+    return this.inMemoryMessages.get(quoteId) || [];
   }
 }

@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { getRepositories } from "./db/database-factory.js";
 import { QuotationService } from "./services/quotation-service.js";
 import { createApiRouter } from "./api/routes.js";
+import { NativeWebSocketServer, ChannelManager, EventBroadcaster } from "./realtime/index.js";
 
 export const defaultConfig = {
   port: parseInt(process.env.PORT || "3000", 10),
@@ -12,7 +13,7 @@ export const defaultConfig = {
 };
 
 /**
- * Creates the DealFlow360 HTTP server with the Phase 2 REST API router mounted.
+ * Creates the DealFlow360 HTTP server with REST API and Real-Time WebSocket Gateway mounted.
  * 
  * @param {Object} [config=defaultConfig]
  * @param {Object|null} [customDependencies=null]
@@ -22,14 +23,24 @@ export function createServer(config = defaultConfig, customDependencies = null) 
   let apiRouter;
   let quotationService;
   let repositories;
+  let channelManager;
+  let eventBroadcaster;
+  let wsServer;
 
   if (customDependencies) {
     quotationService = customDependencies.quotationService;
     repositories = customDependencies.repositories;
+    channelManager = customDependencies.channelManager || new ChannelManager({ quotationService });
+    eventBroadcaster = customDependencies.eventBroadcaster || new EventBroadcaster(channelManager);
+    wsServer = customDependencies.wsServer || new NativeWebSocketServer({ path: "/ws" });
     apiRouter = createApiRouter({ quotationService, repositories });
   } else {
     const provider = process.env.DB_PROVIDER || "sqlite";
     repositories = getRepositories(provider);
+
+    channelManager = new ChannelManager();
+    eventBroadcaster = new EventBroadcaster(channelManager);
+    wsServer = new NativeWebSocketServer({ path: "/ws" });
 
     quotationService = new QuotationService({
       quotationRepository: repositories.quotationRepository,
@@ -37,10 +48,37 @@ export function createServer(config = defaultConfig, customDependencies = null) 
       productRepository: repositories.productRepository,
       incentiveRuleRepository: repositories.incentiveRuleRepository,
       inventoryRepository: repositories.inventoryRepository,
+      eventBroadcaster,
+      database: repositories.database || null,
     });
 
+    channelManager.quotationService = quotationService;
     apiRouter = createApiRouter({ quotationService, repositories });
   }
+
+  // Handle client connections and wire real-time events
+  wsServer.on("connection", (client) => {
+    channelManager.registerClient(client);
+  });
+
+  channelManager.on("chatMessage", (data) => {
+    try {
+      quotationService.addNegotiationMessage({
+        quoteId: data.quoteId,
+        senderId: data.senderId,
+        senderRole: data.senderRole,
+        senderName: data.senderName,
+        message: data.message,
+      });
+    } catch (err) {
+      if (data.client && data.client.readyState === 1) {
+        data.client.send({
+          type: "ERROR",
+          error: `Chat persistence error: ${err.message}`,
+        });
+      }
+    }
+  });
 
   const server = createHttpServer(async (req, res) => {
     try {
@@ -86,10 +124,29 @@ export function createServer(config = defaultConfig, customDependencies = null) 
     }
   });
 
+  // Attach WebSocket Server to the HTTP Server instance
+  wsServer.attach(server);
+
   server.repositories = repositories;
   server.quotationService = quotationService;
+  server.channelManager = channelManager;
+  server.eventBroadcaster = eventBroadcaster;
+  server.wsServer = wsServer;
 
   return server;
+}
+
+/**
+ * Accessor for the real-time gateway components mounted on the server.
+ * @param {import('node:http').Server} server
+ * @returns {{ wsServer: NativeWebSocketServer, channelManager: ChannelManager, eventBroadcaster: EventBroadcaster }}
+ */
+export function getRealtimeGateway(server) {
+  return {
+    wsServer: server.wsServer,
+    channelManager: server.channelManager,
+    eventBroadcaster: server.eventBroadcaster,
+  };
 }
 
 const isMain = process.argv[1] && (

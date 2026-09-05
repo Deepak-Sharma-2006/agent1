@@ -58,23 +58,71 @@ export function CustomerPortal({ quoteId, onBack }) {
   const [chatMessages, setChatMessages] = useState([]);
   const [newChatMessage, setNewChatMessage] = useState('');
 
-  const targetQuoteId = quoteId || 'Q-2026-001';
+  const [availableQuotes, setAvailableQuotes] = useState([]);
+  const [selectedQuoteId, setSelectedQuoteId] = useState(quoteId || null);
+
+  useEffect(() => {
+    if (quoteId) {
+      setSelectedQuoteId(quoteId);
+    }
+  }, [quoteId]);
+
+  const activeQuoteId = quotation?.id || selectedQuoteId;
 
   const fetchPortalData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/quotes/${targetQuoteId}/portal`);
-      const data = await res.json();
+
+      // 1. Fetch available quotations list
+      let quotesList = availableQuotes;
+      try {
+        const listRes = await fetch('/api/quotes');
+        const listData = await listRes.json();
+        if (listData && Array.isArray(listData.quotations)) {
+          quotesList = listData.quotations;
+          setAvailableQuotes(quotesList);
+        }
+      } catch (listErr) {
+        console.warn('Could not fetch quotes list:', listErr);
+      }
+
+      // 2. Determine target ID to query
+      let targetId = selectedQuoteId;
+      if (!targetId || targetId === 'Q-2026-001') {
+        if (quotesList.length > 0) {
+          targetId = quotesList[0].id;
+          setSelectedQuoteId(targetId);
+        }
+      }
+
+      if (!targetId) {
+        setLoading(false);
+        setError('No commercial proposals have been authored yet. Please create a quote in Quotation Studio first.');
+        return;
+      }
+
+      // 3. Fetch portal data
+      let res = await fetch(`/api/quotes/${targetId}/portal`);
+      let data = await res.json();
+
+      // If portal 404s, try standard single quote endpoint or fallback to first available
+      if ((!data.success || !data.quotation) && quotesList.length > 0 && targetId !== quotesList[0].id) {
+        targetId = quotesList[0].id;
+        setSelectedQuoteId(targetId);
+        res = await fetch(`/api/quotes/${targetId}/portal`);
+        data = await res.json();
+      }
+
       if (data.success && data.quotation) {
         setQuotation(data.quotation);
         setCustomer(data.customer || { name: 'Acme Industrial', tier: 'Gold' });
         setCounterDiscount(data.quotation.discountPercentage || 12);
       } else {
         // Fallback: try standard single quote endpoint
-        const fallbackRes = await fetch(`/api/quotes/${targetQuoteId}`);
+        const fallbackRes = await fetch(`/api/quotes/${targetId}`);
         const fallbackData = await fallbackRes.json();
-        if (fallbackData.success && fallbackData.quotation) {
+        if (fallbackData.quotation) {
           setQuotation(fallbackData.quotation);
           setCounterDiscount(fallbackData.quotation.discountPercentage || 12);
         } else {
@@ -83,10 +131,14 @@ export function CustomerPortal({ quoteId, onBack }) {
       }
 
       // Fetch chat messages
-      const msgRes = await fetch(`/api/quotes/${targetQuoteId}/messages`);
-      const msgData = await msgRes.json();
-      if (msgData.success && msgData.messages) {
-        setChatMessages(msgData.messages);
+      try {
+        const msgRes = await fetch(`/api/quotes/${targetId}/messages`);
+        const msgData = await msgRes.json();
+        if (msgData.messages) {
+          setChatMessages(msgData.messages);
+        }
+      } catch {
+        // Chat messages are non-blocking
       }
     } catch (err) {
       setError('Failed to connect to negotiation server: ' + err.message);
@@ -97,12 +149,12 @@ export function CustomerPortal({ quoteId, onBack }) {
 
   useEffect(() => {
     fetchPortalData();
-  }, [targetQuoteId]);
+  }, [selectedQuoteId]);
 
   // Real-time WebSocket event synchronization
   useEffect(() => {
     if (!lastEvent) return;
-    if (lastEvent.quoteId === targetQuoteId) {
+    if (activeQuoteId && lastEvent.quoteId === activeQuoteId) {
       fetchPortalData();
 
       if (lastEvent.type === 'COUNTER_OFFER_RECEIVED') {
@@ -114,12 +166,12 @@ export function CustomerPortal({ quoteId, onBack }) {
       }
     }
 
-    if (lastEvent.type === 'CHAT_MESSAGE' && lastEvent.quoteId === targetQuoteId) {
+    if (activeQuoteId && lastEvent.type === 'CHAT_MESSAGE' && lastEvent.quoteId === activeQuoteId) {
       setChatMessages((prev) => [
         ...prev,
         {
           id: 'msg-' + Date.now(),
-          quoteId: targetQuoteId,
+          quoteId: activeQuoteId,
           senderId: lastEvent.senderId,
           senderRole: lastEvent.senderRole,
           senderName: lastEvent.senderName,
@@ -128,14 +180,14 @@ export function CustomerPortal({ quoteId, onBack }) {
         },
       ]);
     }
-  }, [lastEvent, targetQuoteId]);
+  }, [lastEvent, activeQuoteId]);
 
   const handleSendChat = (e) => {
     e.preventDefault();
-    if (!newChatMessage.trim()) return;
+    if (!newChatMessage.trim() || !activeQuoteId) return;
 
     sendChatMessage({
-      quoteId: targetQuoteId,
+      quoteId: activeQuoteId,
       senderId: currentUser.id || 'cust-01',
       senderRole: 'Customer',
       senderName: currentUser.name || 'Sarah Jenkins',
@@ -146,7 +198,7 @@ export function CustomerPortal({ quoteId, onBack }) {
       ...prev,
       {
         id: 'msg-local-' + Date.now(),
-        quoteId: targetQuoteId,
+        quoteId: activeQuoteId,
         senderId: currentUser.id || 'cust-01',
         senderRole: 'Customer',
         senderName: currentUser.name || 'Sarah Jenkins',
@@ -160,14 +212,14 @@ export function CustomerPortal({ quoteId, onBack }) {
 
   const handleSubmitCounterOffer = async (e) => {
     e.preventDefault();
-    if (!quotation) return;
+    if (!quotation || !activeQuoteId) return;
 
     try {
       setSubmittingCounter(true);
       setCounterSuccessMessage(null);
       setError(null);
 
-      const res = await fetch(`/api/quotes/${targetQuoteId}/counter`, {
+      const res = await fetch(`/api/quotes/${activeQuoteId}/counter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,13 +250,13 @@ export function CustomerPortal({ quoteId, onBack }) {
   };
 
   const handleConfirmTerms = async () => {
-    if (!quotation) return;
+    if (!quotation || !activeQuoteId) return;
 
     try {
       setConfirming(true);
       setError(null);
 
-      const res = await fetch(`/api/quotes/${targetQuoteId}/confirm`, {
+      const res = await fetch(`/api/quotes/${activeQuoteId}/confirm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -255,13 +307,27 @@ export function CustomerPortal({ quoteId, onBack }) {
       <div style={{ padding: '40px 20px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
         <div style={{ padding: '24px', borderRadius: '8px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c' }}>
           <AlertTriangle size={36} style={{ margin: '0 auto 12px' }} />
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 700 }}>Portal Access Error</h3>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 700 }}>Portal Access Notice</h3>
           <p style={{ margin: 0, fontSize: '13px' }}>{error}</p>
-          {onBack && (
-            <button className="btn btn-secondary btn-sm" onClick={onBack} style={{ marginTop: '16px' }}>
+          <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={onBack || (() => { window.location.href = '/quotes'; })}
+            >
               Return to Workspace
             </button>
-          )}
+            {availableQuotes.length > 0 && (
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  setSelectedQuoteId(availableQuotes[0].id);
+                  setError(null);
+                }}
+              >
+                Load Active Proposal
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -336,6 +402,24 @@ export function CustomerPortal({ quoteId, onBack }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {availableQuotes.length > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>Proposal:</span>
+              <select
+                className="form-control"
+                style={{ fontSize: '12px', padding: '4px 8px', height: '32px', minWidth: '160px', backgroundColor: 'var(--bg-card, #fff)' }}
+                value={activeQuoteId || ''}
+                onChange={(e) => setSelectedQuoteId(e.target.value)}
+              >
+                {availableQuotes.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {q.quoteNumber || q.id} ({q.customerName || 'Customer'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {onBack && (
             <button className="btn btn-secondary btn-sm" onClick={onBack}>
               Exit Portal

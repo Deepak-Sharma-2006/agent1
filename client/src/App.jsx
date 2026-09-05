@@ -21,7 +21,8 @@ function MainLayout() {
   });
   const [activeQuoteId, setActiveQuoteId] = useState(() => {
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/portal/')) {
-      return window.location.pathname.replace('/portal/', '') || 'Q-2026-001';
+      const pathParam = window.location.pathname.replace('/portal/', '').trim();
+      return pathParam && pathParam !== 'portal' ? pathParam : null;
     }
     return null;
   });
@@ -64,7 +65,7 @@ function MainLayout() {
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-canvas, #f8fafc)' }}>
         <Navbar />
         <main style={{ padding: '24px 0' }}>
-          <CustomerPortal quoteId={activeQuoteId || 'Q-2026-001'} />
+          <CustomerPortal quoteId={activeQuoteId} onBack={handleBackToDashboard} />
         </main>
         <SwitchAccountModal />
       </div>

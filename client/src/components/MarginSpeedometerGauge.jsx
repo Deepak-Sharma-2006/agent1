@@ -247,7 +247,7 @@ export function MarginSpeedometerGauge({ margin = 0, compact = false }) {
           />
           <line
             x1="0"
-            y1="-(r - 22)"
+            y1={-(r - 22)}
             x2="0"
             y2={-(r - 4)}
             stroke={statusColor}

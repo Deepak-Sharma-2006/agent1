@@ -9,7 +9,7 @@ const NODE_BUILTINS = new Set([
   "process", "punycode", "querystring", "readline", "repl", "stream",
   "stream/promises", "stream/web", "string_decoder", "sys", "timers",
   "timers/promises", "tls", "trace_events", "tty", "url", "util",
-  "util/types", "v8", "vm", "wasi", "worker_threads", "zlib", "test"
+  "util/types", "v8", "vm", "wasi", "worker_threads", "zlib", "test", "sqlite"
 ]);
 
 function getDeclaredDependencies(projectRoot: string): Set<string> {

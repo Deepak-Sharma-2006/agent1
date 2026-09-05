@@ -16,16 +16,18 @@ import {
   WarehouseRepository,
 } from "./memory-store.js";
 
-export function seedDatabase() {
-  const store = MemoryStore.getInstance();
-  store.clear();
+export function seedDatabase(customRepos = null) {
+  if (!customRepos) {
+    const store = MemoryStore.getInstance();
+    store.clear();
+  }
 
-  const customerRepo = new CustomerRepository();
-  const productRepo = new ProductRepository();
-  const warehouseRepo = new WarehouseRepository();
-  const inventoryRepo = new InventoryRepository();
-  const discountRepo = new DiscountRuleRepository();
-  const incentiveRepo = new IncentiveRuleRepository();
+  const customerRepo = customRepos?.customerRepository || new CustomerRepository();
+  const productRepo = customRepos?.productRepository || new ProductRepository();
+  const warehouseRepo = customRepos?.warehouseRepository || new WarehouseRepository();
+  const inventoryRepo = customRepos?.inventoryRepository || new InventoryRepository();
+  const discountRepo = customRepos?.discountRuleRepository || new DiscountRuleRepository();
+  const incentiveRepo = customRepos?.incentiveRuleRepository || new IncentiveRuleRepository();
 
   const now = new Date().toISOString();
 

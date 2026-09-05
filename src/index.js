@@ -1,15 +1,6 @@
 import { createServer as createHttpServer } from "node:http";
 import { fileURLToPath } from "node:url";
-import {
-  CustomerRepository,
-  ProductRepository,
-  WarehouseRepository,
-  InventoryRepository,
-  IncentiveRuleRepository,
-  DiscountRuleRepository,
-  QuotationRepository,
-} from "./db/memory-store.js";
-import { seedDatabase } from "./db/seed.js";
+import { getRepositories } from "./db/database-factory.js";
 import { QuotationService } from "./services/quotation-service.js";
 import { createApiRouter } from "./api/routes.js";
 
@@ -37,31 +28,15 @@ export function createServer(config = defaultConfig, customDependencies = null) 
     repositories = customDependencies.repositories;
     apiRouter = createApiRouter({ quotationService, repositories });
   } else {
-    seedDatabase();
-    const customerRepository = new CustomerRepository();
-    const productRepository = new ProductRepository();
-    const warehouseRepository = new WarehouseRepository();
-    const inventoryRepository = new InventoryRepository();
-    const incentiveRuleRepository = new IncentiveRuleRepository();
-    const discountRuleRepository = new DiscountRuleRepository();
-    const quotationRepository = new QuotationRepository();
-
-    repositories = {
-      customerRepository,
-      productRepository,
-      warehouseRepository,
-      inventoryRepository,
-      incentiveRuleRepository,
-      discountRuleRepository,
-      quotationRepository,
-    };
+    const provider = process.env.DB_PROVIDER || "sqlite";
+    repositories = getRepositories(provider);
 
     quotationService = new QuotationService({
-      quotationRepository,
-      customerRepository,
-      productRepository,
-      incentiveRuleRepository,
-      inventoryRepository,
+      quotationRepository: repositories.quotationRepository,
+      customerRepository: repositories.customerRepository,
+      productRepository: repositories.productRepository,
+      incentiveRuleRepository: repositories.incentiveRuleRepository,
+      inventoryRepository: repositories.inventoryRepository,
     });
 
     apiRouter = createApiRouter({ quotationService, repositories });

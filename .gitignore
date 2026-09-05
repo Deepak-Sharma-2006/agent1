@@ -11,6 +11,9 @@ node_modules/
 dist/
 build/
 .npm-cache/
+prisma/*.db
+prisma/*.db-wal
+prisma/*.db-shm
 
 # Ephemeral runtime logs (keep directory structure)
 .agents/state/metrics/*.json

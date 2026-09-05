@@ -738,11 +738,13 @@ export function CustomerPortal({ quoteId, onBack }) {
                           {line.category || 'Hardware'}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'center', fontWeight: 600, fontSize: '13px' }}>{line.quantity}</td>
-                      <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '13px' }}>
+                      <td style={{ textAlign: 'center', fontWeight: 700, fontSize: '13px', whiteSpace: 'nowrap' }}>
+                        {Number(line.quantity || 1).toLocaleString()} <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>units</span>
+                      </td>
+                      <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '13px', whiteSpace: 'nowrap' }}>
                         {formatCurrency(line.listPriceCents)}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {(line.discountPercentage || line.discountPct) > 0 ? (
                           <span
                             style={{
@@ -761,10 +763,10 @@ export function CustomerPortal({ quoteId, onBack }) {
                           <span style={{ color: 'var(--text-muted)' }}>—</span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'right', fontWeight: 600, fontSize: '13px', color: 'var(--text-main)' }}>
+                      <td style={{ textAlign: 'right', fontWeight: 600, fontSize: '13px', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
                         {formatCurrency(line.netPriceCents || line.listPriceCents)}
                       </td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '13.5px', color: 'var(--primary)' }}>
+                      <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '13.5px', color: 'var(--primary)', whiteSpace: 'nowrap' }}>
                         {formatCurrency(line.lineTotalCents || (line.netPriceCents || line.listPriceCents) * line.quantity)}
                       </td>
                     </tr>

@@ -203,24 +203,24 @@ export function WarehouseView() {
 
         <div className="card" style={{ marginBottom: 0, padding: '16px' }}>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Physical Units</div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)', marginTop: '4px' }}>
-            {totalPhysical}
+          <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)', marginTop: '4px', whiteSpace: 'nowrap' }}>
+            {totalPhysical.toLocaleString()} <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-muted)' }}>units</span>
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Floor inventory across depots</div>
         </div>
 
         <div className="card" style={{ marginBottom: 0, padding: '16px' }}>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Reserved for Orders</div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--warning)', marginTop: '4px' }}>
-            {totalReserved}
+          <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--warning)', marginTop: '4px', whiteSpace: 'nowrap' }}>
+            {totalReserved.toLocaleString()} <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-muted)' }}>units</span>
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Locked by confirmed quotations</div>
         </div>
 
         <div className="card" style={{ marginBottom: 0, padding: '16px' }}>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Available-To-Promise (ATP)</div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--success)', marginTop: '4px' }}>
-            {totalATP}
+          <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--success)', marginTop: '4px', whiteSpace: 'nowrap' }}>
+            {totalATP.toLocaleString()} <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-muted)' }}>units</span>
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Net allocatable minus buffers</div>
         </div>
@@ -389,26 +389,26 @@ export function WarehouseView() {
                     >
                       <div>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600 }}>PHYSICAL</div>
-                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', marginTop: '2px' }}>
-                          {totalUnits}
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', marginTop: '2px', whiteSpace: 'nowrap' }}>
+                          {totalUnits.toLocaleString()} <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted)' }}>u</span>
                         </div>
                       </div>
                       <div>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600 }}>RESERVED</div>
-                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--warning)', marginTop: '2px' }}>
-                          {reservedUnits}
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--warning)', marginTop: '2px', whiteSpace: 'nowrap' }}>
+                          {reservedUnits.toLocaleString()} <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted)' }}>u</span>
                         </div>
                       </div>
                       <div>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600 }}>SAFETY</div>
-                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-muted)', marginTop: '2px' }}>
-                          {safetyUnits}
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-muted)', marginTop: '2px', whiteSpace: 'nowrap' }}>
+                          {safetyUnits.toLocaleString()} <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted)' }}>u</span>
                         </div>
                       </div>
                       <div>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600 }}>LIVE ATP</div>
-                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--success)', marginTop: '2px' }}>
-                          {atpUnits}
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--success)', marginTop: '2px', whiteSpace: 'nowrap' }}>
+                          {atpUnits.toLocaleString()} <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted)' }}>u</span>
                         </div>
                       </div>
                     </div>
@@ -454,16 +454,16 @@ export function WarehouseView() {
                                   {prod.name || item.productId}
                                 </div>
                                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px' }}>
-                                  SKU: {prod.sku || 'SKU-GEN'} • Phys: {physical} | Res: {reserved} | Buf: {safety}
+                                  SKU: {prod.sku || 'SKU-GEN'} • Phys: {physical.toLocaleString()} | Res: {reserved.toLocaleString()} | Buf: {safety.toLocaleString()}
                                 </div>
                               </div>
 
-                              <div style={{ textAlign: 'right' }}>
+                              <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                                 <span
                                   className={atp > 15 ? 'badge badge-approved' : atp > 0 ? 'badge badge-pending' : 'badge badge-rejected'}
                                   style={{ fontSize: '11px', padding: '3px 8px', fontWeight: 700 }}
                                 >
-                                  {atp} ATP
+                                  {atp.toLocaleString()} ATP units
                                 </span>
                               </div>
                             </div>

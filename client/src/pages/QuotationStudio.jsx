@@ -557,12 +557,12 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Product / SKU</th>
-                  <th>List Price</th>
-                  <th style={{ width: '70px' }}>Qty</th>
-                  <th style={{ width: '110px' }}>Discount %</th>
-                  <th>Net Price</th>
-                  <th>Total</th>
+                  <th style={{ minWidth: '220px' }}>Product / SKU</th>
+                  <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>List Price</th>
+                  <th style={{ textAlign: 'center', whiteSpace: 'nowrap', minWidth: '130px' }}>Quantity</th>
+                  <th style={{ textAlign: 'center', whiteSpace: 'nowrap', minWidth: '100px' }}>Discount %</th>
+                  <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Net Price</th>
+                  <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Line Total</th>
                   {!isCustomer() && quote.status === 'Draft' && <th style={{ width: '40px' }}></th>}
                 </tr>
               </thead>
@@ -575,6 +575,8 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                   const lineTotal = netPrice * (Number(line.quantity) || 1);
                   const ceiling = getCategoryCeiling(product.category);
                   const isCeilingBreached = discountPct > ceiling;
+                  const qtyLength = String(line.quantity || 1).length;
+                  const dynamicQtyWidth = Math.max(72, qtyLength * 11 + 36);
 
                   return (
                     <tr key={line.id}>
@@ -606,39 +608,59 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                           </div>
                         )}
                       </td>
-                      <td>{formatCurrency(listPrice)}</td>
-                      <td>
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{formatCurrency(listPrice)}</td>
+                      <td className="qty-cell" style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {canCreateQuotes() && quote.status === 'Draft' ? (
-                          <input
-                            type="number"
-                            min="1"
-                            className="form-control"
-                            value={line.quantity || 1}
-                            onChange={(e) => handleLineChange(line.id, 'quantity', e.target.value)}
-                            style={{ padding: '4px 8px', textAlign: 'center' }}
-                          />
+                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                            <input
+                              type="number"
+                              min="1"
+                              max="999999"
+                              className="form-control no-spin"
+                              value={line.quantity || 1}
+                              onChange={(e) => handleLineChange(line.id, 'quantity', e.target.value)}
+                              style={{
+                                padding: '5px 8px',
+                                textAlign: 'center',
+                                width: `${dynamicQtyWidth}px`,
+                                minWidth: '72px',
+                                maxWidth: '140px',
+                                fontSize: '13.5px',
+                                fontWeight: 700,
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                            <span className="unit-tag">units</span>
+                          </div>
                         ) : (
-                          <span>{line.quantity}</span>
+                          <span style={{ fontWeight: 700, fontSize: '13.5px' }}>
+                            {Number(line.quantity || 1).toLocaleString()} <span className="unit-tag">units</span>
+                          </span>
                         )}
                       </td>
-                      <td>
+                      <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {canCreateQuotes() && quote.status === 'Draft' ? (
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                               <input
                                 type="number"
                                 min="0"
-                                max="35"
-                                className="form-control"
+                                max="100"
+                                className="form-control no-spin"
                                 value={discountPct}
                                 onChange={(e) => handleLineChange(line.id, 'unitDiscountPercentage', e.target.value)}
                                 style={{
-                                  padding: '4px 8px',
+                                  padding: '5px 8px',
                                   textAlign: 'center',
+                                  width: `${Math.max(56, String(discountPct).length * 10 + 26)}px`,
+                                  minWidth: '56px',
+                                  maxWidth: '80px',
+                                  fontSize: '13.5px',
+                                  fontWeight: 600,
                                   borderColor: isCeilingBreached ? 'var(--danger, #ef4444)' : undefined,
                                 }}
                               />
-                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>%</span>
+                              <span className="unit-tag">%</span>
                             </div>
                             {isCeilingBreached && (
                               <div style={{ fontSize: '9.5px', color: 'var(--danger, #ef4444)', fontWeight: 600, marginTop: '2px' }}>
@@ -648,7 +670,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                           </div>
                         ) : (
                           <div>
-                            <span>{discountPct}%</span>
+                            <span style={{ fontWeight: 600, fontSize: '13.5px' }}>{discountPct}%</span>
                             {isCeilingBreached && (
                               <span style={{ fontSize: '10px', color: 'var(--danger, #ef4444)', marginLeft: '4px' }}>
                                 (over cap)
@@ -657,8 +679,8 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                           </div>
                         )}
                       </td>
-                      <td style={{ fontWeight: 600 }}>{formatCurrency(netPrice)}</td>
-                      <td style={{ fontWeight: 700, color: 'var(--text-main)' }}>{formatCurrency(lineTotal)}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatCurrency(netPrice)}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>{formatCurrency(lineTotal)}</td>
                       {canCreateQuotes() && quote.status === 'Draft' && (
                         <td>
                           <button

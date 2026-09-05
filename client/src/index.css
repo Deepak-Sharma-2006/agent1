@@ -512,6 +512,44 @@ html, body {
   box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
+/* Remove native up/down counter arrows from number inputs (Qty / Counters) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button,
+.no-spin::-webkit-outer-spin-button,
+.no-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+input[type="number"],
+.no-spin {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+/* Dynamic Numerical & Unit Formatting */
+.tabular-nums,
+.table td,
+.table th,
+.kpi-value,
+.badge {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.table td.amount,
+.table td.metric,
+.table td.qty-cell {
+  white-space: nowrap;
+}
+
+.unit-tag {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  user-select: none;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Real-Time Commercial Negotiation Chat Styles                              */
 /* -------------------------------------------------------------------------- */

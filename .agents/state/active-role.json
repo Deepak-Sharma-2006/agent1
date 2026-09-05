@@ -1,7 +1,7 @@
 {
-  "operator": "Computer2",
-  "role": "Alpha",
+  "operator": "Computer1",
+  "role": "Beta",
   "phase": 10,
-  "activeLeaseDomain": "release",
-  "updatedAt": "2026-09-05T21:12:00.000Z"
+  "activeLeaseDomain": "audit",
+  "updatedAt": "2026-09-06T02:53:30.000Z"
 }

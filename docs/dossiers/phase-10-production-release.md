@@ -4,7 +4,7 @@
 > **Author**: Computer 2 (Alpha Builder)  
 > **Auditor**: Computer 1 (Beta Auditor)  
 > **Standard**: 6-Technique Cognitive Reading Protocol (`.agents/skills/code-reading-dossier/SKILL.md`)  
-> **Compliance Target**: Odoo Hackathon Self-Governing Sales Operations & CPQ Platform (DealFlow360)
+> **Compliance Target**: DealFlow360 Enterprise Autonomous CPQ & Sales Operations Platform
 
 ---
 
@@ -107,7 +107,7 @@ flowchart TD
 
 ## Technique 4: Non-Blocking Noise Filtering (Bypassing Telemetry on Pass 1)
 
-When reviewing [`src/domain/billing-engine.js`](file:///d:/agent1/src/domain/billing-engine.js) on Pass 1, filter out the following secondary concerns:
+When reviewing [`src/domain/billing-engine.js`](file:///src/domain/billing-engine.js) on Pass 1, filter out the following secondary concerns:
 - **Pass 1 Focus**:
   1. Integer math in `calculateProration`:
      $$\text{ProratedCredit} = \left\lfloor \frac{\text{CurrentPrice} \times \text{DaysRemaining}}{\text{TotalDays}} \right\rceil$$

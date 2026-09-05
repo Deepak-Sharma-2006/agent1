@@ -15,7 +15,7 @@ The **Phase 1 Domain Core** serves as the immutable ground truth for the entire 
 The explicit responsibilities of this domain layer are:
 1. **Dynamic Customer Tier Classification**: Accounts are not statically assigned a tier; they dynamically upgrade or degrade across `Bronze`, `Silver`, `Gold`, and `Platinum` based on spend velocity, order cadence (daily/weekly replenishment rhythm), Days Sales Outstanding (DSO), and overdue invoice aging.
 2. **Historical Condition-Based Incentive Governance**: Evaluates Admin-configured rules (such as 2x Volume Spikes and 10-Order Milestone Loyalty) against verified customer purchase logs. Sales Managers can negotiate within hard discretionary bounds ($5,000 / 20%), while exceptionally large high-cadence deals escalate to Finance.
-3. **Hard Discretionary Negotiation Caps**: Enforces non-negotiable discount and rebate thresholds across 3 tiers (Sales Rep $\le 10\%$, Sales Manager $\le 20\%$, Finance $\le 35\%$) with a mandatory fiscal floor requiring deal gross margin to remain $\ge 18.0\%$. The Executive VP role is eliminated; Finance is the apex commercial sign-off authority.
+3. **Hard Discretionary Negotiation Caps**: Enforces clear, non-negotiable discount and rebate limits across 3 roles (Sales Rep <= 10%, Sales Manager <= 20%, Finance <= 35%) with a mandatory profit floor requiring deal gross margin to remain at or above 18.0%. The Executive VP role is eliminated; Finance is the final commercial sign-off authority.
 4. **Graceful Fallback on Rejection**: Guarantees that if a higher-tier approver (Finance) rejects an aggressive counter-offer or bespoke incentive, the quotation does not terminate into a churn-inducing dead end. Instead, it seamlessly reverts to the "Last Approved Best Offer" for 1-click customer confirmation.
 5. **Zero Floating-Point Financials**: Every monetary calculation (unit prices, line subtotals, discounts, rebates, margins) is strictly represented in **integer cents** ($1.00 = 100$ cents) to completely eliminate IEEE-754 floating-point rounding errors.
 
@@ -99,7 +99,7 @@ During Pass 1 code comprehension and architectural reviews, the following non-bl
 ## Technique 5: Audit Exactly One Failure Path
 
 ### Audited Failure Path: Margin Floor Breach with Escalation Circumvention
-- **Attack / Failure Vector**: A rogue sales representative attempts to force through a 28% discount on high-cost hardware (`unitCostPriceCents = 70000`, `unitListPriceCents = 100000`). After the discount, net price is $750.00, yielding a gross profit of $50.00 ($6.7\%$ margin).
+- **Attack / Failure Vector**: A rogue sales representative attempts to force through a 28% discount on high-cost hardware (`unitCostPriceCents = 70000`, `unitListPriceCents = 100000`). After the discount, net price is $750.00, yielding a gross profit of $50.00 (6.7% margin).
 - **Vulnerability Check**:
   - Does the system allow this quote to escalate to Finance and potentially slip through on executive goodwill?
   - Does an attacker gain information about other pricing tiers via differential timing or error messages?

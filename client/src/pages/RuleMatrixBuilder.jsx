@@ -233,12 +233,12 @@ export function RuleMatrixBuilder() {
                 <span className="badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'var(--danger)' }}>Executive Review</span>
               </div>
 
-              <div style={{ padding: '10px 12px', borderRadius: '8px', backgroundColor: 'rgba(0, 0, 0, 0.4)', border: '1px dashed rgba(239, 68, 68, 0.6)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '10px 12px', borderRadius: '8px', backgroundColor: 'var(--danger-light, #fef2f2)', border: '1px dashed var(--danger-border, #fecaca)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '13px', color: '#ff4d4f' }}>Statutory Red-Line Floor: 18.0%</div>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '2px' }}>Immutable system invariant: Transaction finalization is locked regardless of user override</div>
+                  <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--danger, #dc2626)' }}>Statutory Red-Line Floor: 18.0%</div>
+                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>Immutable system invariant: Transaction finalization is locked regardless of user override</div>
                 </div>
-                <span className="badge" style={{ backgroundColor: '#ef4444', color: '#ffffff' }}>HARD BLOCK</span>
+                <span className="badge" style={{ backgroundColor: 'var(--danger, #dc2626)', color: '#ffffff' }}>HARD BLOCK</span>
               </div>
             </div>
           </div>
@@ -351,15 +351,16 @@ export function RuleMatrixBuilder() {
               style={{
                 padding: '16px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(15, 23, 42, 0.5)',
+                backgroundColor: 'var(--bg-canvas, #f8fafc)',
                 border: `1px solid ${routeColor}40`,
+                boxShadow: 'var(--shadow-xs)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '10px',
+                gap: '12px',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>
+                <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted, #64748b)', fontWeight: 700 }}>
                   Calculated Approval Path
                 </span>
                 <span
@@ -368,7 +369,7 @@ export function RuleMatrixBuilder() {
                     fontWeight: 700,
                     padding: '3px 10px',
                     borderRadius: '999px',
-                    backgroundColor: `${routeColor}20`,
+                    backgroundColor: `${routeColor}15`,
                     color: routeColor,
                     border: `1px solid ${routeColor}40`,
                     display: 'flex',
@@ -382,23 +383,23 @@ export function RuleMatrixBuilder() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '8px 10px', borderRadius: '6px' }}>
-                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Blended Risk Score</div>
-                  <div style={{ fontSize: '16px', fontWeight: 800, color: calculatedRiskScore > 12 ? 'var(--danger)' : calculatedRiskScore > 0 ? 'var(--warning)' : 'var(--success)' }}>
+                <div style={{ backgroundColor: 'var(--bg-surface, #ffffff)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-subtle, #e2e8f0)', boxShadow: 'var(--shadow-xs)' }}>
+                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>Blended Risk Score</div>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: calculatedRiskScore > 12 ? 'var(--danger, #dc2626)' : calculatedRiskScore > 0 ? 'var(--warning, #d97706)' : 'var(--success, #059669)', marginTop: '2px' }}>
                     {calculatedRiskScore.toFixed(1)} / 20.0
                   </div>
                 </div>
 
-                <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', padding: '8px 10px', borderRadius: '6px' }}>
-                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Required Authority</div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: routeColor, marginTop: '2px' }}>
+                <div style={{ backgroundColor: 'var(--bg-surface, #ffffff)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-subtle, #e2e8f0)', boxShadow: 'var(--shadow-xs)' }}>
+                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>Required Authority</div>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: routeColor, marginTop: '2px' }}>
                     {routeTier}
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                <strong>Policy Grounding:</strong> {reason}
+              <div style={{ fontSize: '12px', color: 'var(--text-main, #0f172a)', lineHeight: '1.4', backgroundColor: 'var(--bg-surface, #ffffff)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-subtle, #e2e8f0)' }}>
+                <strong style={{ color: 'var(--text-muted, #64748b)' }}>Policy Grounding:</strong> {reason}
               </div>
             </div>
           </div>

@@ -596,37 +596,80 @@ export function QuotationStudio({ quoteId, onBack }) {
                 </span>
               </div>
 
-              {/* Telemetry Tab Selector */}
+              {/* Telemetry Tab Selector (Phase 5 Segmented Pill) */}
               <div
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr 1fr',
                   gap: '4px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                  backgroundColor: 'var(--bg-subtle, #f1f5f9)',
+                  border: '1px solid var(--border-subtle, #e2e8f0)',
                   padding: '3px',
-                  borderRadius: '8px',
+                  borderRadius: '7px',
                   marginBottom: '12px',
                 }}
               >
                 <button
-                  className={`btn btn-sm ${telemetryTab === 'gauge' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ fontSize: '11px', padding: '5px 8px', justifyContent: 'center' }}
+                  style={{
+                    fontSize: '11.5px',
+                    padding: '5px 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    border: telemetryTab === 'gauge' ? '1px solid var(--border-subtle, #e2e8f0)' : '1px solid transparent',
+                    backgroundColor: telemetryTab === 'gauge' ? '#ffffff' : 'transparent',
+                    color: telemetryTab === 'gauge' ? 'var(--primary, #0284c7)' : 'var(--text-muted, #64748b)',
+                    fontWeight: telemetryTab === 'gauge' ? 700 : 500,
+                    boxShadow: telemetryTab === 'gauge' ? 'var(--shadow-xs)' : 'none',
+                  }}
                   onClick={() => setTelemetryTab('gauge')}
                 >
                   <Gauge size={13} />
                   <span>Margin</span>
                 </button>
                 <button
-                  className={`btn btn-sm ${telemetryTab === 'curve' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ fontSize: '11px', padding: '5px 8px', justifyContent: 'center' }}
+                  style={{
+                    fontSize: '11.5px',
+                    padding: '5px 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    border: telemetryTab === 'curve' ? '1px solid var(--border-subtle, #e2e8f0)' : '1px solid transparent',
+                    backgroundColor: telemetryTab === 'curve' ? '#ffffff' : 'transparent',
+                    color: telemetryTab === 'curve' ? 'var(--primary, #0284c7)' : 'var(--text-muted, #64748b)',
+                    fontWeight: telemetryTab === 'curve' ? 700 : 500,
+                    boxShadow: telemetryTab === 'curve' ? 'var(--shadow-xs)' : 'none',
+                  }}
                   onClick={() => setTelemetryTab('curve')}
                 >
                   <TrendingUp size={13} />
                   <span>Tier Velocity</span>
                 </button>
                 <button
-                  className={`btn btn-sm ${telemetryTab === 'radar' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ fontSize: '11px', padding: '5px 8px', justifyContent: 'center' }}
+                  style={{
+                    fontSize: '11.5px',
+                    padding: '5px 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    border: telemetryTab === 'radar' ? '1px solid var(--border-subtle, #e2e8f0)' : '1px solid transparent',
+                    backgroundColor: telemetryTab === 'radar' ? '#ffffff' : 'transparent',
+                    color: telemetryTab === 'radar' ? 'var(--primary, #0284c7)' : 'var(--text-muted, #64748b)',
+                    fontWeight: telemetryTab === 'radar' ? 700 : 500,
+                    boxShadow: telemetryTab === 'radar' ? 'var(--shadow-xs)' : 'none',
+                  }}
                   onClick={() => setTelemetryTab('radar')}
                 >
                   <ShieldAlert size={13} />
@@ -661,19 +704,20 @@ export function QuotationStudio({ quoteId, onBack }) {
                 <div
                   style={{
                     marginTop: '12px',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    backgroundColor: 'var(--danger-light, #fef2f2)',
+                    border: '1px solid var(--danger-border, #fecaca)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '11.5px',
-                    color: 'var(--danger, #ef4444)',
+                    gap: '10px',
+                    fontSize: '12px',
+                    color: 'var(--danger, #dc2626)',
                     fontWeight: 600,
+                    boxShadow: 'var(--shadow-xs)',
                   }}
                 >
-                  <ShieldAlert size={16} />
+                  <ShieldAlert size={18} color="var(--danger, #dc2626)" />
                   <span>HARD BLOCK: Margin ({currentMargin.toFixed(1)}%) breaches statutory 18% floor. Binding order confirmation is locked.</span>
                 </div>
               )}
@@ -685,7 +729,7 @@ export function QuotationStudio({ quoteId, onBack }) {
             <div className="card" style={{ marginBottom: 0 }}>
               <div className="card-header">
                 <span className="card-title" style={{ fontSize: '13px' }}>
-                  <Sparkles size={15} color="var(--primary)" />
+                  <Sparkles size={15} color="var(--primary, #0284c7)" />
                   <span>Margin-Lifting Recommendations</span>
                 </span>
               </div>
@@ -695,28 +739,29 @@ export function QuotationStudio({ quoteId, onBack }) {
                   <div
                     key={rec.sku}
                     style={{
-                      padding: '10px 12px',
+                      padding: '11px 13px',
                       borderRadius: '8px',
-                      backgroundColor: 'rgba(15, 23, 42, 0.35)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      backgroundColor: 'var(--bg-canvas, #f8fafc)',
+                      border: '1px solid var(--border-subtle, #e2e8f0)',
+                      boxShadow: 'var(--shadow-xs)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '12.5px' }}>{rec.name}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--success)', fontWeight: 600, marginTop: '2px' }}>
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-main, #0f172a)' }}>{rec.name}</div>
+                      <div style={{ fontSize: '11.5px', color: 'var(--success, #059669)', fontWeight: 600, marginTop: '2px' }}>
                         +{rec.estimatedMarginLiftPct?.toFixed(1) || 4.2}% margin lift • {formatCurrency(rec.listPriceCents)}
                       </div>
                     </div>
                     {!isCustomer() && quote.status === 'Draft' && (
                       <button
                         className="btn btn-secondary btn-sm"
-                        style={{ fontSize: '11px', padding: '4px 10px', color: 'var(--primary)' }}
+                        style={{ fontSize: '11.5px', padding: '5px 12px', color: 'var(--primary, #0284c7)', fontWeight: 600 }}
                         onClick={() => handleApplyUpsell(rec)}
                       >
-                        <Plus size={12} />
+                        <Plus size={13} />
                         <span>Attach</span>
                       </button>
                     )}

@@ -56,11 +56,11 @@ npm install
 
 # 3. Verify Antigravity customization layer & scripts
 npm run check:hallucinations   # Zero ghost packages check
-npm run lock:status            # Inspect active domain leases
+npm run role:status            # Inspect active domain leases
 npm run harness:eval           # Validate 4/4 behavioral test contracts
 
 # 4. Acquire Phase 1 Lease (Alpha Builder Role)
-node --experimental-strip-types scripts/lock-manager.ts acquire --domain auth --operator "Computer1" --role Alpha --ttl 7200
+npm run role:alpha -- auth      # Atomically leases 'auth' domain to Computer 1
 ```
 
 ---
@@ -76,10 +76,13 @@ cd agent1
 npm install
 
 # 3. Inspect active leases (Verify Computer 1 holds Phase 1 lease)
-npm run lock:status
+npm run role:status
 
-# 4. Spin up local Docker sandbox container for Styx Red-Teaming
-docker compose up -d test-sandbox
+# 4. AI Security Penetration Testing (Strix/Styx)
+# Strix is installed via: pip install strix-agent
+npm run strix:quick            # Fast pre-flight DAST check
+# or run full pen-test suite:
+npm run pentest
 ```
 
 ---
@@ -90,17 +93,18 @@ docker compose up -d test-sandbox
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                             THE PHASE HANDOFF LIFECYCLE                                          │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1. Computer 1 (Alpha) implements Phase 1 in Antigravity IDE.                                     │
+│ 1. Computer 1 (Alpha) implements Phase 1 in Antigravity IDE / agy CLI.                           │
 │ 2. Computer 1 writes tests (Vitest) & authors dossier: docs/dossiers/phase-1-auth.md.            │
 │ 3. Computer 1 commits to feat/phase-1-auth and pushes to origin.                                 │
 │ 4. Computer 1 executes lease transfer:                                                           │
-│    node --experimental-strip-types scripts/lock-manager.ts transfer \                            │
-│      --domain auth --operator "Computer1" --to "Computer2" --role Beta                           │
-│ 5. Computer 2 (Beta) pulls branch, convenes Claude Council & runs Styx DAST:                     │
-│    npm run pentest                                                                               │
+│    npm run role:transfer -- auth Computer2 Beta                                                  │
+│ 5. Computer 2 (Beta) pulls branch, convenes Claude Council & runs Strix DAST:                    │
+│    npm run pentest   (or: npm run strix:deep)                                                    │
 │ 6. Computer 2 audits dossier, verifies zero timing attacks, and executes Feynman compression.    │
-│ 7. Computer 2 merges feat/phase-1-auth into main and releases lock.                             │
-│ 8. ROLE INVERSION: Computer 2 now acquires Phase 2 as ALPHA; Computer 1 becomes BETA!           │
+│ 7. Computer 2 merges feat/phase-1-auth into main and releases lock:                             │
+│    npm run role:release -- auth                                                                  │
+│ 8. ROLE INVERSION: Computer 2 now acquires Phase 2 as ALPHA; Computer 1 becomes BETA!            │
+│    (Computer 2 runs: npm run role:alpha -- payments)                                             │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -119,21 +123,23 @@ docker compose up -d test-sandbox
 │   │   └── coding-standards.md      # Strict TypeScript & TDD
 │   ├── skills/                      # Modular operational runbooks
 │   │   ├── claude-council/          # 5-member adversarial council
-│   │   ├── styx-pentest/            # Autonomous AI red-team DAST
+│   │   ├── styx-pentest/            # Autonomous AI red-team DAST (Strix)
 │   │   ├── code-reading-dossier/    # 6-technique comprehension generator
 │   │   ├── token-budget-guard/      # Token calculation & cost limiter
 │   │   ├── agentic-loop-runner/     # 4-part self-correcting feedback loop
-│   │   └── git-sync-lock/           # Distributed lease lock coordinator
+│   │   ├── git-sync-lock/           # Distributed lease lock coordinator
+│   │   └── skill-finder/            # Zero-token dynamic skill search & scaffold
 │   ├── hooks.json                   # Lifecycle hooks (safety, lint, token)
 │   ├── harness/                     # Behavioral evaluation test suite
 │   │   ├── eval-runner.ts           # Automated test harness runner
 │   │   └── golden-evals.json        # Benchmark test contracts
 │   └── state/                       # Ephemeral locks & metrics
 ├── scripts/                         # Standalone operational tools
-│   ├── lock-manager.ts              # Atomic lease lock manager
+│   ├── lock-manager.ts              # Atomic lease lock & role exchange manager
 │   ├── anti-hallucination-checker.ts# AST import & package.json validator
 │   ├── token-budget-guard.ts        # Real-time token monitor & brake
-│   └── pen-test-runner.ts           # Styx dynamic penetration test runner
+│   ├── skill-finder.ts              # Dynamic skill lookup & generator
+│   └── pen-test-runner.ts           # Strix/Styx dynamic penetration test runner
 ├── docs/
 │   └── dossiers/                    # Human operator comprehension records
 │       └── phase-1-auth.md          # Sample Phase 1 dossier

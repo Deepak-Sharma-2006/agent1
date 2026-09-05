@@ -118,33 +118,73 @@ const isMain = process.argv[1] && (
 
 if (isMain) {
   const args = process.argv.slice(2);
-  const command = args[0];
+  const rawCmd = (args[0] || "status").toLowerCase();
 
   const getArg = (flag: string): string | undefined => {
     const idx = args.indexOf(flag);
     return idx !== -1 && idx + 1 < args.length ? args[idx + 1] : undefined;
   };
 
-  const domain = getArg("--domain") || "default";
-  const operator = getArg("--operator") || "OperatorAlpha";
-  const role = (getArg("--role") as "Alpha" | "Beta") || "Alpha";
-  const to = getArg("--to") || "OperatorBeta";
+  // Support positional or flag args: e.g. "alpha auth", "transfer auth Computer2 Beta"
+  const defaultOperator = process.env.OPERATOR_NAME || "Computer1";
+  const flagOperator = getArg("--operator");
+  const flagDomain = getArg("--domain");
+  const flagRole = getArg("--role") as "Alpha" | "Beta" | undefined;
+  const flagTo = getArg("--to");
   const ttl = parseInt(getArg("--ttl") || "3600", 10);
 
-  if (command === "acquire") {
+  if (rawCmd === "alpha") {
+    const domain = flagDomain || (args[1] && !args[1].startsWith("-") ? args[1] : "all");
+    const operator = flagOperator || defaultOperator;
+    const ok = acquireLock(domain, operator, "Alpha", ttl);
+    process.exit(ok ? 0 : 1);
+  } else if (rawCmd === "beta") {
+    const domain = flagDomain || (args[1] && !args[1].startsWith("-") ? args[1] : "all");
+    const operator = flagOperator || defaultOperator;
+    const ok = acquireLock(domain, operator, "Beta", ttl);
+    process.exit(ok ? 0 : 1);
+  } else if (rawCmd === "acquire") {
+    const domain = flagDomain || (args[1] && !args[1].startsWith("-") ? args[1] : "all");
+    const operator = flagOperator || defaultOperator;
+    const role = flagRole || "Alpha";
     const ok = acquireLock(domain, operator, role, ttl);
     process.exit(ok ? 0 : 1);
-  } else if (command === "release") {
+  } else if (rawCmd === "release") {
+    const domain = flagDomain || (args[1] && !args[1].startsWith("-") ? args[1] : "all");
+    const operator = flagOperator || defaultOperator;
     const ok = releaseLock(domain, operator);
     process.exit(ok ? 0 : 1);
-  } else if (command === "transfer") {
+  } else if (rawCmd === "transfer") {
+    const domain = flagDomain || (args[1] && !args[1].startsWith("-") ? args[1] : "all");
+    const operator = flagOperator || defaultOperator;
+    const to = flagTo || (args[2] && !args[2].startsWith("-") ? args[2] : "Computer2");
+    const role = (flagRole || (args[3] && !args[3].startsWith("-") ? args[3] : "Alpha")) as "Alpha" | "Beta";
     const ok = transferLock(domain, operator, to, role);
     process.exit(ok ? 0 : 1);
-  } else if (command === "status") {
+  } else if (rawCmd === "status") {
     listLocks();
     process.exit(0);
   } else {
-    console.log("Usage: node --experimental-strip-types scripts/lock-manager.ts [acquire|release|transfer|status] [options]");
+    console.log(`
+Antigravity Lease Lock & Role Exchange Manager
+----------------------------------------------
+Usage:
+  node --experimental-strip-types scripts/lock-manager.ts <command> [options]
+
+Commands:
+  alpha [domain]                     Acquire Alpha (Builder) lease on domain (default: "all")
+  beta [domain]                      Acquire Beta (Auditor) lease on domain (default: "all")
+  transfer [domain] [to] [role]      Transfer domain lease to another operator
+  release [domain]                   Release domain lease
+  status                             List active leases and expiration times
+
+Flags:
+  --domain <name>                    Target functional domain (e.g. auth, api, db)
+  --operator <name>                  Current operator name (default: env OPERATOR_NAME or Computer1)
+  --to <name>                        Recipient operator name for transfer
+  --role <Alpha|Beta>                Target role assignment
+  --ttl <seconds>                    Lease expiration TTL in seconds (default: 3600)
+`);
     process.exit(0);
   }
 }

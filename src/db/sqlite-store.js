@@ -1026,11 +1026,19 @@ export class SqliteQuotationRepository {
     }
 
     const lines = this.db.prepare(`
-      SELECT * FROM quotation_lines WHERE quotation_id = ? ORDER BY rowid ASC
+      SELECT ql.*, p.name AS product_name, p.category AS product_category, p.sku AS product_sku
+      FROM quotation_lines ql
+      LEFT JOIN products p ON ql.product_id = p.id
+      WHERE ql.quotation_id = ?
+      ORDER BY ql.rowid ASC
     `).all(qRow.id).map((l) => ({
       id: l.id,
       quotationId: l.quotation_id,
       productId: l.product_id,
+      productName: l.product_name || l.product_id,
+      description: l.product_name || l.product_id,
+      category: l.product_category || 'Hardware',
+      sku: l.product_sku || l.product_id,
       quantity: l.quantity,
       listPriceCents: l.list_price_cents,
       costPriceCents: l.cost_price_cents,

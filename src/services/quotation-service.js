@@ -156,6 +156,15 @@ export class QuotationService {
         if (line.lineSubtotalCents !== undefined && line.lineTotalCents === undefined) {
           line.lineTotalCents = line.lineSubtotalCents;
         }
+        if ((!line.productName || !line.category || !line.sku) && this.productRepository) {
+          const p = this.productRepository.findById(line.productId);
+          if (p) {
+            line.productName = line.productName || p.name;
+            line.description = line.description || p.description || p.name;
+            line.category = line.category || p.category;
+            line.sku = line.sku || p.sku;
+          }
+        }
         if (line.productName && !line.description) {
           line.description = line.productName;
         }
@@ -197,7 +206,7 @@ export class QuotationService {
     }
 
     const quotationId = `qt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    const quoteNumber = `QT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const quoteNumber = `QT-${new Date().getFullYear()}-${Date.now().toString().slice(-5)}${Math.floor(100 + Math.random() * 900)}`;
 
     const validUntilDate = new Date();
     validUntilDate.setDate(validUntilDate.getDate() + validityPeriodDays);

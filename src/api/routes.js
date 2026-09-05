@@ -257,6 +257,19 @@ export function createApiRouter({ quotationService, repositories }) {
       const quoteId = singleQuoteMatch[1];
       try {
         const quotation = quotationService.getQuotationById(quoteId);
+        if (quotation && quotation.lines && productRepository) {
+          for (const l of quotation.lines) {
+            if (!l.productName || !l.sku || !l.category) {
+              const prod = productRepository.findById(l.productId);
+              if (prod) {
+                l.productName = l.productName || prod.name;
+                l.sku = l.sku || prod.sku;
+                l.category = l.category || prod.category;
+                l.description = l.description || prod.description || prod.name;
+              }
+            }
+          }
+        }
         sendJsonResponse(res, 200, { quotation });
         return true;
       } catch (err) {
@@ -314,23 +327,32 @@ export function createApiRouter({ quotationService, repositories }) {
           createdAt: quotation.createdAt,
           updatedAt: quotation.updatedAt,
           expiresAt: quotation.expiresAt || quotation.validUntil,
-          lines: (quotation.lines || []).map((l) => ({
-            id: l.id,
-            productId: l.productId,
-            variantId: l.variantId,
-            description: l.description || l.productName,
-            productName: l.productName || l.description,
-            quantity: l.quantity,
-            listPriceCents: l.listPriceCents !== undefined ? l.listPriceCents : l.unitListPriceCents,
-            unitListPriceCents: l.unitListPriceCents !== undefined ? l.unitListPriceCents : l.listPriceCents,
-            discountPercentage: l.discountPercentage !== undefined ? l.discountPercentage : (l.discountPct || 0),
-            discountPct: l.discountPct !== undefined ? l.discountPct : (l.discountPercentage || 0),
-            netPriceCents: l.netPriceCents !== undefined ? l.netPriceCents : l.netUnitPriceCents,
-            netUnitPriceCents: l.netUnitPriceCents !== undefined ? l.netUnitPriceCents : l.netPriceCents,
-            lineTotalCents: l.lineTotalCents !== undefined ? l.lineTotalCents : l.lineSubtotalCents,
-            lineSubtotalCents: l.lineSubtotalCents !== undefined ? l.lineSubtotalCents : l.lineTotalCents,
-            category: l.category,
-          })),
+          lines: (quotation.lines || []).map((l) => {
+            const prod = productRepository ? productRepository.findById(l.productId) : null;
+            const productName = l.productName || (prod ? prod.name : null) || l.description || l.productId;
+            const category = l.category || (prod ? prod.category : null) || "Hardware";
+            const sku = l.sku || (prod ? prod.sku : null) || l.productId;
+            const description = l.description || (prod ? prod.description : null) || productName;
+
+            return {
+              id: l.id,
+              productId: l.productId,
+              variantId: l.variantId,
+              sku,
+              productName,
+              description,
+              quantity: l.quantity,
+              listPriceCents: l.listPriceCents !== undefined ? l.listPriceCents : l.unitListPriceCents,
+              unitListPriceCents: l.unitListPriceCents !== undefined ? l.unitListPriceCents : l.listPriceCents,
+              discountPercentage: l.discountPercentage !== undefined ? l.discountPercentage : (l.discountPct || 0),
+              discountPct: l.discountPct !== undefined ? l.discountPct : (l.discountPercentage || 0),
+              netPriceCents: l.netPriceCents !== undefined ? l.netPriceCents : l.netUnitPriceCents,
+              netUnitPriceCents: l.netUnitPriceCents !== undefined ? l.netUnitPriceCents : l.netPriceCents,
+              lineTotalCents: l.lineTotalCents !== undefined ? l.lineTotalCents : l.lineSubtotalCents,
+              lineSubtotalCents: l.lineSubtotalCents !== undefined ? l.lineSubtotalCents : l.lineTotalCents,
+              category,
+            };
+          }),
         };
 
         sendJsonResponse(res, 200, {

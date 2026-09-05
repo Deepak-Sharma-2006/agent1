@@ -556,28 +556,35 @@ export function CustomerPortal({ quoteId, onBack }) {
               </span>
             </div>
 
-            <div className="table-container">
-              <table>
+            <div className="table-wrapper">
+              <table className="table">
                 <thead>
                   <tr>
-                    <th>Item & Description</th>
-                    <th>Category</th>
-                    <th style={{ textAlign: 'center' }}>Qty</th>
-                    <th style={{ textAlign: 'right' }}>List Unit</th>
-                    <th style={{ textAlign: 'center' }}>Discount</th>
-                    <th style={{ textAlign: 'right' }}>Net Unit</th>
-                    <th style={{ textAlign: 'right' }}>Line Total</th>
+                    <th style={{ minWidth: '240px' }}>Item & Description</th>
+                    <th style={{ width: '110px' }}>Category</th>
+                    <th style={{ width: '60px', textAlign: 'center' }}>Qty</th>
+                    <th style={{ width: '110px', textAlign: 'right' }}>List Unit</th>
+                    <th style={{ width: '90px', textAlign: 'center' }}>Discount</th>
+                    <th style={{ width: '110px', textAlign: 'right' }}>Net Unit</th>
+                    <th style={{ width: '120px', textAlign: 'right' }}>Line Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {lines.map((line, idx) => (
                     <tr key={line.id || idx}>
                       <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                          {line.description || line.productId}
+                        <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '13.5px', marginBottom: '3px' }}>
+                          {line.productName || line.description || line.name || line.productId}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                          SKU: {line.productId} {line.variantId ? `(${line.variantId})` : ''}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#475569', fontFamily: 'monospace', backgroundColor: '#f1f5f9', padding: '1px 6px', borderRadius: '3px', fontWeight: 500 }}>
+                            SKU: {line.sku || line.productId}
+                          </span>
+                          {line.variantId && (
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              • Variant: {line.variantId}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td>
@@ -585,18 +592,19 @@ export function CustomerPortal({ quoteId, onBack }) {
                           style={{
                             fontSize: '11px',
                             fontWeight: 600,
-                            padding: '2px 7px',
+                            padding: '3px 8px',
                             borderRadius: '4px',
+                            display: 'inline-block',
                             backgroundColor:
-                              line.category === 'Hardware'
+                              (line.category || '').toLowerCase().includes('hardware')
                                 ? '#eff6ff'
-                                : line.category === 'Service'
+                                : (line.category || '').toLowerCase().includes('service')
                                 ? '#fdf4ff'
                                 : '#f0fdf4',
                             color:
-                              line.category === 'Hardware'
+                              (line.category || '').toLowerCase().includes('hardware')
                                 ? '#1d4ed8'
-                                : line.category === 'Service'
+                                : (line.category || '').toLowerCase().includes('service')
                                 ? '#a21caf'
                                 : '#15803d',
                           }}
@@ -604,23 +612,33 @@ export function CustomerPortal({ quoteId, onBack }) {
                           {line.category || 'Hardware'}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'center', fontWeight: 600 }}>{line.quantity}</td>
-                      <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>
+                      <td style={{ textAlign: 'center', fontWeight: 600, fontSize: '13px' }}>{line.quantity}</td>
+                      <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '13px' }}>
                         {formatCurrency(line.listPriceCents)}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        {line.discountPercentage > 0 ? (
-                          <span style={{ fontWeight: 700, color: 'var(--success, #059669)', fontSize: '12px' }}>
-                            -{line.discountPercentage}%
+                        {(line.discountPercentage || line.discountPct) > 0 ? (
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              color: '#059669',
+                              backgroundColor: '#ecfdf5',
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              fontSize: '11.5px',
+                              display: 'inline-block',
+                            }}
+                          >
+                            -{(line.discountPercentage || line.discountPct)}%
                           </span>
                         ) : (
                           <span style={{ color: 'var(--text-muted)' }}>—</span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                      <td style={{ textAlign: 'right', fontWeight: 600, fontSize: '13px', color: 'var(--text-main)' }}>
                         {formatCurrency(line.netPriceCents || line.listPriceCents)}
                       </td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-main)' }}>
+                      <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '13.5px', color: 'var(--primary)' }}>
                         {formatCurrency(line.lineTotalCents || (line.netPriceCents || line.listPriceCents) * line.quantity)}
                       </td>
                     </tr>

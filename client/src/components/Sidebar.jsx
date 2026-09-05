@@ -15,7 +15,7 @@ export function Sidebar({ currentView, setCurrentView }) {
   const { currentUser, canApprove, canManageRules, canNegotiate, isCustomer, isWarehouse } = useAuth();
 
   const navItems = [
-    { id: 'dashboard', label: isWarehouse() ? 'Fulfillment Center' : 'Dashboard', icon: LayoutDashboard, visible: true },
+    { id: 'dashboard', label: isWarehouse() ? 'Fulfillment Center' : isCustomer() ? 'Orders & Proposals' : 'Dashboard', icon: LayoutDashboard, visible: true },
     { id: 'quotes', label: isWarehouse() ? 'Dispatch Orders' : 'Quotation Studio', icon: FileText, visible: !isCustomer() },
     { id: 'portal', label: 'Customer Portal', icon: ExternalLink, visible: isCustomer() },
     { id: 'approvals', label: 'Managerial Inbox', icon: ShieldCheck, visible: canApprove() },

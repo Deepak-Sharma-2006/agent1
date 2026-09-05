@@ -118,6 +118,9 @@ export function AuthProvider({ children }) {
   const canNegotiate = () => currentUser.role !== 'Warehouse';
   const isCustomer = () => currentUser.role === 'Customer';
   const isWarehouse = () => currentUser.role === 'Warehouse';
+  const isSalesRep = () => currentUser.role === 'SalesRep';
+  const isSalesManager = () => currentUser.role === 'SalesManager';
+  const isFinance = () => currentUser.role === 'Finance';
 
   return (
     <AuthContext.Provider
@@ -133,6 +136,9 @@ export function AuthProvider({ children }) {
         canNegotiate,
         isCustomer,
         isWarehouse,
+        isSalesRep,
+        isSalesManager,
+        isFinance,
       }}
     >
       {children}

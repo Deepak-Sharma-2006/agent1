@@ -1,8 +1,8 @@
 {
   "domain": "core",
-  "operator": "Computer1",
-  "role": "Alpha",
-  "acquiredAt": "2026-09-05T09:03:16.707Z",
-  "expiresAt": "2026-09-05T11:03:16.707Z",
-  "ttlSeconds": 7200
+  "operator": "Computer2",
+  "role": "Beta",
+  "acquiredAt": "2026-09-05T09:35:00.000Z",
+  "expiresAt": "2026-09-05T12:35:00.000Z",
+  "ttlSeconds": 10800
 }

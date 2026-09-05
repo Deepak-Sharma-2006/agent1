@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node --experimental-strip-types src/index.ts",
-    "test:unit": "node --experimental-strip-types --test tests/bootstrap.test.ts",
+    "test:unit": "node --experimental-strip-types --test tests/bootstrap.test.ts tests/phase1-entities.test.ts",
     "test": "npm run test:unit && npm run harness:eval",
     "role:status": "node --experimental-strip-types scripts/role-switch.ts status",
     "role:alpha": "node --experimental-strip-types scripts/role-switch.ts alpha",

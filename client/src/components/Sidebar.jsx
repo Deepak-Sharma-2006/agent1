@@ -6,6 +6,7 @@ import {
   MessageSquare,
   Package,
   Truck,
+  Sliders,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export function Sidebar({ currentView, setCurrentView }) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, visible: true },
     { id: 'quotes', label: isCustomer() ? 'My Proposals' : 'Quotation Studio', icon: FileText, visible: true },
+    { id: 'rules', label: 'CPQ Rule Matrix', icon: Sliders, visible: !isCustomer() },
     { id: 'chat', label: 'Negotiation Feed', icon: MessageSquare, visible: true },
     { id: 'catalog', label: 'Product Catalog', icon: Package, visible: !isWarehouse() },
     { id: 'warehouse', label: 'Warehouse Hubs', icon: Truck, visible: !isCustomer() },

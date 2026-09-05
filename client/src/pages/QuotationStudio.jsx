@@ -14,7 +14,14 @@ import {
   ArrowLeft,
   DollarSign,
   ShieldAlert,
+  Gauge,
+  Activity,
+  Layers,
+  Check,
 } from 'lucide-react';
+import { MarginSpeedometerGauge } from '../components/MarginSpeedometerGauge';
+import { TierSpendVelocityCurve } from '../components/TierSpendVelocityCurve';
+import { BlendedRiskRadarChart } from '../components/BlendedRiskRadarChart';
 
 export function QuotationStudio({ quoteId, onBack }) {
   const { currentUser, canApprove, canViewInternalMargins, isCustomer } = useAuth();
@@ -28,6 +35,16 @@ export function QuotationStudio({ quoteId, onBack }) {
   const [saving, setSaving] = useState(false);
   const [counterDiscount, setCounterDiscount] = useState(15);
   const [showCounterModal, setShowCounterModal] = useState(false);
+  const [telemetryTab, setTelemetryTab] = useState('gauge'); // 'gauge' | 'curve' | 'radar'
+
+  // Helper for product category discount ceilings
+  const getCategoryCeiling = (category) => {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('hardware')) return 15;
+    if (cat.includes('service')) return 10;
+    if (cat.includes('subscription')) return 20;
+    return 15;
+  };
 
   // Load catalog and quote
   useEffect(() => {
@@ -103,7 +120,8 @@ export function QuotationStudio({ quoteId, onBack }) {
           lines: quote.lines.map((l) => ({
             productId: l.productId,
             quantity: Number(l.quantity) || 1,
-            discountPercent: Number(l.unitDiscountPercentage) || 0,
+            discountPercent: Number(l.unitDiscountPercentage ?? l.discountPercent) || 0,
+            unitDiscountPercentage: Number(l.unitDiscountPercentage ?? l.discountPercent) || 0,
           })),
         };
 
@@ -113,8 +131,8 @@ export function QuotationStudio({ quoteId, onBack }) {
           body: JSON.stringify(payload),
         }).then((r) => r.json());
 
-        if (res.success && res.breakdown) {
-          setPreview(res.breakdown);
+        if (res.success && (res.preview || res.breakdown)) {
+          setPreview(res.preview || res.breakdown);
         }
       } catch {
         // Ignored
@@ -153,6 +171,23 @@ export function QuotationStudio({ quoteId, onBack }) {
       ...prev,
       lines: prev.lines.map((l) => (l.id === lineId ? { ...l, [field]: val } : l)),
     }));
+  };
+
+  // 1-Click Margin-Lifting Upsell Attachment
+  const handleApplyUpsell = (rec) => {
+    const matchedProd = products.find((p) => p.sku === rec.sku || p.name === rec.name) || products[0];
+    if (!matchedProd) return;
+    const newLine = {
+      id: `line-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      productId: matchedProd.id,
+      quantity: 1,
+      unitDiscountPercentage: 0,
+    };
+    setQuote((prev) => ({
+      ...prev,
+      lines: [...(prev.lines || []), newLine],
+    }));
+    addToast('Upsell Added', `Attached "${rec.name}" (+${(rec.estimatedMarginLiftPct || 3.5).toFixed(1)}% margin lift)`, 'success');
   };
 
   // Submit quote modifications
@@ -298,11 +333,15 @@ export function QuotationStudio({ quoteId, onBack }) {
   }
 
   const activeCustomer = customers.find((c) => c.id === quote.customerId) || {};
-  const currentMargin = preview?.grossMarginPercent ?? quote.grossMarginPercent ?? 0;
+  const currentMargin = preview?.grossMarginPercentage ?? preview?.grossMarginPercent ?? quote.grossMarginPercent ?? quote.grossMarginPercentage ?? 0;
   const netTotal = preview?.netTotalCents ?? quote.netTotalCents ?? 0;
-  const costTotal = preview?.totalCostCents ?? quote.totalCostCents ?? 0;
+  const costTotal = preview?.costTotalCents ?? preview?.totalCostCents ?? quote.costTotalCents ?? quote.totalCostCents ?? 0;
+  const blendedScore = preview?.escalation?.blendedRiskScore ?? 0;
+  const maxDiscountInLines = Math.max(...(quote.lines?.map((l) => Number(l.unitDiscountPercentage ?? l.discountPercent ?? 0)) || [0]));
 
   const formatCurrency = (cents) => `$${((cents || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const isFloorBreached = currentMargin < 18.0;
 
   return (
     <div>
@@ -326,7 +365,7 @@ export function QuotationStudio({ quoteId, onBack }) {
               </span>
             </div>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-              Client: {activeCustomer.name || quote.customerId} • Terms: {activeCustomer.paymentTerms || 'Net30'}
+              Client: {activeCustomer.name || quote.customerId} • Tier: <strong style={{ color: 'var(--primary)' }}>{activeCustomer.tier || 'Bronze'}</strong> • Terms: {activeCustomer.paymentTerms || 'Net30'}
             </div>
           </div>
         </div>
@@ -358,7 +397,7 @@ export function QuotationStudio({ quoteId, onBack }) {
                 <TrendingUp size={15} />
                 <span>Request Counter-Offer</span>
               </button>
-              <button className="btn btn-success" onClick={handleConfirm} disabled={saving}>
+              <button className="btn btn-success" onClick={handleConfirm} disabled={saving || isFloorBreached}>
                 <CheckCircle size={15} />
                 <span>1-Click Binding Confirm</span>
               </button>
@@ -366,7 +405,7 @@ export function QuotationStudio({ quoteId, onBack }) {
           )}
 
           {!isCustomer() && quote.status === 'Approved' && (
-            <button className="btn btn-success" onClick={handleConfirm} disabled={saving}>
+            <button className="btn btn-success" onClick={handleConfirm} disabled={saving || isFloorBreached}>
               <CheckCircle size={15} />
               <span>Finalize Order</span>
             </button>
@@ -375,15 +414,15 @@ export function QuotationStudio({ quoteId, onBack }) {
       </div>
 
       {/* Main Grid: Line Items + Real-Time Deal Health */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.15fr', gap: '20px' }}>
         {/* Left Column: Line Items Matrix */}
         <div className="card">
           <div className="card-header">
-            <span className="card-title">Commercial Line Items</span>
+            <span className="card-title">Commercial Line Items Matrix</span>
             {!isCustomer() && quote.status === 'Draft' && (
               <button className="btn btn-secondary btn-sm" onClick={handleAddLine}>
                 <Plus size={14} />
-                <span>Add Hardware / Service</span>
+                <span>Add SKU Line</span>
               </button>
             )}
           </div>
@@ -394,8 +433,8 @@ export function QuotationStudio({ quoteId, onBack }) {
                 <tr>
                   <th>Product / SKU</th>
                   <th>List Price</th>
-                  <th style={{ width: '80px' }}>Qty</th>
-                  <th style={{ width: '100px' }}>Discount %</th>
+                  <th style={{ width: '70px' }}>Qty</th>
+                  <th style={{ width: '110px' }}>Discount %</th>
                   <th>Net Price</th>
                   <th>Total</th>
                   {!isCustomer() && quote.status === 'Draft' && <th style={{ width: '40px' }}></th>}
@@ -408,27 +447,36 @@ export function QuotationStudio({ quoteId, onBack }) {
                   const discountPct = Number(line.unitDiscountPercentage ?? line.discountPercent) || 0;
                   const netPrice = Math.round(listPrice * (1 - discountPct / 100));
                   const lineTotal = netPrice * (Number(line.quantity) || 1);
+                  const ceiling = getCategoryCeiling(product.category);
+                  const isCeilingBreached = discountPct > ceiling;
 
                   return (
                     <tr key={line.id}>
                       <td>
                         {!isCustomer() && quote.status === 'Draft' ? (
-                          <select
-                            className="form-control"
-                            value={line.productId}
-                            onChange={(e) => handleLineChange(line.id, 'productId', e.target.value)}
-                            style={{ padding: '4px 8px', fontSize: '12.5px' }}
-                          >
-                            {products.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.name} ({p.sku})
-                              </option>
-                            ))}
-                          </select>
+                          <div>
+                            <select
+                              className="form-control"
+                              value={line.productId}
+                              onChange={(e) => handleLineChange(line.id, 'productId', e.target.value)}
+                              style={{ padding: '4px 8px', fontSize: '12.5px' }}
+                            >
+                              {products.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name} ({p.sku}) - {p.category}
+                                </option>
+                              ))}
+                            </select>
+                            <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              Category: {product.category || 'Hardware'} • Ceiling: {ceiling}%
+                            </div>
+                          </div>
                         ) : (
                           <div>
                             <div style={{ fontWeight: 600 }}>{product.name || line.productId}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{product.sku}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              {product.sku} • {product.category || 'Hardware'}
+                            </div>
                           </div>
                         )}
                       </td>
@@ -449,20 +497,38 @@ export function QuotationStudio({ quoteId, onBack }) {
                       </td>
                       <td>
                         {!isCustomer() && quote.status === 'Draft' ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <input
-                              type="number"
-                              min="0"
-                              max="35"
-                              className="form-control"
-                              value={discountPct}
-                              onChange={(e) => handleLineChange(line.id, 'unitDiscountPercentage', e.target.value)}
-                              style={{ padding: '4px 8px', textAlign: 'center' }}
-                            />
-                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>%</span>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max="35"
+                                className="form-control"
+                                value={discountPct}
+                                onChange={(e) => handleLineChange(line.id, 'unitDiscountPercentage', e.target.value)}
+                                style={{
+                                  padding: '4px 8px',
+                                  textAlign: 'center',
+                                  borderColor: isCeilingBreached ? 'var(--danger, #ef4444)' : undefined,
+                                }}
+                              />
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>%</span>
+                            </div>
+                            {isCeilingBreached && (
+                              <div style={{ fontSize: '9.5px', color: 'var(--danger, #ef4444)', fontWeight: 600, marginTop: '2px' }}>
+                                &gt; {ceiling}% cap!
+                              </div>
+                            )}
                           </div>
                         ) : (
-                          <span>{discountPct}%</span>
+                          <div>
+                            <span>{discountPct}%</span>
+                            {isCeilingBreached && (
+                              <span style={{ fontSize: '10px', color: 'var(--danger, #ef4444)', marginLeft: '4px' }}>
+                                (over cap)
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td style={{ fontWeight: 600 }}>{formatCurrency(netPrice)}</td>
@@ -473,6 +539,7 @@ export function QuotationStudio({ quoteId, onBack }) {
                             className="btn btn-secondary btn-sm"
                             onClick={() => handleRemoveLine(line.id)}
                             style={{ padding: '4px', color: 'var(--danger)' }}
+                            title="Remove line item"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -486,9 +553,10 @@ export function QuotationStudio({ quoteId, onBack }) {
           </div>
         </div>
 
-        {/* Right Column: Real-Time Deal Health Widget */}
-        <div>
-          <div className="card">
+        {/* Right Column: Financial Ledger & Interactive Telemetry Console */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Financial Ledger Summary Card */}
+          <div className="card" style={{ marginBottom: 0 }}>
             <div className="card-header">
               <span className="card-title">
                 <DollarSign size={16} />
@@ -496,7 +564,7 @@ export function QuotationStudio({ quoteId, onBack }) {
               </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Catalog Subtotal</span>
                 <span style={{ fontWeight: 600 }}>{formatCurrency(preview?.subtotalCents || quote.subtotalCents)}</span>
@@ -505,7 +573,7 @@ export function QuotationStudio({ quoteId, onBack }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Discounts & Incentives</span>
                 <span style={{ fontWeight: 600, color: 'var(--danger)' }}>
-                  -{formatCurrency(preview?.discountAmountCents || quote.discountAmountCents)}
+                  -{formatCurrency(preview?.totalDiscountCents || preview?.discountTotalCents || quote.discountAmountCents || 0)}
                 </span>
               </div>
 
@@ -516,104 +584,147 @@ export function QuotationStudio({ quoteId, onBack }) {
                 <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(netTotal)}</span>
               </div>
             </div>
+          </div>
 
-            {/* Internal Gross Margin Speedometer */}
-            {canViewInternalMargins() && (
-              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>
-                    Deal Gross Margin
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: '18px',
-                      fontWeight: 700,
-                      color: currentMargin >= 25 ? 'var(--success)' : currentMargin >= 18 ? 'var(--warning)' : 'var(--danger)',
-                    }}
-                  >
-                    {currentMargin.toFixed(1)}%
-                  </span>
-                </div>
+          {/* Interactive Visual Telemetry Console */}
+          {canViewInternalMargins() && (
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="card-header" style={{ paddingBottom: '10px' }}>
+                <span className="card-title" style={{ fontSize: '13px' }}>
+                  <Activity size={15} color="var(--primary)" />
+                  <span>Real-Time Deal Telemetry</span>
+                </span>
+              </div>
 
-                {/* Speedometer Margin Bar */}
-                <div style={{ width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', display: 'flex' }}>
-                  <div
-                    style={{
-                      width: `${Math.min(100, Math.max(0, currentMargin))}%`,
-                      backgroundColor: currentMargin >= 25 ? 'var(--success)' : currentMargin >= 18 ? 'var(--warning)' : 'var(--danger)',
-                      transition: 'width 200ms ease, background-color 200ms ease',
+              {/* Telemetry Tab Selector */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
+                  gap: '4px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                  padding: '3px',
+                  borderRadius: '8px',
+                  marginBottom: '12px',
+                }}
+              >
+                <button
+                  className={`btn btn-sm ${telemetryTab === 'gauge' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ fontSize: '11px', padding: '5px 8px', justifyContent: 'center' }}
+                  onClick={() => setTelemetryTab('gauge')}
+                >
+                  <Gauge size={13} />
+                  <span>Margin</span>
+                </button>
+                <button
+                  className={`btn btn-sm ${telemetryTab === 'curve' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ fontSize: '11px', padding: '5px 8px', justifyContent: 'center' }}
+                  onClick={() => setTelemetryTab('curve')}
+                >
+                  <TrendingUp size={13} />
+                  <span>Tier Velocity</span>
+                </button>
+                <button
+                  className={`btn btn-sm ${telemetryTab === 'radar' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ fontSize: '11px', padding: '5px 8px', justifyContent: 'center' }}
+                  onClick={() => setTelemetryTab('radar')}
+                >
+                  <ShieldAlert size={13} />
+                  <span>Risk Radar</span>
+                </button>
+              </div>
+
+              {/* Render Selected Visualization */}
+              <div style={{ minHeight: '160px' }}>
+                {telemetryTab === 'gauge' && (
+                  <MarginSpeedometerGauge margin={currentMargin} />
+                )}
+
+                {telemetryTab === 'curve' && (
+                  <TierSpendVelocityCurve customer={activeCustomer} />
+                )}
+
+                {telemetryTab === 'radar' && (
+                  <BlendedRiskRadarChart
+                    riskData={{
+                      blendedRiskScore: blendedScore,
+                      grossMarginPercent: currentMargin,
+                      maxDiscountPercent: maxDiscountInLines,
+                      escalationTier: preview?.escalation?.requiredTier || 'SalesRep',
                     }}
                   />
-                </div>
+                )}
+              </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  <span>0%</span>
-                  <span style={{ color: 'var(--danger)', fontWeight: 700 }}>Floor 18%</span>
-                  <span style={{ color: 'var(--success)', fontWeight: 700 }}>Target 25%</span>
-                  <span>100%</span>
-                </div>
-
-                {/* Governance Alert Pill */}
+              {/* Hard Floor Block Warning Banner */}
+              {isFloorBreached && (
                 <div
                   style={{
-                    marginTop: '14px',
+                    marginTop: '12px',
                     padding: '10px 12px',
-                    borderRadius: '6px',
-                    backgroundColor: currentMargin < 18 ? 'var(--danger-light)' : currentMargin < 25 ? 'var(--warning-light)' : 'var(--success-light)',
-                    border: `1px solid ${currentMargin < 18 ? 'var(--danger-border)' : currentMargin < 25 ? 'var(--warning-border)' : 'var(--success-border)'}`,
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    fontSize: '12px',
+                    fontSize: '11.5px',
+                    color: 'var(--danger, #ef4444)',
+                    fontWeight: 600,
                   }}
                 >
-                  <ShieldAlert size={16} color={currentMargin < 18 ? 'var(--danger)' : currentMargin < 25 ? 'var(--warning)' : 'var(--success)'} />
-                  <span>
-                    {currentMargin < 18
-                      ? 'Hard Block: Breaches 18% margin floor. Transaction cannot be confirmed.'
-                      : currentMargin <= 20
-                      ? 'Escalation Required: Requires Sales Manager sign-off.'
-                      : 'Self-Approved: Within standard sales rep discretionary ceiling.'}
-                  </span>
+                  <ShieldAlert size={16} />
+                  <span>HARD BLOCK: Margin ({currentMargin.toFixed(1)}%) breaches statutory 18% floor. Binding order confirmation is locked.</span>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          )}
 
-            {/* High-Margin Upsell Chips */}
-            {canViewInternalMargins() && preview?.upsellSuggestions?.length > 0 && (
-              <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--primary)', marginBottom: '8px' }}>
-                  <Sparkles size={14} />
+          {/* 1-Click Margin-Lifting Recommendations Card */}
+          {canViewInternalMargins() && (preview?.upsellSuggestions?.length > 0 || preview?.upsellRecommendations?.length > 0) && (
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="card-header">
+                <span className="card-title" style={{ fontSize: '13px' }}>
+                  <Sparkles size={15} color="var(--primary)" />
                   <span>Margin-Lifting Recommendations</span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {preview.upsellSuggestions.map((rec) => (
-                    <div
-                      key={rec.sku}
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid var(--border-subtle)',
-                        fontSize: '11.5px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{rec.name}</div>
-                        <div style={{ color: 'var(--text-muted)' }}>+{rec.estimatedMarginLiftPct?.toFixed(1)}% margin lift</div>
-                      </div>
-                      <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(rec.listPriceCents)}</span>
-                    </div>
-                  ))}
-                </div>
+                </span>
               </div>
-            )}
-          </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {(preview.upsellSuggestions || preview.upsellRecommendations).map((rec) => (
+                  <div
+                    key={rec.sku}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(15, 23, 42, 0.35)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '12.5px' }}>{rec.name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--success)', fontWeight: 600, marginTop: '2px' }}>
+                        +{rec.estimatedMarginLiftPct?.toFixed(1) || 4.2}% margin lift • {formatCurrency(rec.listPriceCents)}
+                      </div>
+                    </div>
+                    {!isCustomer() && quote.status === 'Draft' && (
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '11px', padding: '4px 10px', color: 'var(--primary)' }}
+                        onClick={() => handleApplyUpsell(rec)}
+                      >
+                        <Plus size={12} />
+                        <span>Attach</span>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -662,3 +773,5 @@ export function QuotationStudio({ quoteId, onBack }) {
     </div>
   );
 }
+
+export default QuotationStudio;

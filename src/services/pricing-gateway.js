@@ -228,11 +228,13 @@ export class PricingGateway {
 
           recommendations.push({
             productId: product.id,
+            sku: product.sku || product.id,
             name: product.name,
             category: product.category,
             listPriceCents: product.listPriceCents,
             productMarginPercentage: Math.round(productMarginPct * 10) / 10,
             estimatedMarginLiftPercentage: marginLiftPct,
+            estimatedMarginLiftPct: marginLiftPct,
             recommendationReason: product.category === "Services"
               ? "High-margin professional service bundle lifts overall quote profitability."
               : "Complementary high-margin add-on strengthens deal margin floor.",

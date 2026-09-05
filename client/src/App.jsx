@@ -9,6 +9,7 @@ import { QuotationStudio } from './pages/QuotationStudio';
 import { NegotiationChat } from './pages/NegotiationChat';
 import { WarehouseView } from './pages/WarehouseView';
 import { CatalogView } from './pages/CatalogView';
+import { RuleMatrixBuilder } from './pages/RuleMatrixBuilder';
 
 function MainLayout() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -34,6 +35,7 @@ function MainLayout() {
           {currentView === 'quotes' && (
             <QuotationStudio quoteId={activeQuoteId} onBack={handleBackToDashboard} />
           )}
+          {currentView === 'rules' && <RuleMatrixBuilder />}
           {currentView === 'chat' && <NegotiationChat initialQuoteId={activeQuoteId} />}
           {currentView === 'catalog' && <CatalogView />}
           {currentView === 'warehouse' && <WarehouseView />}

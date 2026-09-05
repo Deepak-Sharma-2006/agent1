@@ -1,10 +1,10 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
-import { Layers, UserCheck } from 'lucide-react';
+import { Layers, LogOut } from 'lucide-react';
 
 export function Navbar() {
-  const { currentUser, setIsSwitchModalOpen } = useAuth();
+  const { currentUser, logout } = useAuth();
   const { status: wsStatus } = useWebSocket();
 
   return (
@@ -24,7 +24,7 @@ export function Navbar() {
           <span>{wsStatus}</span>
         </div>
 
-        {/* Authenticated Persona Profile & Switcher */}
+        {/* Authenticated Persona Profile & Logout */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.2 }}>
@@ -40,7 +40,7 @@ export function Navbar() {
               width: '32px',
               height: '32px',
               borderRadius: '50%',
-              backgroundColor: '#0284c7',
+              backgroundColor: '#714B67',
               color: 'white',
               fontWeight: 700,
               fontSize: '12px',
@@ -55,7 +55,8 @@ export function Navbar() {
 
           <button
             className="btn btn-secondary btn-sm"
-            onClick={() => setIsSwitchModalOpen(true)}
+            onClick={logout}
+            title="Sign out and return to login"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.1)',
               borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -64,8 +65,8 @@ export function Navbar() {
               padding: '4px 10px',
             }}
           >
-            <UserCheck size={14} />
-            <span>Switch Role</span>
+            <LogOut size={14} />
+            <span>Sign Out</span>
           </button>
         </div>
       </div>

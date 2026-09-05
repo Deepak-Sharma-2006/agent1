@@ -55,6 +55,15 @@ export const ENTERPRISE_USERS = {
   },
 };
 
+/** Default view per role after login */
+export const ROLE_DEFAULT_VIEWS = {
+  SalesRep: 'dashboard',
+  SalesManager: 'dashboard',
+  Finance: 'dashboard',
+  Customer: 'portal',
+  Warehouse: 'dashboard',
+};
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -70,17 +79,30 @@ export function AuthProvider({ children }) {
     return ENTERPRISE_USERS.salesRep;
   });
 
-  const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('dealflow360_authenticated') === 'true';
+  });
 
   useEffect(() => {
     localStorage.setItem('dealflow360_user', JSON.stringify(currentUser));
   }, [currentUser]);
 
-  const switchUser = (userKey) => {
+  useEffect(() => {
+    localStorage.setItem('dealflow360_authenticated', String(isAuthenticated));
+  }, [isAuthenticated]);
+
+  const login = (userKey) => {
     if (ENTERPRISE_USERS[userKey]) {
       setCurrentUser(ENTERPRISE_USERS[userKey]);
-      setIsSwitchModalOpen(false);
+      setIsAuthenticated(true);
     }
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('dealflow360_user');
+    localStorage.removeItem('dealflow360_authenticated');
+    setCurrentUser(ENTERPRISE_USERS.salesRep);
   };
 
   const canApprove = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance';
@@ -101,9 +123,9 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         currentUser,
-        switchUser,
-        isSwitchModalOpen,
-        setIsSwitchModalOpen,
+        isAuthenticated,
+        login,
+        logout,
         canApprove,
         canViewInternalMargins,
         canManageRules,

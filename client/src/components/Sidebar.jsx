@@ -16,13 +16,13 @@ export function Sidebar({ currentView, setCurrentView }) {
 
   const navItems = [
     { id: 'dashboard', label: isWarehouse() ? 'Fulfillment Center' : 'Dashboard', icon: LayoutDashboard, visible: true },
-    { id: 'quotes', label: isCustomer() ? 'My Proposals' : isWarehouse() ? 'Dispatch Orders' : 'Quotation Studio', icon: FileText, visible: true },
-    { id: 'portal', label: 'Customer Portal', icon: ExternalLink, visible: !isWarehouse() },
+    { id: 'quotes', label: isWarehouse() ? 'Dispatch Orders' : 'Quotation Studio', icon: FileText, visible: !isCustomer() },
+    { id: 'portal', label: 'Customer Portal', icon: ExternalLink, visible: isCustomer() },
+    { id: 'approvals', label: 'Managerial Inbox', icon: ShieldCheck, visible: canApprove() },
     { id: 'rules', label: 'CPQ Rule Matrix', icon: Sliders, visible: canManageRules() },
     { id: 'chat', label: 'Negotiation Feed', icon: MessageSquare, visible: canNegotiate() },
-    { id: 'catalog', label: 'Product Catalog', icon: Package, visible: !isWarehouse() },
+    { id: 'catalog', label: 'Product Catalog', icon: Package, visible: !isWarehouse() && !isCustomer() },
     { id: 'warehouse', label: isWarehouse() ? 'Depot Inventory' : 'Warehouse Hubs', icon: Truck, visible: !isCustomer() },
-    { id: 'approvals', label: 'Managerial Inbox', icon: ShieldCheck, visible: canApprove() },
   ];
 
   return (

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth, ROLE_DEFAULT_VIEWS } from './context/AuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
-import { SwitchAccountModal } from './components/SwitchAccountModal';
+import { LoginScreen } from './pages/LoginScreen';
 import { Dashboard } from './pages/Dashboard';
 import { QuotationStudio } from './pages/QuotationStudio';
 import { NegotiationChat } from './pages/NegotiationChat';
@@ -11,14 +11,20 @@ import { WarehouseView } from './pages/WarehouseView';
 import { CatalogView } from './pages/CatalogView';
 import { RuleMatrixBuilder } from './pages/RuleMatrixBuilder';
 import { CustomerPortal } from './pages/CustomerPortal';
+import { ApprovalsInbox } from './pages/ApprovalsInbox';
 
 function MainLayout() {
+  const { currentUser, isAuthenticated, canManageRules, canNegotiate, isCustomer, isWarehouse, canApprove } = useAuth();
+
   const [currentView, setCurrentView] = useState(() => {
+    // Standalone portal deep link detection
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/portal')) {
       return 'portal';
     }
-    return 'dashboard';
+    // Role-specific default view
+    return ROLE_DEFAULT_VIEWS[currentUser.role] || 'dashboard';
   });
+
   const [activeQuoteId, setActiveQuoteId] = useState(() => {
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/portal/')) {
       const pathParam = window.location.pathname.replace('/portal/', '').trim();
@@ -26,16 +32,36 @@ function MainLayout() {
     }
     return null;
   });
-  const { canManageRules, canNegotiate, isCustomer, isWarehouse, canApprove } = useAuth();
 
-  // Active view guardrails to strictly prevent unauthorized route access on role switch
+  // Force set role-specific default view on fresh login
+  const prevAuthRef = React.useRef(isAuthenticated);
   React.useEffect(() => {
-    if (currentView === 'rules' && !canManageRules()) setCurrentView('dashboard');
-    if (currentView === 'warehouse' && isCustomer()) setCurrentView('dashboard');
-    if (currentView === 'chat' && isWarehouse()) setCurrentView('dashboard');
-    if (currentView === 'catalog' && isWarehouse()) setCurrentView('dashboard');
-    if (currentView === 'approvals' && !canApprove()) setCurrentView('dashboard');
-  }, [currentView, canManageRules, isCustomer, isWarehouse, canApprove]);
+    if (isAuthenticated && !prevAuthRef.current) {
+      // User just logged in — set their role-specific default view
+      const isPortalRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/portal');
+      if (!isPortalRoute) {
+        setCurrentView(ROLE_DEFAULT_VIEWS[currentUser.role] || 'dashboard');
+      }
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated, currentUser.role]);
+
+  // Reset view to role default when user changes (re-login with different role)
+  React.useEffect(() => {
+    const defaultView = ROLE_DEFAULT_VIEWS[currentUser.role] || 'dashboard';
+    // Only reset if the current view is not allowed for this role
+    if (currentView === 'portal' && !isCustomer() && !(typeof window !== 'undefined' && window.location.pathname.startsWith('/portal'))) {
+      setCurrentView(defaultView);
+    }
+    if (currentView === 'quotes' && isCustomer()) {
+      setCurrentView('portal');
+    }
+    if (currentView === 'rules' && !canManageRules()) setCurrentView(defaultView);
+    if (currentView === 'warehouse' && isCustomer()) setCurrentView(defaultView);
+    if (currentView === 'chat' && isWarehouse()) setCurrentView(defaultView);
+    if (currentView === 'catalog' && (isWarehouse() || isCustomer())) setCurrentView(defaultView);
+    if (currentView === 'approvals' && !canApprove()) setCurrentView(defaultView);
+  }, [currentUser.role]);
 
   const handleOpenQuote = (id) => {
     setActiveQuoteId(id);
@@ -53,8 +79,13 @@ function MainLayout() {
 
   const handleBackToDashboard = () => {
     setActiveQuoteId(null);
-    setCurrentView('dashboard');
+    setCurrentView(ROLE_DEFAULT_VIEWS[currentUser.role] || 'dashboard');
   };
+
+  // Auth Gate: Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <LoginScreen />;
+  }
 
   // Standalone external portal link mode
   const isStandalonePortal =
@@ -67,7 +98,6 @@ function MainLayout() {
         <main style={{ padding: '24px 0' }}>
           <CustomerPortal quoteId={activeQuoteId} onBack={handleBackToDashboard} />
         </main>
-        <SwitchAccountModal />
       </div>
     );
   }
@@ -89,14 +119,13 @@ function MainLayout() {
           {currentView === 'portal' && (
             <CustomerPortal quoteId={activeQuoteId} onBack={handleBackToDashboard} />
           )}
+          {currentView === 'approvals' && <ApprovalsInbox onOpenQuote={handleOpenQuote} />}
           {currentView === 'rules' && <RuleMatrixBuilder />}
           {currentView === 'chat' && <NegotiationChat initialQuoteId={activeQuoteId} />}
           {currentView === 'catalog' && <CatalogView />}
           {currentView === 'warehouse' && <WarehouseView />}
-          {currentView === 'approvals' && <Dashboard onOpenQuote={handleOpenQuote} />}
         </main>
       </div>
-      <SwitchAccountModal />
     </div>
   );
 }

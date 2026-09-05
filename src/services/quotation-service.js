@@ -12,6 +12,14 @@ import { EscalationEngine } from "../domain/escalation-engine.js";
 import { FallbackEngine } from "../domain/fallback-engine.js";
 import { IncentiveEngine } from "../domain/incentive-engine.js";
 import { WarehouseAllocationEngine } from "../domain/warehouse-allocation-engine.js";
+import {
+  createSubscriptionContract,
+  calculateProration,
+  reconcileInvoicesForQuote,
+  recordInvoicePayment,
+  evaluateDealHealth,
+  analyzePipelineHealth,
+} from "../domain/index.js";
 
 export class ConcurrencyConflictError extends Error {
   constructor(message) {
@@ -58,6 +66,8 @@ export class QuotationService {
     warehouseRepository = null,
     shipmentRepository = null,
     backorderRepository = null,
+    subscriptionRepository = null,
+    invoiceRepository = null,
     eventBroadcaster = null,
     database = null,
   }) {
@@ -69,6 +79,8 @@ export class QuotationService {
     this.warehouseRepository = warehouseRepository;
     this.shipmentRepository = shipmentRepository;
     this.backorderRepository = backorderRepository;
+    this.subscriptionRepository = subscriptionRepository;
+    this.invoiceRepository = invoiceRepository;
     this.eventBroadcaster = eventBroadcaster;
     this.database = database;
     this.inMemoryMessages = new Map();
@@ -1313,6 +1325,146 @@ export class QuotationService {
     }
 
     return updated;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 10: Hybrid Subscriptions & Proration
+  // ---------------------------------------------------------------------------
+
+  createSubscriptionContract(quotationId, options = {}) {
+    const quotation = this.quotationRepository.findById(quotationId);
+    if (!quotation) {
+      throw new NotFoundError(`Quotation '${quotationId}' not found.`);
+    }
+
+    const contract = createSubscriptionContract({
+      quotationId: quotation.id,
+      customerId: quotation.customerId,
+      customerName: quotation.customerName,
+      lines: quotation.lines || [],
+      ...options,
+    });
+
+    if (!contract) {
+      throw new ValidationError(`Quotation '${quotationId}' contains no subscription items.`);
+    }
+
+    if (this.subscriptionRepository) {
+      this.subscriptionRepository.save(contract);
+    }
+    return contract;
+  }
+
+  listSubscriptions(filters = {}) {
+    if (!this.subscriptionRepository) return [];
+    let subs = this.subscriptionRepository.findAll();
+    if (filters.customerId) {
+      subs = subs.filter((s) => s.customerId === filters.customerId);
+    }
+    if (filters.status) {
+      subs = subs.filter((s) => (s.status || '').toLowerCase() === filters.status.toLowerCase());
+    }
+    return subs;
+  }
+
+  getSubscriptionById(id) {
+    if (!this.subscriptionRepository) return null;
+    return this.subscriptionRepository.findById(id);
+  }
+
+  calculateSubscriptionProration(subscriptionId, { newPriceCents, effectiveDate, cycleStartDate, cycleEndDate }) {
+    const sub = this.subscriptionRepository ? this.subscriptionRepository.findById(subscriptionId) : null;
+    const currentPriceCents = sub ? sub.cycleAmountCents : 0;
+    return calculateProration({
+      currentPriceCents,
+      newPriceCents,
+      effectiveDate,
+      cycleStartDate: cycleStartDate || (sub ? sub.startDate : new Date().toISOString().split('T')[0]),
+      cycleEndDate: cycleEndDate || (sub ? sub.nextBillingDate : new Date().toISOString().split('T')[0]),
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 10: GAAP Fulfillment Invoicing & Payments
+  // ---------------------------------------------------------------------------
+
+  reconcileInvoicesForQuotation(quotationId) {
+    const quote = this.quotationRepository.findById(quotationId);
+    if (!quote) {
+      throw new NotFoundError(`Quotation '${quotationId}' not found.`);
+    }
+
+    const shipments = this.shipmentRepository ? this.shipmentRepository.findByQuotationId(quotationId) : [];
+    const existingInvoices = this.invoiceRepository ? this.invoiceRepository.findByQuotationId(quotationId) : [];
+
+    const result = reconcileInvoicesForQuote({ quote, shipments, existingInvoices });
+
+    if (result.canGenerateInvoice && result.invoice && this.invoiceRepository) {
+      this.invoiceRepository.save(result.invoice);
+    }
+
+    return result;
+  }
+
+  listInvoices(filters = {}) {
+    if (!this.invoiceRepository) return [];
+    return this.invoiceRepository.findAll(filters);
+  }
+
+  getInvoiceById(id) {
+    if (!this.invoiceRepository) return null;
+    return this.invoiceRepository.findById(id);
+  }
+
+  recordInvoicePayment(invoiceId, { paymentAmountCents, paymentMethod = 'WireTransfer' }) {
+    if (!this.invoiceRepository) {
+      throw new Error('Invoice repository not available.');
+    }
+    const invoice = this.invoiceRepository.findById(invoiceId);
+    if (!invoice) {
+      throw new NotFoundError(`Invoice '${invoiceId}' not found.`);
+    }
+
+    const customer = this.customerRepository.findById(invoice.customerId);
+    const result = recordInvoicePayment({
+      invoice,
+      paymentAmountCents,
+      customer,
+      paymentMethod,
+    });
+
+    this.invoiceRepository.save(result.invoice);
+    if (result.customer) {
+      this.customerRepository.save(result.customer);
+    }
+
+    return result;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 10: Deal Health & Pipeline Anomaly Surveillance
+  // ---------------------------------------------------------------------------
+
+  evaluatePipelineDealHealth(options = {}) {
+    const quotes = this.quotationRepository.findAll ? this.quotationRepository.findAll() : [];
+    const backorders = this.backorderRepository ? this.backorderRepository.findAll() : [];
+    const repStatsMap = options.repStatsMap || {
+      'Alice Walker': { averageDiscountPct: 7.2, totalQuotes: 35 },
+      'Bob Miller': { averageDiscountPct: 8.0, totalQuotes: 28 },
+      'Charlie Davis': { averageDiscountPct: 6.5, totalQuotes: 40 },
+    };
+
+    return analyzePipelineHealth(quotes, repStatsMap, backorders, options.now || new Date());
+  }
+
+  evaluateQuoteDealHealth(quotationId, options = {}) {
+    const quote = this.quotationRepository.findById(quotationId);
+    if (!quote) {
+      throw new NotFoundError(`Quotation '${quotationId}' not found.`);
+    }
+    const backorders = this.backorderRepository ? this.backorderRepository.findByQuotationId(quotationId) : [];
+    const repStats = options.repStats || { averageDiscountPct: 8.0, totalQuotes: 25 };
+    return evaluateDealHealth({ quote, repStats, backorders, now: options.now || new Date() });
   }
 }
 

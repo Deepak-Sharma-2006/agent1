@@ -70,6 +70,8 @@ export function createServer(config = defaultConfig, customDependencies = null) 
       warehouseRepository: repositories.warehouseRepository,
       shipmentRepository: repositories.shipmentRepository,
       backorderRepository: repositories.backorderRepository,
+      subscriptionRepository: repositories.subscriptionRepository,
+      invoiceRepository: repositories.invoiceRepository,
       eventBroadcaster,
       database: repositories.database || null,
     });

@@ -18,6 +18,8 @@ import {
   QuotationRepository as MemoryQuotationRepository,
   ShipmentRepository as MemoryShipmentRepository,
   BackorderRepository as MemoryBackorderRepository,
+  SubscriptionRepository as MemorySubscriptionRepository,
+  InvoiceRepository as MemoryInvoiceRepository,
 } from "./memory-store.js";
 import { seedDatabase as seedMemoryDatabase } from "./seed.js";
 import {
@@ -31,6 +33,8 @@ import {
   SqliteQuotationRepository,
   SqliteShipmentRepository,
   SqliteBackorderRepository,
+  SqliteSubscriptionRepository,
+  SqliteInvoiceRepository,
 } from "./sqlite-store.js";
 import { seedSqliteDatabase } from "./sqlite-seed.js";
 
@@ -64,6 +68,8 @@ export function getRepositories(provider = process.env.DB_PROVIDER || "sqlite", 
       quotationRepository: new MemoryQuotationRepository(),
       shipmentRepository: new MemoryShipmentRepository(),
       backorderRepository: new MemoryBackorderRepository(),
+      subscriptionRepository: new MemorySubscriptionRepository(),
+      invoiceRepository: new MemoryInvoiceRepository(),
     };
   }
 
@@ -97,6 +103,8 @@ export function getRepositories(provider = process.env.DB_PROVIDER || "sqlite", 
     quotationRepository: new SqliteQuotationRepository(activeSqliteDb),
     shipmentRepository: new SqliteShipmentRepository(activeSqliteDb),
     backorderRepository: new SqliteBackorderRepository(activeSqliteDb),
+    subscriptionRepository: new SqliteSubscriptionRepository(activeSqliteDb),
+    invoiceRepository: new SqliteInvoiceRepository(activeSqliteDb),
   };
 }
 

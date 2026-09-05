@@ -730,6 +730,157 @@ export function createApiRouter({ quotationService, repositories }) {
       }
     }
 
+    // =========================================================================
+    // Phase 10: Hybrid Subscriptions & Proration Endpoints
+    // =========================================================================
+
+    // List All Subscriptions
+    if (pathname === "/api/subscriptions" && method === "GET") {
+      const customerId = parsedUrl.searchParams.get("customerId") || undefined;
+      const status = parsedUrl.searchParams.get("status") || undefined;
+      const subscriptions = quotationService.listSubscriptions({ customerId, status });
+      const totalMrrCents = subscriptions.reduce((sum, s) => sum + (s.mrrCents || 0), 0);
+      sendJsonResponse(res, 200, { count: subscriptions.length, totalMrrCents, subscriptions });
+      return true;
+    }
+
+    // Get Subscription Detail
+    const subDetailMatch = pathname.match(/^\/api\/subscriptions\/([^/]+)$/);
+    if (subDetailMatch && method === "GET") {
+      const subId = subDetailMatch[1];
+      const subscription = quotationService.getSubscriptionById(subId);
+      if (!subscription) {
+        sendErrorResponse(res, 404, `Subscription '${subId}' not found.`);
+        return true;
+      }
+      sendJsonResponse(res, 200, { subscription });
+      return true;
+    }
+
+    // Calculate Mid-Cycle Proration
+    const subProrateMatch = pathname.match(/^\/api\/subscriptions\/([^/]+)\/prorate$/);
+    if (subProrateMatch && method === "POST") {
+      const subId = subProrateMatch[1];
+      try {
+        const body = await parseJsonRequestBody(req);
+        const proration = quotationService.calculateSubscriptionProration(subId, body);
+        sendJsonResponse(res, 200, { proration });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // Create Subscription from Quote
+    const quoteSubMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/subscriptions$/);
+    if (quoteSubMatch && method === "POST") {
+      const quoteId = quoteSubMatch[1];
+      try {
+        const body = await parseJsonRequestBody(req).catch(() => ({}));
+        const contract = quotationService.createSubscriptionContract(quoteId, body);
+        sendJsonResponse(res, 201, { subscription: contract });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // =========================================================================
+    // Phase 10: GAAP Invoicing & Payment Reconciliation Endpoints
+    // =========================================================================
+
+    // List All Invoices
+    if (pathname === "/api/invoices" && method === "GET") {
+      const status = parsedUrl.searchParams.get("status") || undefined;
+      const quotationId = parsedUrl.searchParams.get("quotationId") || undefined;
+      const invoices = quotationService.listInvoices({ status, quotationId });
+      sendJsonResponse(res, 200, { count: invoices.length, invoices });
+      return true;
+    }
+
+    // Reconcile and Generate Invoice for Quote
+    const invoiceReconcileMatch = pathname.match(/^\/api\/invoices\/reconcile\/([^/]+)$/);
+    if (invoiceReconcileMatch && method === "POST") {
+      const quoteId = invoiceReconcileMatch[1];
+      try {
+        const result = quotationService.reconcileInvoicesForQuotation(quoteId);
+        sendJsonResponse(res, result.canGenerateInvoice ? 201 : 200, result);
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // Get Invoice Detail
+    const invoiceDetailMatch = pathname.match(/^\/api\/invoices\/([^/]+)$/);
+    if (invoiceDetailMatch && method === "GET") {
+      const invId = invoiceDetailMatch[1];
+      const invoice = quotationService.getInvoiceById(invId);
+      if (!invoice) {
+        sendErrorResponse(res, 404, `Invoice '${invId}' not found.`);
+        return true;
+      }
+      sendJsonResponse(res, 200, { invoice });
+      return true;
+    }
+
+    // Record Invoice Payment
+    const invoicePayMatch = pathname.match(/^\/api\/invoices\/([^/]+)\/payments$/);
+    if (invoicePayMatch && method === "POST") {
+      const invId = invoicePayMatch[1];
+      try {
+        const body = await parseJsonRequestBody(req);
+        const result = quotationService.recordInvoicePayment(invId, {
+          paymentAmountCents: body.paymentAmountCents || body.amountCents,
+          paymentMethod: body.paymentMethod || "WireTransfer",
+        });
+        sendJsonResponse(res, 200, result);
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // =========================================================================
+    // Phase 10: Deal Health & Pipeline Anomaly Surveillance Endpoints
+    // =========================================================================
+
+    // Pipeline-Wide Deal Health
+    if (pathname === "/api/deal-health" && method === "GET") {
+      try {
+        const healthReport = quotationService.evaluatePipelineDealHealth();
+        sendJsonResponse(res, 200, { report: healthReport });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 500;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // Single Quote Deal Health
+    const quoteHealthMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/deal-health$/);
+    if (quoteHealthMatch && method === "GET") {
+      const quoteId = quoteHealthMatch[1];
+      try {
+        const quoteHealth = quotationService.evaluateQuoteDealHealth(quoteId);
+        sendJsonResponse(res, 200, { dealHealth: quoteHealth });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
     // Route not handled by API
     return false;
   };

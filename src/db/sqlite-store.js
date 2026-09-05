@@ -291,6 +291,51 @@ export class SqliteDatabase {
         created_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_audit_aggregate ON audit_logs(aggregate_type, aggregate_id);
+
+      -- 17. Subscription Contracts (Phase 10 Hybrid Billing)
+      CREATE TABLE IF NOT EXISTS subscription_contracts (
+        id TEXT PRIMARY KEY,
+        quotation_id TEXT,
+        customer_id TEXT NOT NULL,
+        customer_name TEXT,
+        status TEXT NOT NULL DEFAULT 'Active',
+        billing_cycle TEXT NOT NULL DEFAULT 'Monthly',
+        term_months INTEGER NOT NULL DEFAULT 12,
+        start_date TEXT NOT NULL,
+        next_billing_date TEXT NOT NULL,
+        cycle_amount_cents INTEGER NOT NULL DEFAULT 0,
+        mrr_cents INTEGER NOT NULL DEFAULT 0,
+        arr_cents INTEGER NOT NULL DEFAULT 0,
+        items_json TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (customer_id) REFERENCES customers(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_subs_customer ON subscription_contracts(customer_id);
+      CREATE INDEX IF NOT EXISTS idx_subs_quote ON subscription_contracts(quotation_id);
+
+      -- 18. Invoices (Phase 10 GAAP Fulfillment Invoicing)
+      CREATE TABLE IF NOT EXISTS invoices (
+        id TEXT PRIMARY KEY,
+        quotation_id TEXT,
+        customer_id TEXT NOT NULL,
+        customer_name TEXT,
+        status TEXT NOT NULL DEFAULT 'Issued',
+        issue_date TEXT NOT NULL,
+        due_date TEXT NOT NULL,
+        subtotal_cents INTEGER NOT NULL DEFAULT 0,
+        tax_cents INTEGER NOT NULL DEFAULT 0,
+        total_cents INTEGER NOT NULL DEFAULT 0,
+        paid_amount_cents INTEGER NOT NULL DEFAULT 0,
+        remaining_balance_cents INTEGER NOT NULL DEFAULT 0,
+        items_json TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (customer_id) REFERENCES customers(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inv_customer ON invoices(customer_id);
+      CREATE INDEX IF NOT EXISTS idx_inv_quote ON invoices(quotation_id);
+      CREATE INDEX IF NOT EXISTS idx_inv_status ON invoices(status);
     `);
   }
 
@@ -1288,6 +1333,197 @@ export class SqliteBackorderRepository {
       status: row.status,
       createdAt: row.created_at,
       resolvedAt: row.resolved_at,
+    };
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 12. SqliteSubscriptionRepository (Phase 10 Hybrid Billing)
+// -----------------------------------------------------------------------------
+export class SqliteSubscriptionRepository {
+  constructor(db) {
+    this.db = db;
+  }
+
+  findById(id) {
+    const row = this.db.prepare("SELECT * FROM subscription_contracts WHERE id = ?").get(id);
+    return row ? this.mapRow(row) : undefined;
+  }
+
+  findByQuotationId(quotationId) {
+    const rows = this.db.prepare("SELECT * FROM subscription_contracts WHERE quotation_id = ?").all(quotationId);
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  findByCustomerId(customerId) {
+    const rows = this.db.prepare("SELECT * FROM subscription_contracts WHERE customer_id = ?").all(customerId);
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  findAll() {
+    const rows = this.db.prepare("SELECT * FROM subscription_contracts ORDER BY created_at DESC").all();
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  save(sub) {
+    const stmt = this.db.prepare(`
+      INSERT INTO subscription_contracts (
+        id, quotation_id, customer_id, customer_name, status, billing_cycle,
+        term_months, start_date, next_billing_date, cycle_amount_cents,
+        mrr_cents, arr_cents, items_json, created_at, updated_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ) ON CONFLICT(id) DO UPDATE SET
+        status = excluded.status,
+        next_billing_date = excluded.next_billing_date,
+        cycle_amount_cents = excluded.cycle_amount_cents,
+        mrr_cents = excluded.mrr_cents,
+        arr_cents = excluded.arr_cents,
+        items_json = excluded.items_json,
+        updated_at = excluded.updated_at
+    `);
+
+    stmt.run(
+      sub.id,
+      sub.quotationId || null,
+      sub.customerId,
+      sub.customerName || null,
+      sub.status || "Active",
+      sub.billingCycle || "Monthly",
+      sub.termMonths || 12,
+      sub.startDate,
+      sub.nextBillingDate,
+      sub.cycleAmountCents || 0,
+      sub.mrrCents || 0,
+      sub.arrCents || 0,
+      JSON.stringify(sub.items || []),
+      sub.createdAt || new Date().toISOString(),
+      sub.updatedAt || new Date().toISOString()
+    );
+
+    return sub;
+  }
+
+  mapRow(row) {
+    return {
+      id: row.id,
+      quotationId: row.quotation_id,
+      customerId: row.customer_id,
+      customerName: row.customer_name,
+      status: row.status,
+      billingCycle: row.billing_cycle,
+      termMonths: row.term_months,
+      startDate: row.start_date,
+      nextBillingDate: row.next_billing_date,
+      cycleAmountCents: row.cycle_amount_cents,
+      mrrCents: row.mrr_cents,
+      arrCents: row.arr_cents,
+      items: JSON.parse(row.items_json || "[]"),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 13. SqliteInvoiceRepository (Phase 10 GAAP Fulfillment Invoicing)
+// -----------------------------------------------------------------------------
+export class SqliteInvoiceRepository {
+  constructor(db) {
+    this.db = db;
+  }
+
+  findById(id) {
+    const row = this.db.prepare("SELECT * FROM invoices WHERE id = ?").get(id);
+    return row ? this.mapRow(row) : undefined;
+  }
+
+  findByQuotationId(quotationId) {
+    const rows = this.db.prepare("SELECT * FROM invoices WHERE quotation_id = ?").all(quotationId);
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  findByCustomerId(customerId) {
+    const rows = this.db.prepare("SELECT * FROM invoices WHERE customer_id = ?").all(customerId);
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  findAll(filters = {}) {
+    let sql = "SELECT * FROM invoices";
+    const params = [];
+    const clauses = [];
+
+    if (filters.status) {
+      clauses.push("LOWER(status) = LOWER(?)");
+      params.push(filters.status);
+    }
+    if (filters.quotationId) {
+      clauses.push("quotation_id = ?");
+      params.push(filters.quotationId);
+    }
+
+    if (clauses.length > 0) {
+      sql += " WHERE " + clauses.join(" AND ");
+    }
+    sql += " ORDER BY created_at DESC";
+
+    const rows = this.db.prepare(sql).all(...params);
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  save(inv) {
+    const stmt = this.db.prepare(`
+      INSERT INTO invoices (
+        id, quotation_id, customer_id, customer_name, status, issue_date,
+        due_date, subtotal_cents, tax_cents, total_cents, paid_amount_cents,
+        remaining_balance_cents, items_json, created_at, updated_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ) ON CONFLICT(id) DO UPDATE SET
+        status = excluded.status,
+        paid_amount_cents = excluded.paid_amount_cents,
+        remaining_balance_cents = excluded.remaining_balance_cents,
+        updated_at = excluded.updated_at
+    `);
+
+    stmt.run(
+      inv.id,
+      inv.quotationId || null,
+      inv.customerId,
+      inv.customerName || null,
+      inv.status || "Issued",
+      inv.issueDate,
+      inv.dueDate,
+      inv.subtotalCents || 0,
+      inv.taxCents || 0,
+      inv.totalCents || 0,
+      inv.paidAmountCents || 0,
+      inv.remainingBalanceCents ?? inv.totalCents ?? 0,
+      JSON.stringify(inv.items || []),
+      inv.createdAt || new Date().toISOString(),
+      inv.updatedAt || new Date().toISOString()
+    );
+
+    return inv;
+  }
+
+  mapRow(row) {
+    return {
+      id: row.id,
+      quotationId: row.quotation_id,
+      customerId: row.customer_id,
+      customerName: row.customer_name,
+      status: row.status,
+      issueDate: row.issue_date,
+      dueDate: row.due_date,
+      subtotalCents: row.subtotal_cents,
+      taxCents: row.tax_cents,
+      totalCents: row.total_cents,
+      paidAmountCents: row.paid_amount_cents,
+      remainingBalanceCents: row.remaining_balance_cents,
+      items: JSON.parse(row.items_json || "[]"),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     };
   }
 }

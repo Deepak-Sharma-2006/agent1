@@ -17,6 +17,8 @@ export class MemoryStore {
     this.quotations = new Map();
     this.shipments = new Map();
     this.backorders = new Map();
+    this.subscriptions = new Map();
+    this.invoices = new Map();
   }
 
   static instance = null;
@@ -38,6 +40,8 @@ export class MemoryStore {
     this.quotations.clear();
     this.shipments.clear();
     this.backorders.clear();
+    this.subscriptions.clear();
+    this.invoices.clear();
   }
 }
 
@@ -312,6 +316,91 @@ export class BackorderRepository {
     ticket.updatedAt = new Date().toISOString();
     this.store.backorders.set(ticket.id, ticket);
     return ticket;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Subscription Repository (Phase 10 Hybrid Billing)
+// -----------------------------------------------------------------------------
+export class SubscriptionRepository {
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
+
+  findById(id) {
+    return this.store.subscriptions.get(id);
+  }
+
+  findByQuotationId(quotationId) {
+    const results = [];
+    for (const sub of this.store.subscriptions.values()) {
+      if (sub.quotationId === quotationId) results.push(sub);
+    }
+    return results;
+  }
+
+  findByCustomerId(customerId) {
+    const results = [];
+    for (const sub of this.store.subscriptions.values()) {
+      if (sub.customerId === customerId) results.push(sub);
+    }
+    return results;
+  }
+
+  findAll() {
+    return Array.from(this.store.subscriptions.values());
+  }
+
+  save(subscription) {
+    subscription.updatedAt = new Date().toISOString();
+    this.store.subscriptions.set(subscription.id, subscription);
+    return subscription;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Invoice Repository (Phase 10 GAAP Fulfillment Invoicing)
+// -----------------------------------------------------------------------------
+export class InvoiceRepository {
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
+
+  findById(id) {
+    return this.store.invoices.get(id);
+  }
+
+  findByQuotationId(quotationId) {
+    const results = [];
+    for (const inv of this.store.invoices.values()) {
+      if (inv.quotationId === quotationId) results.push(inv);
+    }
+    return results;
+  }
+
+  findByCustomerId(customerId) {
+    const results = [];
+    for (const inv of this.store.invoices.values()) {
+      if (inv.customerId === customerId) results.push(inv);
+    }
+    return results;
+  }
+
+  findAll(filters = {}) {
+    let results = Array.from(this.store.invoices.values());
+    if (filters.status) {
+      results = results.filter((inv) => (inv.status || '').toLowerCase() === filters.status.toLowerCase());
+    }
+    if (filters.quotationId) {
+      results = results.filter((inv) => inv.quotationId === filters.quotationId);
+    }
+    return results;
+  }
+
+  save(invoice) {
+    invoice.updatedAt = new Date().toISOString();
+    this.store.invoices.set(invoice.id, invoice);
+    return invoice;
   }
 }
 

@@ -1,7 +1,7 @@
 {
-  "operator": "Computer1",
-  "role": "Alpha",
+  "operator": "Computer2",
+  "role": "Beta",
   "phase": 9,
   "activeLeaseDomain": "sync",
-  "updatedAt": "2026-09-06T02:12:00.000Z"
+  "updatedAt": "2026-09-05T21:03:07.889Z"
 }

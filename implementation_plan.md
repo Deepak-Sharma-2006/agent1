@@ -540,9 +540,15 @@ Aside from the multi-factor Blended Risk Score, each role operates under strict,
    - **Verification**: Database migration tests, relational cascade tests, and zero data corruption during concurrent writes.
 
 4. **Phase 4**: *Real-Time Collaboration — WebSocket Gateway (`ws`) Pub/Sub Engine*
-   - **Stack**: Native Node.js `ws` library mounted on the existing `node:http` server port.
-   - **Deliverables**: Event-driven real-time channel broadcasting quotation updates (`QUOTE_UPDATED`, `APPROVAL_REQUIRED`, `COUNTER_OFFER_RECEIVED`, `APPROVAL_GRANTED`, `FALLBACK_TRIGGERED`). Multi-client synchronization between Sales Rep, Sales Manager, and Customer Portal without polling.
-   - **Verification**: Multi-client WebSocket concurrency test, reconnection resilience, and packet drop recovery.
+   - **Stack**: Native Node.js RFC 6455 WebSocket engine mounted on the existing `node:http` server port (`/ws`).
+   - **Deliverables**:
+     - Role-guarded topic pub/sub engine (`quotation:{id}`, `role:manager`, `role:finance`, `customer:{id}`) preventing cross-tenant trade secret leakage.
+     - Real-time quotation lifecycle event broadcasting (`QUOTE_LINE_MUTATED`, `APPROVAL_REQUIRED`, `COUNTER_OFFER_RECEIVED`, `APPROVAL_GRANTED`, `FALLBACK_REVERTED`, `QUOTE_CONFIRMED`).
+     - Split-brain negotiation defenses: editing presence hints (`PRESENCE_EDITING`) and real-time OCC diff broadcasts to prevent blind 409 collisions.
+     - Dual-path escalation dispatch: live WebSocket alerts paired with SQLite persistence for offline/in-transit managers (`SYNC_ON_CONNECT`).
+     - Legally binding negotiation chat audit trail persisted atomically to SQLite `negotiation_messages` table before egress.
+     - Automatic field sales reconnection with exponential backoff and version catch-up synchronization (`lastKnownVersion`).
+   - **Verification**: Multi-client WebSocket concurrency tests, role boundary security tests, reconnection state catch-up tests, and clean Strix AI DAST pentest.
 
 5. **Phase 5**: *Frontend UI Foundation — Vite + React 18/19 SPA & Lucide Icons*
    - **Stack**: Vite, React 18/19, Lucide Icons (`lucide-react`), Modern CSS Design System.

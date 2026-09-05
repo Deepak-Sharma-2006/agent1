@@ -11,6 +11,7 @@ import { QuotationCalculator } from "../domain/quotation-calculator.js";
 import { EscalationEngine } from "../domain/escalation-engine.js";
 import { FallbackEngine } from "../domain/fallback-engine.js";
 import { IncentiveEngine } from "../domain/incentive-engine.js";
+import { WarehouseAllocationEngine } from "../domain/warehouse-allocation-engine.js";
 
 export class ConcurrencyConflictError extends Error {
   constructor(message) {
@@ -54,6 +55,9 @@ export class QuotationService {
     productRepository,
     incentiveRuleRepository,
     inventoryRepository,
+    warehouseRepository = null,
+    shipmentRepository = null,
+    backorderRepository = null,
     eventBroadcaster = null,
     database = null,
   }) {
@@ -62,6 +66,9 @@ export class QuotationService {
     this.productRepository = productRepository;
     this.incentiveRuleRepository = incentiveRuleRepository;
     this.inventoryRepository = inventoryRepository;
+    this.warehouseRepository = warehouseRepository;
+    this.shipmentRepository = shipmentRepository;
+    this.backorderRepository = backorderRepository;
     this.eventBroadcaster = eventBroadcaster;
     this.database = database;
     this.inMemoryMessages = new Map();
@@ -944,6 +951,17 @@ export class QuotationService {
     this._incrementVersion(quotation);
     this.quotationRepository.save(quotation);
 
+    // Auto-allocate multi-warehouse split shipments upon contract confirmation
+    if (this.warehouseRepository && this.shipmentRepository) {
+      try {
+        const alloc = this.allocateQuotationShipments(quotation.id);
+        quotation.shipments = alloc.shipments;
+        quotation.backorders = alloc.backorders;
+      } catch (err) {
+        // Non-blocking fallback
+      }
+    }
+
     if (this.eventBroadcaster) {
       this.eventBroadcaster.emitQuoteConfirmed(quotation);
     }
@@ -1056,4 +1074,178 @@ export class QuotationService {
 
     return this.inMemoryMessages.get(quoteId) || [];
   }
+
+  /**
+   * Allocates quotation lines across 5+ regional warehouses using greedy O(W * K) optimization.
+   * Creates ShipmentOrder and BackorderTicket records and increments reserved stock.
+   * 
+   * @param {string} quotationId
+   * @param {Object} [options={}]
+   * @returns {Object} Allocation result
+   */
+  allocateQuotationShipments(quotationId, options = {}) {
+    const quotation = this.getQuotationById(quotationId);
+    if (!quotation) {
+      throw new NotFoundError(`Quotation '${quotationId}' not found.`);
+    }
+
+    const warehouses = this.warehouseRepository ? this.warehouseRepository.findAll() : [];
+    const inventoryList = this.inventoryRepository ? this.inventoryRepository.findAll() : [];
+
+    // Customer preferred hub or primary hub
+    let preferredWarehouseId = options.preferredWarehouseId;
+    if (!preferredWarehouseId && this.customerRepository) {
+      const cust = this.customerRepository.findById(quotation.customerId);
+      if (cust && cust.preferredWarehouseId) {
+        preferredWarehouseId = cust.preferredWarehouseId;
+      }
+    }
+
+    const allocation = WarehouseAllocationEngine.allocateQuotation(
+      quotation,
+      warehouses,
+      inventoryList,
+      { ...options, preferredWarehouseId }
+    );
+
+    // Persist shipments
+    const savedShipments = [];
+    if (this.shipmentRepository) {
+      for (const ship of allocation.shipments) {
+        const saved = this.shipmentRepository.save(ship);
+        savedShipments.push(saved);
+
+        // Increment reserved stock for allocated items
+        if (this.inventoryRepository && Array.isArray(ship.items)) {
+          for (const item of ship.items) {
+            const invRecord = typeof this.inventoryRepository.findByProductAndWarehouse === 'function'
+              ? this.inventoryRepository.findByProductAndWarehouse(item.productId, ship.warehouseId)
+              : null;
+            if (invRecord) {
+              invRecord.reservedStock = (invRecord.reservedStock || 0) + item.quantity;
+              this.inventoryRepository.save(invRecord);
+            }
+          }
+        }
+      }
+    }
+
+    // Persist backorders
+    const savedBackorders = [];
+    if (this.backorderRepository) {
+      for (const bo of allocation.backorders) {
+        const saved = this.backorderRepository.save(bo);
+        savedBackorders.push(saved);
+      }
+    }
+
+    if (this.eventBroadcaster && typeof this.eventBroadcaster.broadcast === 'function') {
+      this.eventBroadcaster.broadcast('role:warehouse', {
+        type: 'SHIPMENT_ALLOCATED',
+        quotationId,
+        shipments: savedShipments.length > 0 ? savedShipments : allocation.shipments,
+      });
+    }
+
+    return {
+      quotationId,
+      shipments: savedShipments.length > 0 ? savedShipments : allocation.shipments,
+      backorders: savedBackorders.length > 0 ? savedBackorders : allocation.backorders,
+      summary: allocation.summary,
+    };
+  }
+
+  /**
+   * Retrieves all shipment orders and backorders for a quotation.
+   * 
+   * @param {string} quotationId
+   * @returns {Object} { shipments, backorders }
+   */
+  getQuotationShipments(quotationId) {
+    const shipments = this.shipmentRepository ? this.shipmentRepository.findByQuotationId(quotationId) : [];
+    const backorders = this.backorderRepository ? this.backorderRepository.findByQuotationId(quotationId) : [];
+    return { shipments, backorders };
+  }
+
+  /**
+   * Lists all shipment orders across regional fulfillment depots.
+   * 
+   * @param {Object} [filters={}]
+   * @param {string} [filters.warehouseId]
+   * @param {string} [filters.status]
+   * @returns {Array<Object>}
+   */
+  listAllShipments(filters = {}) {
+    return this.shipmentRepository ? this.shipmentRepository.findAll(filters) : [];
+  }
+
+  /**
+   * Lists all backorder tickets across regional fulfillment depots.
+   * 
+   * @param {Object} [filters={}]
+   * @param {string} [filters.quotationId]
+   * @returns {Array<Object>}
+   */
+  listAllBackorders(filters = {}) {
+    if (!this.backorderRepository) return [];
+    if (filters.quotationId) {
+      return this.backorderRepository.findByQuotationId(filters.quotationId);
+    }
+    return typeof this.backorderRepository.findAll === 'function'
+      ? this.backorderRepository.findAll()
+      : [];
+  }
+
+  /**
+   * Dispatches a shipment order, assigning carrier and tracking number, and deducting physical stock.
+   * 
+   * @param {string} shipmentId
+   * @param {Object} [dispatchDetails={}]
+   * @returns {Object} Updated shipment
+   */
+  dispatchShipment(shipmentId, { carrier, trackingNumber, dispatchedBy } = {}) {
+    if (!this.shipmentRepository) {
+      throw new ValidationError("Shipment repository not configured.");
+    }
+    const shipment = this.shipmentRepository.findById(shipmentId);
+    if (!shipment) {
+      throw new NotFoundError(`Shipment order '${shipmentId}' not found.`);
+    }
+
+    if (shipment.status === "Shipped" || shipment.status === "Delivered") {
+      throw new ValidationError(`Shipment '${shipmentId}' is already ${shipment.status}.`);
+    }
+
+    shipment.status = "Shipped";
+    shipment.carrier = carrier || shipment.carrier || "FedEx Ground Priority";
+    shipment.trackingNumber = trackingNumber || `TRK-${Date.now().toString().slice(-8)}`;
+    shipment.shippedAt = new Date().toISOString();
+    shipment.dispatchedBy = dispatchedBy || "Warehouse Picker";
+
+    // Deduct physical inventory & release reserved stock
+    if (this.inventoryRepository && Array.isArray(shipment.items)) {
+      for (const item of shipment.items) {
+        const invRecord = typeof this.inventoryRepository.findByProductAndWarehouse === 'function'
+          ? this.inventoryRepository.findByProductAndWarehouse(item.productId, shipment.warehouseId)
+          : null;
+        if (invRecord) {
+          invRecord.physicalStock = Math.max(0, (invRecord.physicalStock || 0) - item.quantity);
+          invRecord.reservedStock = Math.max(0, (invRecord.reservedStock || 0) - item.quantity);
+          this.inventoryRepository.save(invRecord);
+        }
+      }
+    }
+
+    const updated = this.shipmentRepository.save(shipment);
+
+    if (this.eventBroadcaster && typeof this.eventBroadcaster.broadcast === 'function') {
+      this.eventBroadcaster.broadcast('role:warehouse', {
+        type: 'SHIPMENT_DISPATCHED',
+        shipment: updated,
+      });
+    }
+
+    return updated;
+  }
 }
+

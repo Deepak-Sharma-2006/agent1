@@ -9,3 +9,4 @@ export * from "./incentive-engine.js";
 export * from "./escalation-engine.js";
 export * from "./fallback-engine.js";
 export * from "./quotation-calculator.js";
+export * from "./warehouse-allocation-engine.js";

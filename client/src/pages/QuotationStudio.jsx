@@ -42,6 +42,11 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
   const [showCounterModal, setShowCounterModal] = useState(false);
   const [telemetryTab, setTelemetryTab] = useState('gauge'); // 'gauge' | 'curve' | 'radar'
 
+  // Phase 8 Multi-Warehouse Split Shipments & Backorders
+  const [shipments, setShipments] = useState([]);
+  const [backorders, setBackorders] = useState([]);
+  const [allocating, setAllocating] = useState(false);
+
   // Helper for product category discount ceilings
   const getCategoryCeiling = (category) => {
     const cat = (category || '').toLowerCase();
@@ -49,6 +54,47 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
     if (cat.includes('service')) return 10;
     if (cat.includes('subscription')) return 20;
     return 15;
+  };
+
+  // Fetch linked shipments and backorders for active quote
+  const fetchShipments = async (qId) => {
+    if (!qId) return;
+    try {
+      const res = await fetch(`/api/quotes/${qId}/shipments`).then((r) => r.json());
+      if (res.success) {
+        setShipments(res.shipments || []);
+        setBackorders(res.backorders || []);
+      }
+    } catch {
+      // Non-blocking
+    }
+  };
+
+  const handleTriggerAllocation = async () => {
+    if (!quote?.id) return;
+    try {
+      setAllocating(true);
+      const res = await fetch(`/api/quotes/${quote.id}/allocate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).then((r) => r.json());
+
+      if (res.success) {
+        setShipments(res.shipments || []);
+        setBackorders(res.backorders || []);
+        addToast?.(
+          'Allocation Completed',
+          `Split ${res.shipments.length} shipment order(s) across regional depots.`,
+          'success'
+        );
+      } else {
+        addToast?.('Allocation Failed', res.error, 'danger');
+      }
+    } catch (err) {
+      addToast?.('Error', err.message, 'danger');
+    } finally {
+      setAllocating(false);
+    }
   };
 
   // Load catalog and quote
@@ -102,8 +148,9 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
   useEffect(() => {
     if (quote?.id) {
       sendAction('subscribe', { topic: `quotation:${quote.id}` });
+      fetchShipments(quote.id);
     }
-  }, [quote?.id]);
+  }, [quote?.id, quote?.status]);
 
   // Real-time remote updates
   useEffect(() => {
@@ -634,35 +681,97 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
 
         {/* Right Column: Financial Ledger / Depot Routing & Interactive Telemetry Console */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Warehouse Depot Routing Card */}
-          {isWarehouse() && (
+          {/* Multi-Depot Fulfillment Manifest Card (Phase 8 Multi-Warehouse Split) */}
+          {(isWarehouse() || quote?.status === 'Confirmed' || shipments.length > 0) && (
             <div className="card" style={{ marginBottom: 0 }}>
-              <div className="card-header">
-                <span className="card-title" style={{ fontSize: '13.5px' }}>
-                  <Truck size={16} color="var(--primary)" />
-                  <span>Depot Dispatch & Fulfillment</span>
+              <div className="card-header" style={{ paddingBottom: '10px' }}>
+                <span className="card-title" style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Truck size={15} color="var(--primary)" />
+                  <span>Multi-Depot Fulfillment Manifest</span>
                 </span>
-                <span className="badge badge-confirmed">Confirmed Order</span>
+                {quote?.status === 'Confirmed' ? (
+                  <span className="badge badge-confirmed" style={{ fontSize: '10.5px' }}>
+                    Active Order
+                  </span>
+                ) : (
+                  <span className="badge badge-pending" style={{ fontSize: '10.5px' }}>
+                    Preview Split
+                  </span>
+                )}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12.5px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Assigned Fulfillment Depot:</span>
-                  <strong style={{ color: 'var(--primary)' }}>Chicago Central Hub (wh-chi-01)</strong>
+              {shipments.length === 0 ? (
+                <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', padding: '4px 0' }}>
+                  <div>No warehouse shipments dispatched yet. Stock will be auto-allocated across 6 continental depots upon digital contract confirmation.</div>
+                  {quote?.id && !isCustomer() && (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      style={{ marginTop: '10px', fontSize: '11.5px', width: '100%' }}
+                      onClick={handleTriggerAllocation}
+                      disabled={allocating}
+                    >
+                      {allocating ? 'Allocating 6 Depots...' : 'Simulate Multi-Depot Split'}
+                    </button>
+                  )}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Inventory Reservation:</span>
-                  <span style={{ fontWeight: 700, color: 'var(--success)' }}>100% Stock Reserved</span>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                    Split across <strong>{shipments.length}</strong> fulfillment depot(s):
+                  </div>
+
+                  {shipments.map((s) => (
+                    <div
+                      key={s.id}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--bg-canvas)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '12px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                          {s.warehouseName || s.warehouseCode || s.warehouseId}
+                        </span>
+                        <span
+                          className={s.status === 'Shipped' ? 'badge badge-approved' : 'badge badge-pending'}
+                          style={{ fontSize: '10px' }}
+                        >
+                          {s.status || 'Placed'}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        Items: {(s.items || []).map((it) => `${it.productName || it.productId} (${it.quantity}u)`).join(', ') || `${s.totalUnits || 1} units`}
+                      </div>
+
+                      {s.trackingNumber && (
+                        <div style={{ fontSize: '11px', color: 'var(--primary)', fontFamily: 'monospace', marginTop: '2px' }}>
+                          TRK: {s.trackingNumber} ({s.carrier || 'FedEx'})
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {backorders.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: '4px',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: '#fffbeb',
+                        border: '1px solid #fde68a',
+                        fontSize: '11.5px',
+                        color: '#92400e',
+                      }}
+                    >
+                      <strong>Backorder Alert:</strong> {backorders.reduce((sum, b) => sum + b.quantity, 0)} units unfulfilled awaiting factory restock.
+                    </div>
+                  )}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Dispatch Protocol:</span>
-                  <span>Standard 48h Freight</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Delivery Destination:</span>
-                  <span style={{ fontWeight: 600 }}>{activeCustomer.name || 'Acme Industrial'}</span>
-                </div>
-              </div>
+              )}
             </div>
           )}
 

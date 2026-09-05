@@ -1103,3 +1103,192 @@ export class SqliteQuotationRepository {
     };
   }
 }
+
+// -----------------------------------------------------------------------------
+// SQLite Shipment Order & Backorder Repositories (Phase 8 Multi-Warehouse Split)
+// -----------------------------------------------------------------------------
+export class SqliteShipmentRepository {
+  constructor(sqliteDb) {
+    this.sqliteDb = sqliteDb;
+    this.db = sqliteDb.db;
+  }
+
+  findById(id) {
+    const row = this.db.prepare("SELECT * FROM shipment_orders WHERE id = ?").get(id);
+    return row ? this.hydrateShipment(row) : undefined;
+  }
+
+  findByQuotationId(quotationId) {
+    const rows = this.db.prepare("SELECT * FROM shipment_orders WHERE quotation_id = ? ORDER BY created_at ASC").all(quotationId);
+    return rows.map((r) => this.hydrateShipment(r));
+  }
+
+  findByWarehouseId(warehouseId) {
+    const rows = this.db.prepare("SELECT * FROM shipment_orders WHERE warehouse_id = ? ORDER BY created_at DESC").all(warehouseId);
+    return rows.map((r) => this.hydrateShipment(r));
+  }
+
+  findAll(filters = {}) {
+    let query = "SELECT * FROM shipment_orders WHERE 1=1";
+    const params = [];
+    if (filters.warehouseId) {
+      query += " AND warehouse_id = ?";
+      params.push(filters.warehouseId);
+    }
+    if (filters.status) {
+      query += " AND status = ?";
+      params.push(filters.status);
+    }
+    query += " ORDER BY created_at DESC";
+    const rows = this.db.prepare(query).all(...params);
+    return rows.map((r) => this.hydrateShipment(r));
+  }
+
+  save(shipment) {
+    return this.sqliteDb.withTransaction(() => {
+      const stmt = this.db.prepare(`
+        INSERT INTO shipment_orders (
+          id, quotation_id, warehouse_id, tracking_number, carrier, status, shipped_at, created_at
+        ) VALUES (
+          ?, ?, ?, ?, ?, ?, ?, ?
+        ) ON CONFLICT(id) DO UPDATE SET
+          tracking_number = excluded.tracking_number,
+          carrier = excluded.carrier,
+          status = excluded.status,
+          shipped_at = excluded.shipped_at
+      `);
+
+      stmt.run(
+        shipment.id,
+        shipment.quotationId,
+        shipment.warehouseId,
+        shipment.trackingNumber || null,
+        shipment.carrier || null,
+        shipment.status || "Placed",
+        shipment.shippedAt || null,
+        shipment.createdAt || new Date().toISOString()
+      );
+
+      // Save items
+      if (Array.isArray(shipment.items) && shipment.items.length > 0) {
+        this.db.prepare("DELETE FROM shipment_items WHERE shipment_order_id = ?").run(shipment.id);
+        const itemStmt = this.db.prepare(`
+          INSERT INTO shipment_items (
+            id, shipment_order_id, quotation_line_id, quantity
+          ) VALUES (?, ?, ?, ?)
+        `);
+        for (const item of shipment.items) {
+          const itemId = item.id || `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+          itemStmt.run(
+            itemId,
+            shipment.id,
+            item.quotationLineId || item.lineId || "line-01",
+            item.quantity || 1
+          );
+        }
+      }
+
+      return this.findById(shipment.id);
+    });
+  }
+
+  hydrateShipment(row) {
+    const items = this.db.prepare(`
+      SELECT si.*, ql.product_id, p.name AS product_name, p.sku AS product_sku
+      FROM shipment_items si
+      LEFT JOIN quotation_lines ql ON si.quotation_line_id = ql.id
+      LEFT JOIN products p ON ql.product_id = p.id
+      WHERE si.shipment_order_id = ?
+    `).all(row.id).map((it) => ({
+      id: it.id,
+      shipmentOrderId: it.shipment_order_id,
+      quotationLineId: it.quotation_line_id,
+      productId: it.product_id,
+      productName: it.product_name,
+      sku: it.product_sku,
+      quantity: it.quantity,
+    }));
+
+    const wh = this.db.prepare("SELECT * FROM warehouses WHERE id = ?").get(row.warehouse_id);
+
+    return {
+      id: row.id,
+      quotationId: row.quotation_id,
+      warehouseId: row.warehouse_id,
+      warehouseCode: wh ? wh.code : row.warehouse_id,
+      warehouseName: wh ? wh.name : row.warehouse_id,
+      city: wh ? wh.city : "Unknown",
+      state: wh ? wh.state : "IL",
+      trackingNumber: row.tracking_number,
+      carrier: row.carrier,
+      status: row.status,
+      shippedAt: row.shipped_at,
+      createdAt: row.created_at,
+      totalUnits: items.reduce((sum, i) => sum + i.quantity, 0),
+      items,
+    };
+  }
+}
+
+export class SqliteBackorderRepository {
+  constructor(sqliteDb) {
+    this.sqliteDb = sqliteDb;
+    this.db = sqliteDb.db;
+  }
+
+  findById(id) {
+    const row = this.db.prepare("SELECT * FROM backorder_tickets WHERE id = ?").get(id);
+    return row ? this.mapRow(row) : undefined;
+  }
+
+  findByQuotationId(quotationId) {
+    const rows = this.db.prepare("SELECT * FROM backorder_tickets WHERE quotation_id = ? ORDER BY created_at ASC").all(quotationId);
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  findAll() {
+    const rows = this.db.prepare("SELECT * FROM backorder_tickets ORDER BY created_at DESC").all();
+    return rows.map((r) => this.mapRow(r));
+  }
+
+  save(ticket) {
+    const stmt = this.db.prepare(`
+      INSERT INTO backorder_tickets (
+        id, quotation_id, product_id, quantity, status, created_at, resolved_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?
+      ) ON CONFLICT(id) DO UPDATE SET
+        quantity = excluded.quantity,
+        status = excluded.status,
+        resolved_at = excluded.resolved_at
+    `);
+
+    stmt.run(
+      ticket.id,
+      ticket.quotationId,
+      ticket.productId,
+      ticket.quantity,
+      ticket.status || "Pending",
+      ticket.createdAt || new Date().toISOString(),
+      ticket.resolvedAt || null
+    );
+
+    return ticket;
+  }
+
+  mapRow(row) {
+    const product = this.db.prepare("SELECT * FROM products WHERE id = ?").get(row.product_id);
+    return {
+      id: row.id,
+      quotationId: row.quotation_id,
+      productId: row.product_id,
+      productName: product ? product.name : row.product_id,
+      sku: product ? product.sku : "SKU-GEN",
+      quantity: row.quantity,
+      status: row.status,
+      createdAt: row.created_at,
+      resolvedAt: row.resolved_at,
+    };
+  }
+}
+

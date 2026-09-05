@@ -64,6 +64,36 @@ export function seedDatabase(customRepos = null) {
     active: true,
   });
 
+  const atlantaDepot = warehouseRepo.save({
+    id: "wh-atl-04",
+    code: "WH-ATL",
+    name: "Atlanta Southeast Depot",
+    city: "Atlanta",
+    state: "GA",
+    isPrimaryHub: false,
+    active: true,
+  });
+
+  const newarkFacility = warehouseRepo.save({
+    id: "wh-ewr-05",
+    code: "WH-EWR",
+    name: "Newark East Coast Facility",
+    city: "Newark",
+    state: "NJ",
+    isPrimaryHub: false,
+    active: true,
+  });
+
+  const seattleDepot = warehouseRepo.save({
+    id: "wh-sea-06",
+    code: "WH-SEA",
+    name: "Seattle Pacific Express Depot",
+    city: "Seattle",
+    state: "WA",
+    isPrimaryHub: false,
+    active: true,
+  });
+
   // ---------------------------------------------------------------------------
   // 2. Seed Products & Inventory
   // ---------------------------------------------------------------------------
@@ -171,6 +201,86 @@ export function seedDatabase(customRepos = null) {
     physicalStock: 30,
     reservedStock: 4,
     safetyBuffer: 5,
+    updatedAt: now,
+  });
+
+  inventoryRepo.save({
+    id: "inv-05",
+    warehouseId: atlantaDepot.id,
+    productId: serverPro.id,
+    physicalStock: 25,
+    reservedStock: 0,
+    safetyBuffer: 5,
+    updatedAt: now,
+  });
+
+  inventoryRepo.save({
+    id: "inv-06",
+    warehouseId: newarkFacility.id,
+    productId: serverPro.id,
+    physicalStock: 35,
+    reservedStock: 5,
+    safetyBuffer: 5,
+    updatedAt: now,
+  });
+
+  inventoryRepo.save({
+    id: "inv-07",
+    warehouseId: seattleDepot.id,
+    productId: serverPro.id,
+    physicalStock: 15,
+    reservedStock: 0,
+    safetyBuffer: 3,
+    updatedAt: now,
+  });
+
+  inventoryRepo.save({
+    id: "inv-08",
+    warehouseId: renoDepot.id,
+    productId: serverPro.id,
+    physicalStock: 18,
+    reservedStock: 2,
+    safetyBuffer: 4,
+    updatedAt: now,
+  });
+
+  inventoryRepo.save({
+    id: "inv-09",
+    warehouseId: atlantaDepot.id,
+    productId: coreSwitch.id,
+    physicalStock: 20,
+    reservedStock: 2,
+    safetyBuffer: 3,
+    updatedAt: now,
+  });
+
+  inventoryRepo.save({
+    id: "inv-10",
+    warehouseId: newarkFacility.id,
+    productId: coreSwitch.id,
+    physicalStock: 40,
+    reservedStock: 5,
+    safetyBuffer: 5,
+    updatedAt: now,
+  });
+
+  inventoryRepo.save({
+    id: "inv-11",
+    warehouseId: seattleDepot.id,
+    productId: coreSwitch.id,
+    physicalStock: 15,
+    reservedStock: 0,
+    safetyBuffer: 2,
+    updatedAt: now,
+  });
+
+  inventoryRepo.save({
+    id: "inv-12",
+    warehouseId: dallasDepot.id,
+    productId: coreSwitch.id,
+    physicalStock: 25,
+    reservedStock: 3,
+    safetyBuffer: 4,
     updatedAt: now,
   });
 

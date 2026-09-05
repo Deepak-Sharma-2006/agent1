@@ -15,6 +15,8 @@ export class MemoryStore {
     this.discountRules = new Map();
     this.incentiveRules = new Map();
     this.quotations = new Map();
+    this.shipments = new Map();
+    this.backorders = new Map();
   }
 
   static instance = null;
@@ -34,6 +36,8 @@ export class MemoryStore {
     this.discountRules.clear();
     this.incentiveRules.clear();
     this.quotations.clear();
+    this.shipments.clear();
+    this.backorders.clear();
   }
 }
 
@@ -233,3 +237,81 @@ export class QuotationRepository {
     return quotation;
   }
 }
+
+// -----------------------------------------------------------------------------
+// Shipment Repository (Phase 8 Multi-Warehouse Split)
+// -----------------------------------------------------------------------------
+export class ShipmentRepository {
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
+
+  findById(id) {
+    return this.store.shipments.get(id);
+  }
+
+  findByQuotationId(quotationId) {
+    const results = [];
+    for (const s of this.store.shipments.values()) {
+      if (s.quotationId === quotationId) results.push(s);
+    }
+    return results;
+  }
+
+  findByWarehouseId(warehouseId) {
+    const results = [];
+    for (const s of this.store.shipments.values()) {
+      if (s.warehouseId === warehouseId) results.push(s);
+    }
+    return results;
+  }
+
+  findAll(filters = {}) {
+    let results = Array.from(this.store.shipments.values());
+    if (filters.warehouseId) {
+      results = results.filter((s) => s.warehouseId === filters.warehouseId);
+    }
+    if (filters.status) {
+      results = results.filter((s) => s.status === filters.status);
+    }
+    return results;
+  }
+
+  save(shipment) {
+    shipment.updatedAt = new Date().toISOString();
+    this.store.shipments.set(shipment.id, shipment);
+    return shipment;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Backorder Repository (Phase 8 Multi-Warehouse Split)
+// -----------------------------------------------------------------------------
+export class BackorderRepository {
+  constructor() {
+    this.store = MemoryStore.getInstance();
+  }
+
+  findById(id) {
+    return this.store.backorders.get(id);
+  }
+
+  findByQuotationId(quotationId) {
+    const results = [];
+    for (const bo of this.store.backorders.values()) {
+      if (bo.quotationId === quotationId) results.push(bo);
+    }
+    return results;
+  }
+
+  findAll() {
+    return Array.from(this.store.backorders.values());
+  }
+
+  save(ticket) {
+    ticket.updatedAt = new Date().toISOString();
+    this.store.backorders.set(ticket.id, ticket);
+    return ticket;
+  }
+}
+

@@ -183,7 +183,11 @@ export function createApiRouter({ quotationService, repositories }) {
     // 5. Warehouses & Inventory Endpoints
     if (pathname === "/api/warehouses" && method === "GET") {
       const warehouses = warehouseRepository.findAll();
-      const inventory = inventoryRepository.findAll();
+      const rawInventory = inventoryRepository.findAll();
+      const inventory = rawInventory.map((inv) => ({
+        ...inv,
+        atp: Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0)),
+      }));
       sendJsonResponse(res, 200, { count: warehouses.length, warehouses, inventory });
       return true;
     }
@@ -627,6 +631,75 @@ export function createApiRouter({ quotationService, repositories }) {
         });
 
         sendJsonResponse(res, 201, { message: messageRecord });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // 9. Phase 8 Multi-Warehouse Split & Dispatch Endpoints
+    // Get Quote Shipments & Backorders
+    const quoteShipmentsMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/shipments$/);
+    if (quoteShipmentsMatch && method === "GET") {
+      const quoteId = quoteShipmentsMatch[1];
+      try {
+        const result = quotationService.getQuotationShipments(quoteId);
+        sendJsonResponse(res, 200, result);
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // Allocate Quote Shipments
+    const quoteAllocateMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/allocate$/);
+    if (quoteAllocateMatch && method === "POST") {
+      const quoteId = quoteAllocateMatch[1];
+      try {
+        const body = await parseJsonRequestBody(req).catch(() => ({}));
+        const allocation = quotationService.allocateQuotationShipments(quoteId, body);
+        sendJsonResponse(res, 200, allocation);
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // List All Shipments (supports ?warehouseId= & ?status=)
+    if (pathname === "/api/shipments" && method === "GET") {
+      const warehouseId = parsedUrl.searchParams.get("warehouseId") || undefined;
+      const status = parsedUrl.searchParams.get("status") || undefined;
+      const shipments = quotationService.listAllShipments({ warehouseId, status });
+      sendJsonResponse(res, 200, { count: shipments.length, shipments });
+      return true;
+    }
+
+    // List All Backorders (supports ?quotationId=)
+    if (pathname === "/api/backorders" && method === "GET") {
+      const quotationId = parsedUrl.searchParams.get("quotationId") || undefined;
+      const backorders = quotationService.listAllBackorders ? quotationService.listAllBackorders({ quotationId }) : [];
+      sendJsonResponse(res, 200, { count: backorders.length, backorders });
+      return true;
+    }
+
+    // Dispatch Shipment Order
+    const dispatchMatch = pathname.match(/^\/api\/shipments\/([^/]+)\/dispatch$/);
+    if (dispatchMatch && method === "POST") {
+      const shipmentId = dispatchMatch[1];
+      try {
+        const body = await parseJsonRequestBody(req).catch(() => ({}));
+        const updatedShipment = quotationService.dispatchShipment(shipmentId, {
+          carrier: body.carrier,
+          trackingNumber: body.trackingNumber,
+          dispatchedBy: body.dispatchedBy,
+        });
+        sendJsonResponse(res, 200, { shipment: updatedShipment });
         return true;
       } catch (err) {
         const status = err.statusCode || 400;

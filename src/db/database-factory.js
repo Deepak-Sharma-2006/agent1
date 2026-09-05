@@ -16,6 +16,8 @@ import {
   DiscountRuleRepository as MemoryDiscountRuleRepository,
   IncentiveRuleRepository as MemoryIncentiveRuleRepository,
   QuotationRepository as MemoryQuotationRepository,
+  ShipmentRepository as MemoryShipmentRepository,
+  BackorderRepository as MemoryBackorderRepository,
 } from "./memory-store.js";
 import { seedDatabase as seedMemoryDatabase } from "./seed.js";
 import {
@@ -27,6 +29,8 @@ import {
   SqliteDiscountRuleRepository,
   SqliteIncentiveRuleRepository,
   SqliteQuotationRepository,
+  SqliteShipmentRepository,
+  SqliteBackorderRepository,
 } from "./sqlite-store.js";
 import { seedSqliteDatabase } from "./sqlite-seed.js";
 
@@ -58,6 +62,8 @@ export function getRepositories(provider = process.env.DB_PROVIDER || "sqlite", 
       discountRuleRepository: new MemoryDiscountRuleRepository(),
       incentiveRuleRepository: new MemoryIncentiveRuleRepository(),
       quotationRepository: new MemoryQuotationRepository(),
+      shipmentRepository: new MemoryShipmentRepository(),
+      backorderRepository: new MemoryBackorderRepository(),
     };
   }
 
@@ -89,6 +95,8 @@ export function getRepositories(provider = process.env.DB_PROVIDER || "sqlite", 
     discountRuleRepository: new SqliteDiscountRuleRepository(activeSqliteDb),
     incentiveRuleRepository: new SqliteIncentiveRuleRepository(activeSqliteDb),
     quotationRepository: new SqliteQuotationRepository(activeSqliteDb),
+    shipmentRepository: new SqliteShipmentRepository(activeSqliteDb),
+    backorderRepository: new SqliteBackorderRepository(activeSqliteDb),
   };
 }
 

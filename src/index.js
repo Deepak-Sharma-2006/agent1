@@ -66,6 +66,9 @@ export function createServer(config = defaultConfig, customDependencies = null) 
       productRepository: repositories.productRepository,
       incentiveRuleRepository: repositories.incentiveRuleRepository,
       inventoryRepository: repositories.inventoryRepository,
+      warehouseRepository: repositories.warehouseRepository,
+      shipmentRepository: repositories.shipmentRepository,
+      backorderRepository: repositories.backorderRepository,
       eventBroadcaster,
       database: repositories.database || null,
     });

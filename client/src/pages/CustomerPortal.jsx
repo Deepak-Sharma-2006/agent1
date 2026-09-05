@@ -18,6 +18,9 @@ import {
   Check,
   RotateCcw,
   Sparkles,
+  Truck,
+  MapPin,
+  Package,
 } from 'lucide-react';
 
 /**
@@ -42,6 +45,10 @@ export function CustomerPortal({ quoteId, onBack }) {
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Phase 8 Multi-Depot Delivery & Shipments State (Commercial margins cloaked)
+  const [shipments, setShipments] = useState([]);
+  const [backorders, setBackorders] = useState([]);
 
   // Counter-offer form state
   const [counterDiscount, setCounterDiscount] = useState(15);
@@ -139,6 +146,18 @@ export function CustomerPortal({ quoteId, onBack }) {
         }
       } catch {
         // Chat messages are non-blocking
+      }
+
+      // Fetch logistics shipments & delivery tracking
+      try {
+        const shipRes = await fetch(`/api/quotes/${targetId}/shipments`);
+        const shipData = await shipRes.json();
+        if (shipData.success) {
+          setShipments(shipData.shipments || []);
+          setBackorders(shipData.backorders || []);
+        }
+      } catch {
+        // Shipments are non-blocking
       }
     } catch (err) {
       setError('Failed to connect to negotiation server: ' + err.message);
@@ -537,6 +556,113 @@ export function CustomerPortal({ quoteId, onBack }) {
           <span className="badge badge-confirmed" style={{ fontSize: '12.5px', padding: '6px 14px' }}>
             Active Order
           </span>
+        </div>
+      )}
+
+      {/* Shipment Delivery & Logistics Tracking Timeline (Phase 8 Multi-Warehouse Split) */}
+      {(isConfirmed || shipments.length > 0) && (
+        <div
+          className="card"
+          style={{
+            marginBottom: '20px',
+            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div className="card-header" style={{ paddingBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Truck size={18} color="var(--primary)" />
+              <span className="card-title" style={{ fontSize: '14.5px', fontWeight: 700 }}>
+                Regional Depots Delivery & Logistics Tracking
+              </span>
+            </div>
+            <span className="badge badge-confirmed" style={{ fontSize: '11px' }}>
+              {shipments.length} Fulfillment Package{shipments.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+            Your order is being fulfilled across continental regional fulfillment depots to expedite transit delivery times.
+          </p>
+
+          {shipments.length === 0 ? (
+            <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+              Fulfillment allocation scheduled. Split shipments will appear here with carrier tracking numbers once processed.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+              {shipments.map((s) => {
+                const isShipped = s.status === 'Shipped' || s.status === 'Delivered';
+                return (
+                  <div
+                    key={s.id}
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-canvas)',
+                      border: '1px solid var(--border-subtle)',
+                      borderLeft: isShipped ? '4px solid var(--success)' : '4px solid var(--warning)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700 }}>
+                        <MapPin size={14} color="var(--primary)" />
+                        <span>{s.warehouseName || s.warehouseCode || 'Regional Depot'}</span>
+                      </div>
+                      <span
+                        className={isShipped ? 'badge badge-approved' : 'badge badge-pending'}
+                        style={{ fontSize: '10px', textTransform: 'uppercase' }}
+                      >
+                        {isShipped ? 'Dispatched / In Transit' : 'Packing in Depot'}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                      Deliverables:{' '}
+                      <strong style={{ color: 'var(--text-main)' }}>
+                        {(s.items || []).map((it) => `${it.productName || it.productId} (x${it.quantity})`).join(', ') || `${s.totalUnits || 1} units`}
+                      </strong>
+                    </div>
+
+                    <div style={{ fontSize: '11.5px', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Carrier:</span>
+                        <span style={{ fontWeight: 600 }}>{s.carrier || 'Continental Freight Express'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Tracking Ref:</span>
+                        <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)' }}>
+                          {s.trackingNumber || 'Pending Carrier Manifest'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {backorders.length > 0 && (
+            <div
+              style={{
+                marginTop: '14px',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                backgroundColor: '#fffbeb',
+                border: '1px solid #fde68a',
+                fontSize: '12px',
+                color: '#92400e',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <Package size={16} />
+              <span>
+                <strong>Factory Direct Notice:</strong> {backorders.reduce((sum, b) => sum + b.quantity, 0)} units scheduled for direct manufacturer fulfillment within 5-7 business days.
+              </span>
+            </div>
+          )}
         </div>
       )}
 

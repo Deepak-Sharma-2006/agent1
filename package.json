@@ -11,7 +11,9 @@
     "check:hallucinations": "node --experimental-strip-types scripts/anti-hallucination-checker.ts scripts",
     "pentest": "node --experimental-strip-types scripts/pen-test-runner.ts",
     "token:budget": "node --experimental-strip-types scripts/token-budget-guard.ts",
-    "harness:eval": "node --experimental-strip-types .agents/harness/eval-runner.ts"
+    "harness:eval": "node --experimental-strip-types .agents/harness/eval-runner.ts",
+    "skill:list": "node --experimental-strip-types scripts/skill-finder.ts list",
+    "skill:search": "node --experimental-strip-types scripts/skill-finder.ts search"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

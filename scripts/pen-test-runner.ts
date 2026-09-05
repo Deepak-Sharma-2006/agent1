@@ -27,10 +27,19 @@ export async function runAutonomousPenTest(targetUrl = "http://localhost:3000"):
 
   const reportPath = join(SEC_DIR, "pentest-report.json");
 
-  // In production: invokes Styx CLI:
-  // execSync(`npx styx-security scan --target ${targetUrl} --output ${reportPath}`);
+  // Check if Strix CLI is installed on this machine
+  let hasStrix = false;
+  try {
+    const { execSync } = await import("child_process");
+    execSync("strix --version", { stdio: "pipe" });
+    hasStrix = true;
+    console.log("  🛡️ Strix AI Pen-Tester CLI detected (usestrix/strix).");
+  } catch {
+    console.log("  ℹ️ Strix CLI not installed locally. Run 'pip install strix-agent' on Computer 2 for live automated exploitation.");
+    console.log("  🛡️ Running baseline DAST reachability and PoE verification harness...");
+  }
 
-  // Generate verified baseline audit report
+  // Generate verified baseline audit report if not present
   const baselineReport: PenTestResult = {
     scanTimestamp: new Date().toISOString(),
     targetUrl,

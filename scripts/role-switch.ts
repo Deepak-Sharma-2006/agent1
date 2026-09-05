@@ -117,11 +117,13 @@ export function executeRoleHandoff(toOperator?: string): boolean {
     releaseLock(profile.activeLeaseDomain, currentOp);
     profile.phase += 1;
     profile.role = "Alpha";
-    profile.operator = targetOp;
+    // Odd phases: Computer1 is Alpha | Even phases: Computer2 is Alpha
+    const expectedAlpha = profile.phase % 2 === 1 ? "Computer1" : "Computer2";
+    profile.operator = toOperator || expectedAlpha;
     saveProfile(profile);
     console.log(`🎉 [Phase Advanced] Phase ${profile.phase - 1} verified & closed!`);
-    console.log(`🚀 [Phase Inversion] ${targetOp} is now ALPHA for Phase ${profile.phase}.`);
-    console.log(`👉 Next Action for ${targetOp}: Run 'npm run role:alpha' and begin implementation.\n`);
+    console.log(`🚀 [Phase Inversion] ${profile.operator} is now ALPHA for Phase ${profile.phase}.`);
+    console.log(`👉 Next Action for ${profile.operator}: Run 'npm run role:alpha' and begin implementation.\n`);
     return true;
   }
 }

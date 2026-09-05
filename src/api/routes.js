@@ -266,6 +266,88 @@ export function createApiRouter({ quotationService, repositories }) {
       }
     }
 
+    // Customer Portal View (Sanitized & Cloaked Proposal with zero internal cost metrics)
+    const portalQuoteMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/portal$/);
+    if (portalQuoteMatch && method === "GET") {
+      const quoteId = portalQuoteMatch[1];
+      try {
+        const quotation = quotationService.getQuotationById(quoteId);
+        const customer = customerRepository.findById(quotation.customerId);
+
+        // Strip internal margins, COGS, risk score, and profit metrics before network egress
+        const netTotal = quotation.netTotalCents !== undefined ? quotation.netTotalCents : quotation.totalCents;
+        const subtotal = quotation.subtotalCents || 0;
+        const discountTotal = quotation.discountTotalCents !== undefined ? quotation.discountTotalCents : (quotation.discountAmountCents || 0);
+        const discountPct = quotation.discountPercentage !== undefined
+          ? quotation.discountPercentage
+          : (subtotal > 0 ? Math.round((discountTotal / subtotal) * 100) : 0);
+
+        const sanitizedQuote = {
+          id: quotation.id,
+          quoteNumber: quotation.quoteNumber || quotation.id,
+          customerId: quotation.customerId,
+          salesRepId: quotation.salesRepId,
+          status: quotation.status,
+          version: quotation.version,
+          subtotalCents: subtotal,
+          discountAmountCents: discountTotal,
+          discountTotalCents: discountTotal,
+          discountPercentage: discountPct,
+          discountPct: discountPct,
+          taxAmountCents: quotation.taxAmountCents || 0,
+          totalCents: netTotal,
+          netTotalCents: netTotal,
+          customerCounterNotes: quotation.customerCounterNotes || "",
+          lastApprovedSnapshot: quotation.lastApprovedSnapshot
+            ? {
+                version: quotation.lastApprovedSnapshot.version,
+                discountPercentage: quotation.lastApprovedSnapshot.discountPercentage !== undefined
+                  ? quotation.lastApprovedSnapshot.discountPercentage
+                  : quotation.lastApprovedSnapshot.approvedDiscountPct,
+                totalCents: quotation.lastApprovedSnapshot.totalCents !== undefined
+                  ? quotation.lastApprovedSnapshot.totalCents
+                  : quotation.lastApprovedSnapshot.approvedNetTotalCents,
+                approvedBy: quotation.lastApprovedSnapshot.approvedBy || quotation.lastApprovedSnapshot.approverName || "Management",
+                approvedAt: quotation.lastApprovedSnapshot.approvedAt,
+              }
+            : null,
+          createdAt: quotation.createdAt,
+          updatedAt: quotation.updatedAt,
+          expiresAt: quotation.expiresAt || quotation.validUntil,
+          lines: (quotation.lines || []).map((l) => ({
+            id: l.id,
+            productId: l.productId,
+            variantId: l.variantId,
+            description: l.description || l.productName,
+            productName: l.productName || l.description,
+            quantity: l.quantity,
+            listPriceCents: l.listPriceCents !== undefined ? l.listPriceCents : l.unitListPriceCents,
+            unitListPriceCents: l.unitListPriceCents !== undefined ? l.unitListPriceCents : l.listPriceCents,
+            discountPercentage: l.discountPercentage !== undefined ? l.discountPercentage : (l.discountPct || 0),
+            discountPct: l.discountPct !== undefined ? l.discountPct : (l.discountPercentage || 0),
+            netPriceCents: l.netPriceCents !== undefined ? l.netPriceCents : l.netUnitPriceCents,
+            netUnitPriceCents: l.netUnitPriceCents !== undefined ? l.netUnitPriceCents : l.netPriceCents,
+            lineTotalCents: l.lineTotalCents !== undefined ? l.lineTotalCents : l.lineSubtotalCents,
+            lineSubtotalCents: l.lineSubtotalCents !== undefined ? l.lineSubtotalCents : l.lineTotalCents,
+            category: l.category,
+          })),
+        };
+
+        sendJsonResponse(res, 200, {
+          success: true,
+          quotation: sanitizedQuote,
+          customer: customer
+            ? { id: customer.id, name: customer.name, tier: customer.tier }
+            : { id: quotation.customerId, name: "Customer", tier: "Bronze" },
+        });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 404;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
     // Add Line Item
     const addLineMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/lines$/);
     if (addLineMatch && method === "POST") {

@@ -7,7 +7,7 @@
     "build": "vite build client",
     "dev": "vite client",
     "start": "node src/index.js",
-    "test:unit": "node --test tests/bootstrap.test.js tests/phase1-entities.test.js tests/phase2-api.test.js tests/phase3-persistence.test.js tests/phase4-realtime.test.js tests/phase5-frontend.test.js tests/phase6-cpq-studio.test.js",
+    "test:unit": "node --test --test-concurrency=1 tests/bootstrap.test.js tests/phase1-entities.test.js tests/phase2-api.test.js tests/phase3-persistence.test.js tests/phase4-realtime.test.js tests/phase5-frontend.test.js tests/phase6-cpq-studio.test.js tests/phase7-portal-fallback.test.js",
     "test": "npm run test:unit && npm run harness:eval",
     "role:status": "node --experimental-strip-types scripts/role-switch.ts status",
     "role:alpha": "node --experimental-strip-types scripts/role-switch.ts alpha",

@@ -8,6 +8,7 @@ import {
   Truck,
   Sliders,
   ShieldCheck,
+  ExternalLink,
 } from 'lucide-react';
 
 export function Sidebar({ currentView, setCurrentView }) {
@@ -16,6 +17,7 @@ export function Sidebar({ currentView, setCurrentView }) {
   const navItems = [
     { id: 'dashboard', label: isWarehouse() ? 'Fulfillment Center' : 'Dashboard', icon: LayoutDashboard, visible: true },
     { id: 'quotes', label: isCustomer() ? 'My Proposals' : isWarehouse() ? 'Dispatch Orders' : 'Quotation Studio', icon: FileText, visible: true },
+    { id: 'portal', label: 'Customer Portal', icon: ExternalLink, visible: !isWarehouse() },
     { id: 'rules', label: 'CPQ Rule Matrix', icon: Sliders, visible: canManageRules() },
     { id: 'chat', label: 'Negotiation Feed', icon: MessageSquare, visible: canNegotiate() },
     { id: 'catalog', label: 'Product Catalog', icon: Package, visible: !isWarehouse() },

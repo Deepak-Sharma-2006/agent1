@@ -10,10 +10,21 @@ import { NegotiationChat } from './pages/NegotiationChat';
 import { WarehouseView } from './pages/WarehouseView';
 import { CatalogView } from './pages/CatalogView';
 import { RuleMatrixBuilder } from './pages/RuleMatrixBuilder';
+import { CustomerPortal } from './pages/CustomerPortal';
 
 function MainLayout() {
-  const [currentView, setCurrentView] = useState('dashboard');
-  const [activeQuoteId, setActiveQuoteId] = useState(null);
+  const [currentView, setCurrentView] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/portal')) {
+      return 'portal';
+    }
+    return 'dashboard';
+  });
+  const [activeQuoteId, setActiveQuoteId] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/portal/')) {
+      return window.location.pathname.replace('/portal/', '') || 'Q-2026-001';
+    }
+    return null;
+  });
   const { canManageRules, canNegotiate, isCustomer, isWarehouse, canApprove } = useAuth();
 
   // Active view guardrails to strictly prevent unauthorized route access on role switch
@@ -27,13 +38,38 @@ function MainLayout() {
 
   const handleOpenQuote = (id) => {
     setActiveQuoteId(id);
-    setCurrentView('quotes');
+    if (isCustomer()) {
+      setCurrentView('portal');
+    } else {
+      setCurrentView('quotes');
+    }
+  };
+
+  const handleOpenPortal = (id) => {
+    setActiveQuoteId(id);
+    setCurrentView('portal');
   };
 
   const handleBackToDashboard = () => {
     setActiveQuoteId(null);
     setCurrentView('dashboard');
   };
+
+  // Standalone external portal link mode
+  const isStandalonePortal =
+    typeof window !== 'undefined' && window.location.pathname.startsWith('/portal');
+
+  if (isStandalonePortal) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-canvas, #f8fafc)' }}>
+        <Navbar />
+        <main style={{ padding: '24px 0' }}>
+          <CustomerPortal quoteId={activeQuoteId || 'Q-2026-001'} />
+        </main>
+        <SwitchAccountModal />
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -43,7 +79,14 @@ function MainLayout() {
         <main className="app-content">
           {currentView === 'dashboard' && <Dashboard onOpenQuote={handleOpenQuote} />}
           {currentView === 'quotes' && (
-            <QuotationStudio quoteId={activeQuoteId} onBack={handleBackToDashboard} />
+            <QuotationStudio
+              quoteId={activeQuoteId}
+              onBack={handleBackToDashboard}
+              onOpenPortal={handleOpenPortal}
+            />
+          )}
+          {currentView === 'portal' && (
+            <CustomerPortal quoteId={activeQuoteId} onBack={handleBackToDashboard} />
           )}
           {currentView === 'rules' && <RuleMatrixBuilder />}
           {currentView === 'chat' && <NegotiationChat initialQuoteId={activeQuoteId} />}

@@ -20,12 +20,15 @@ import {
   Check,
   Truck,
   Package,
+  ExternalLink,
+  RotateCcw,
 } from 'lucide-react';
 import { MarginSpeedometerGauge } from '../components/MarginSpeedometerGauge';
 import { TierSpendVelocityCurve } from '../components/TierSpendVelocityCurve';
 import { BlendedRiskRadarChart } from '../components/BlendedRiskRadarChart';
+import { FallbackBanner } from '../components/FallbackBanner';
 
-export function QuotationStudio({ quoteId, onBack }) {
+export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
   const { currentUser, canApprove, canViewInternalMargins, isCustomer, isWarehouse, canCreateQuotes } = useAuth();
   const { sendAction, lastEvent, addToast } = useWebSocket();
 
@@ -276,6 +279,35 @@ export function QuotationStudio({ quoteId, onBack }) {
     }
   };
 
+  // Manager / Finance Reject & Revert to Graceful Fallback
+  const handleRejectAndFallback = async () => {
+    try {
+      setSaving(true);
+      const res = await fetch(`/api/quotes/${quote.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approverId: currentUser.id,
+          approverRole: currentUser.role,
+          approverName: currentUser.name,
+          rejectionReason: 'Counter-discount breaches enterprise gross margin floors.',
+          expectedVersion: quote.version,
+        }),
+      }).then((r) => r.json());
+
+      if (res.success) {
+        setQuote(res.quotation);
+        addToast('Fallback Reverted', 'Counter-offer rejected. Terms rolled back to Last Approved Best Offer.', 'warning');
+      } else {
+        addToast('Rejection Failed', res.error, 'danger');
+      }
+    } catch {
+      addToast('Error', 'Failed to execute fallback reversion', 'danger');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Customer Counter-Offer
   const handleCounterOffer = async () => {
     try {
@@ -376,7 +408,18 @@ export function QuotationStudio({ quoteId, onBack }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {onOpenPortal && !isWarehouse() && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => onOpenPortal(quote.id)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <ExternalLink size={15} />
+              <span>Customer Portal View</span>
+            </button>
+          )}
+
           {canCreateQuotes() && quote.status === 'Draft' && (
             <>
               <button className="btn btn-secondary" onClick={handleSave} disabled={saving}>
@@ -391,10 +434,28 @@ export function QuotationStudio({ quoteId, onBack }) {
           )}
 
           {canApprove() && quote.status === 'PendingApproval' && (
-            <button className="btn btn-success" onClick={handleApprove} disabled={saving}>
-              <CheckCircle size={15} />
-              <span>Authorize Quotation</span>
-            </button>
+            <>
+              <button
+                className="btn btn-secondary"
+                onClick={handleRejectAndFallback}
+                disabled={saving}
+                style={{
+                  borderColor: 'var(--danger-border, #fecaca)',
+                  color: 'var(--danger, #dc2626)',
+                  backgroundColor: '#fff',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <XCircle size={15} />
+                <span>Reject & Revert to Fallback</span>
+              </button>
+              <button className="btn btn-success" onClick={handleApprove} disabled={saving}>
+                <CheckCircle size={15} />
+                <span>Authorize Quotation</span>
+              </button>
+            </>
           )}
 
           {isCustomer() && quote.status === 'Approved' && (
@@ -425,6 +486,9 @@ export function QuotationStudio({ quoteId, onBack }) {
           )}
         </div>
       </div>
+
+      {/* Graceful Fallback Notice Banner */}
+      <FallbackBanner quotation={quote} isCustomer={false} />
 
       {/* Main Grid: Line Items + Real-Time Deal Health */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.15fr', gap: '20px' }}>

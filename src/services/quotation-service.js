@@ -115,7 +115,28 @@ export class QuotationService {
     }
 
     quotation.approvalHistory = quotation.approvalChain || [];
-    quotation.lastApprovedSnapshot = quotation.fallbackSnapshot || null;
+    if (quotation.fallbackSnapshot) {
+      const snap = quotation.fallbackSnapshot;
+      const discountPct = snap.approvedDiscountPct !== undefined
+        ? snap.approvedDiscountPct
+        : (snap.discountPercentage !== undefined ? snap.discountPercentage : (snap.discountPct || 0));
+      const netTotal = snap.approvedNetTotalCents !== undefined
+        ? snap.approvedNetTotalCents
+        : (snap.totalCents !== undefined ? snap.totalCents : (snap.netTotalCents || 0));
+
+      quotation.lastApprovedSnapshot = {
+        ...snap,
+        discountPercentage: discountPct,
+        discountPct: discountPct,
+        totalCents: netTotal,
+        netTotalCents: netTotal,
+        version: snap.version || quotation.version,
+        approvedBy: snap.approverName || snap.approverRole || "Management",
+      };
+    } else {
+      quotation.lastApprovedSnapshot = null;
+    }
+
     if (!quotation.appliedIncentives) {
       quotation.appliedIncentives = [];
     }
@@ -126,7 +147,32 @@ export class QuotationService {
           line.discountPercentage = line.discountPct;
           line.unitDiscountPercentage = line.discountPct;
         }
+        if (line.unitListPriceCents !== undefined && line.listPriceCents === undefined) {
+          line.listPriceCents = line.unitListPriceCents;
+        }
+        if (line.netUnitPriceCents !== undefined && line.netPriceCents === undefined) {
+          line.netPriceCents = line.netUnitPriceCents;
+        }
+        if (line.lineSubtotalCents !== undefined && line.lineTotalCents === undefined) {
+          line.lineTotalCents = line.lineSubtotalCents;
+        }
+        if (line.productName && !line.description) {
+          line.description = line.productName;
+        }
       }
+    }
+
+    if (quotation.subtotalCents > 0 && quotation.discountTotalCents !== undefined) {
+      quotation.discountPercentage = Math.round((quotation.discountTotalCents / quotation.subtotalCents) * 100);
+      quotation.discountPct = quotation.discountPercentage;
+    } else if (quotation.discountPercentage !== undefined && quotation.discountPct === undefined) {
+      quotation.discountPct = quotation.discountPercentage;
+    }
+    if (quotation.netTotalCents !== undefined) {
+      quotation.totalCents = quotation.netTotalCents;
+    }
+    if (quotation.discountTotalCents !== undefined) {
+      quotation.discountAmountCents = quotation.discountTotalCents;
     }
   }
 
@@ -797,6 +843,8 @@ export class QuotationService {
     quotation.blendedRiskScore = assessment.blendedRiskScore;
     quotation.escalationTier = assessment.requiredTier;
     quotation.status = "PendingApproval";
+    quotation.discountPercentage = clampedRequestedDiscount;
+    quotation.discountPct = clampedRequestedDiscount;
     quotation.customerCounterNotes = customerNotes || "";
 
     quotation.approvalChain.push({

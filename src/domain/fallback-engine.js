@@ -28,13 +28,19 @@ export class FallbackEngine {
     return {
       snapshotId: `snap-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       quotationId: quotation.id,
+      version: quotation.version || 1,
+      discountPercentage: avgDiscountPct,
+      discountPct: avgDiscountPct,
       approvedDiscountPct: avgDiscountPct,
       approvedIncentiveCents: quotation.incentiveTotalCents || 0,
       approvedSubtotalCents: quotation.subtotalCents,
-      approvedNetTotalCents: quotation.netTotalCents,
+      approvedNetTotalCents: quotation.netTotalCents !== undefined ? quotation.netTotalCents : quotation.totalCents,
+      totalCents: quotation.netTotalCents !== undefined ? quotation.netTotalCents : quotation.totalCents,
+      netTotalCents: quotation.netTotalCents !== undefined ? quotation.netTotalCents : quotation.totalCents,
       approvedMarginPct: quotation.grossMarginPct,
       approverRole,
       approverName,
+      approvedBy: approverName || approverRole || "Management",
       reason,
       lines: JSON.parse(JSON.stringify(lines)),
       approvedAt: new Date().toISOString(),
@@ -106,6 +112,11 @@ export class FallbackEngine {
     quotation.subtotalCents = snapshot.approvedSubtotalCents;
     quotation.incentiveTotalCents = snapshot.approvedIncentiveCents;
     quotation.netTotalCents = snapshot.approvedNetTotalCents;
+    quotation.totalCents = snapshot.approvedNetTotalCents;
+    quotation.discountTotalCents = snapshot.approvedSubtotalCents - snapshot.approvedNetTotalCents;
+    quotation.discountAmountCents = quotation.discountTotalCents;
+    quotation.discountPercentage = snapshot.approvedDiscountPct !== undefined ? snapshot.approvedDiscountPct : snapshot.discountPercentage;
+    quotation.discountPct = quotation.discountPercentage;
     quotation.grossMarginPct = snapshot.approvedMarginPct;
     quotation.status = 'Approved'; // Reverted to active approved offer for 1-click buyer confirmation
     quotation.escalationTier = snapshot.approverRole === 'Finance' ? 'Finance' : 'SalesManager';

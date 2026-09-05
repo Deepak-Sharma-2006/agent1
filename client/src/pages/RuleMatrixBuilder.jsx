@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Pagination } from '../components/Pagination';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -19,6 +20,12 @@ export function RuleMatrixBuilder() {
   const [servicesDiscount, setServicesDiscount] = useState(8);
   const [subscriptionDiscount, setSubscriptionDiscount] = useState(15);
   const [hypotheticalMargin, setHypotheticalMargin] = useState(23.5);
+
+  // Pagination states
+  const [tierPage, setTierPage] = useState(1);
+  const [tierPageSize, setTierPageSize] = useState(4);
+  const [catPage, setCatPage] = useState(1);
+  const [catPageSize, setCatPageSize] = useState(3);
 
   // Dynamic calculation for simulator
   const tierCeilings = {
@@ -113,49 +120,37 @@ export function RuleMatrixBuilder() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>
-                      <span className="badge" style={{ backgroundColor: 'rgba(205, 127, 50, 0.15)', color: '#cd7f32', border: '1px solid #cd7f3240' }}>
-                        Bronze
-                      </span>
-                    </td>
-                    <td>$0 - $24,999</td>
-                    <td><strong>5.0%</strong></td>
-                    <td>Net 0 (Pre-pay)</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span className="badge" style={{ backgroundColor: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8', border: '1px solid #94a3b840' }}>
-                        Silver
-                      </span>
-                    </td>
-                    <td>$25,000 - $99,999</td>
-                    <td><strong>10.0%</strong></td>
-                    <td>Net 15</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span className="badge" style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid #f59e0b40' }}>
-                        Gold
-                      </span>
-                    </td>
-                    <td>$100,000 - $349,999</td>
-                    <td><strong>15.0%</strong></td>
-                    <td>Net 30</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span className="badge" style={{ backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid #38bdf840' }}>
-                        Platinum
-                      </span>
-                    </td>
-                    <td>$350,000+</td>
-                    <td><strong>20.0%</strong></td>
-                    <td>Net 45 / 60</td>
-                  </tr>
+                  {[
+                    { tier: 'Bronze', range: '$0 - $24,999', ceiling: '5.0%', terms: 'Net 0 (Pre-pay)', color: '#cd7f32', bg: 'rgba(205, 127, 50, 0.15)', border: '#cd7f3240' },
+                    { tier: 'Silver', range: '$25,000 - $99,999', ceiling: '10.0%', terms: 'Net 15', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)', border: '#94a3b840' },
+                    { tier: 'Gold', range: '$100,000 - $349,999', ceiling: '15.0%', terms: 'Net 30', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: '#f59e0b40' },
+                    { tier: 'Platinum', range: '$350,000+', ceiling: '20.0%', terms: 'Net 45 / 60', color: '#0284c7', bg: 'rgba(2, 132, 199, 0.15)', border: '#38bdf840' },
+                  ].slice((tierPage - 1) * tierPageSize, tierPage * tierPageSize).map((row) => (
+                    <tr key={row.tier}>
+                      <td>
+                        <span className="badge" style={{ backgroundColor: row.bg, color: row.color, border: `1px solid ${row.border}` }}>
+                          {row.tier}
+                        </span>
+                      </td>
+                      <td>{row.range}</td>
+                      <td><strong>{row.ceiling}</strong></td>
+                      <td>{row.terms}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
+            <Pagination
+              currentPage={tierPage}
+              totalItems={4}
+              pageSize={tierPageSize}
+              pageSizeOptions={[2, 4]}
+              onPageChange={setTierPage}
+              onPageSizeChange={(newSize) => {
+                setTierPageSize(newSize);
+                setTierPage(1);
+              }}
+            />
           </div>
 
           {/* 2. Product Category Ceilings */}
@@ -177,27 +172,32 @@ export function RuleMatrixBuilder() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><strong>Hardware</strong></td>
-                    <td>15.0%</td>
-                    <td>1.2x</td>
-                    <td><span style={{ color: 'var(--danger)' }}>High (Pass-through cost)</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Services</strong></td>
-                    <td>10.0%</td>
-                    <td>1.5x</td>
-                    <td><span style={{ color: 'var(--warning)' }}>Critical (Fixed hourly labor)</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Subscriptions</strong></td>
-                    <td>20.0%</td>
-                    <td>0.8x</td>
-                    <td><span style={{ color: 'var(--success)' }}>Low (High gross margin SaaS)</span></td>
-                  </tr>
+                  {[
+                    { cat: 'Hardware', cap: '15.0%', mult: '1.2x', sensitivity: 'High (Pass-through cost)', sensColor: 'var(--danger)' },
+                    { cat: 'Services', cap: '10.0%', mult: '1.5x', sensitivity: 'Critical (Fixed hourly labor)', sensColor: 'var(--warning)' },
+                    { cat: 'Subscriptions', cap: '20.0%', mult: '0.8x', sensitivity: 'Low (High gross margin SaaS)', sensColor: 'var(--success)' },
+                  ].slice((catPage - 1) * catPageSize, catPage * catPageSize).map((row) => (
+                    <tr key={row.cat}>
+                      <td><strong>{row.cat}</strong></td>
+                      <td>{row.cap}</td>
+                      <td>{row.mult}</td>
+                      <td><span style={{ color: row.sensColor }}>{row.sensitivity}</span></td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
+            <Pagination
+              currentPage={catPage}
+              totalItems={3}
+              pageSize={catPageSize}
+              pageSizeOptions={[2, 3]}
+              onPageChange={setCatPage}
+              onPageSizeChange={(newSize) => {
+                setCatPageSize(newSize);
+                setCatPage(1);
+              }}
+            />
           </div>
 
           {/* 3. Approval Routing Paths */}

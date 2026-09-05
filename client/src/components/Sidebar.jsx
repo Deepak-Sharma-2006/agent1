@@ -19,7 +19,7 @@ export function Sidebar({ currentView, setCurrentView }) {
 
   const navItems = [
     { id: 'dashboard', label: isWarehouse() ? 'Fulfillment Center' : isCustomer() ? 'Orders & Proposals' : 'Dashboard', icon: LayoutDashboard, visible: true },
-    { id: 'admin-hub', label: 'Platform Administration', icon: Settings, visible: (isAdmin && isAdmin()) || canManageRules() },
+    { id: 'admin-hub', label: 'Platform Administration', icon: Settings, visible: Boolean(isAdmin && isAdmin()) },
     { id: 'quotes', label: isWarehouse() ? 'Dispatch Orders' : 'Quotation Studio', icon: FileText, visible: !isCustomer() },
     { id: 'portal', label: 'Customer Portal', icon: ExternalLink, visible: isCustomer() },
     { id: 'approvals', label: 'Managerial Inbox', icon: ShieldCheck, visible: canApprove() },
@@ -28,7 +28,7 @@ export function Sidebar({ currentView, setCurrentView }) {
     { id: 'catalog', label: 'Product Catalog', icon: Package, visible: !isWarehouse() && !isCustomer() },
     { id: 'billing', label: 'Billing & Invoices', icon: CreditCard, visible: !isCustomer() && !isWarehouse() },
     { id: 'warehouse', label: isWarehouse() ? 'Depot Inventory' : 'Warehouse Hubs', icon: Truck, visible: !isCustomer() },
-    { id: 'database', label: 'Database Explorer', icon: Database, visible: !isCustomer() },
+    { id: 'database', label: 'Database Explorer', icon: Database, visible: Boolean(isAdmin && isAdmin()) },
   ];
 
   return (

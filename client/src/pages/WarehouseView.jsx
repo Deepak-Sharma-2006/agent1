@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
+import { Pagination } from '../components/Pagination';
 import {
   Truck,
   MapPin,
@@ -32,6 +33,14 @@ export function WarehouseView() {
   const [shipments, setShipments] = useState([]);
   const [backorders, setBackorders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination states
+  const [fleetPage, setFleetPage] = useState(1);
+  const [fleetPageSize, setFleetPageSize] = useState(6);
+  const [shipmentPage, setShipmentPage] = useState(1);
+  const [shipmentPageSize, setShipmentPageSize] = useState(5);
+  const [backorderPage, setBackorderPage] = useState(1);
+  const [backorderPageSize, setBackorderPageSize] = useState(5);
 
   // Tab navigation: 'fleet' | 'shipments' | 'backorders'
   const [activeTab, setActiveTab] = useState('fleet');
@@ -155,6 +164,10 @@ export function WarehouseView() {
     const matchesStatus = statusFilter === 'ALL' || s.status === statusFilter;
     return matchesWh && matchesStatus;
   });
+
+  const paginatedWarehouses = warehouses.slice((fleetPage - 1) * fleetPageSize, fleetPage * fleetPageSize);
+  const paginatedShipments = filteredShipments.slice((shipmentPage - 1) * shipmentPageSize, shipmentPage * shipmentPageSize);
+  const paginatedBackorders = backorders.slice((backorderPage - 1) * backorderPageSize, backorderPage * backorderPageSize);
 
   // Calculate network-wide totals
   const totalPhysical = inventory.reduce((sum, i) => sum + (i.physicalStock || 0), 0);
@@ -306,8 +319,9 @@ export function WarehouseView() {
         <>
           {/* TAB 1: 6-Depot Fleet & Live ATP Heatmap */}
           {activeTab === 'fleet' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
-              {warehouses.map((wh) => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
+                {paginatedWarehouses.map((wh) => {
                 const whInventory = inventory.filter((inv) => inv.warehouseId === wh.id);
                 const totalUnits = whInventory.reduce((sum, i) => sum + (i.physicalStock || 0), 0);
                 const reservedUnits = whInventory.reduce((sum, i) => sum + (i.reservedStock || 0), 0);
@@ -475,6 +489,22 @@ export function WarehouseView() {
                 );
               })}
             </div>
+            {warehouses.length > 0 && (
+              <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                <Pagination
+                  currentPage={fleetPage}
+                  totalItems={warehouses.length}
+                  pageSize={fleetPageSize}
+                  pageSizeOptions={[6, 12, 24]}
+                  onPageChange={setFleetPage}
+                  onPageSizeChange={(newSize) => {
+                    setFleetPageSize(newSize);
+                    setFleetPage(1);
+                  }}
+                />
+              </div>
+            )}
+            </div>
           )}
 
           {/* TAB 2: Split Shipment Dispatch Queue */}
@@ -543,7 +573,7 @@ export function WarehouseView() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {filteredShipments.map((ship) => {
+                  {paginatedShipments.map((ship) => {
                     const isShipped = ship.status === 'Shipped' || ship.status === 'Delivered';
                     const wh = warehouses.find((w) => w.id === ship.warehouseId) || {};
 
@@ -656,6 +686,21 @@ export function WarehouseView() {
                   })}
                 </div>
               )}
+              {filteredShipments.length > 0 && (
+                <div style={{ marginTop: '16px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                  <Pagination
+                    currentPage={shipmentPage}
+                    totalItems={filteredShipments.length}
+                    pageSize={shipmentPageSize}
+                    pageSizeOptions={[5, 10, 25]}
+                    onPageChange={setShipmentPage}
+                    onPageSizeChange={(newSize) => {
+                      setShipmentPageSize(newSize);
+                      setShipmentPage(1);
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -704,7 +749,7 @@ export function WarehouseView() {
                       </tr>
                     </thead>
                     <tbody>
-                      {backorders.map((bo) => {
+                      {paginatedBackorders.map((bo) => {
                         const prod = products[bo.productId] || {};
                         return (
                           <tr key={bo.id} style={{ borderBottom: '1px solid var(--border-subtle)', fontSize: '12.5px' }}>
@@ -734,6 +779,21 @@ export function WarehouseView() {
                       })}
                     </tbody>
                   </table>
+                </div>
+              )}
+              {backorders.length > 0 && (
+                <div style={{ marginTop: '16px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                  <Pagination
+                    currentPage={backorderPage}
+                    totalItems={backorders.length}
+                    pageSize={backorderPageSize}
+                    pageSizeOptions={[5, 10, 25]}
+                    onPageChange={setBackorderPage}
+                    onPageSizeChange={(newSize) => {
+                      setBackorderPageSize(newSize);
+                      setBackorderPage(1);
+                    }}
+                  />
                 </div>
               )}
             </div>

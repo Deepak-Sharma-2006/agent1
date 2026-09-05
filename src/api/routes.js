@@ -1212,6 +1212,107 @@ export function createApiRouter({ quotationService, repositories }) {
       }
     }
 
+    // Native CSV Export for Admin / Reports (Direct download to Downloads folder)
+    if ((pathname === "/api/reports/export/csv" || pathname === "/api/admin/export/csv") && method === "GET") {
+      try {
+        const period = (parsedUrl.searchParams.get("period") || "all").toLowerCase();
+        const salesRepId = parsedUrl.searchParams.get("salesRepId") || undefined;
+        const statusFilter = parsedUrl.searchParams.get("status") || undefined;
+        const categoryFilter = parsedUrl.searchParams.get("category") || undefined;
+
+        const allQuotes = quotationService.listQuotations({});
+        const now = new Date();
+
+        let minDate = null;
+        if (period === "today") {
+          minDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        } else if (period === "week") {
+          minDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (period === "month") {
+          minDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (period === "quarter") {
+          minDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        }
+
+        let exportQuotes = allQuotes.filter((q) => {
+          if (minDate && q.createdAt) {
+            const qDate = new Date(q.createdAt);
+            if (qDate < minDate) return false;
+          }
+          if (salesRepId && salesRepId !== "all" && q.salesRepId !== salesRepId) {
+            return false;
+          }
+          if (statusFilter && statusFilter !== "all" && q.status !== statusFilter) {
+            return false;
+          }
+          if (categoryFilter && categoryFilter !== "all") {
+            const hasCat = (q.lines || []).some(
+              (l) => (l.category || "").toLowerCase() === categoryFilter.toLowerCase()
+            );
+            if (!hasCat) return false;
+          }
+          return true;
+        });
+
+        // If strict filter yielded empty, fallback to all quotes so user gets populated records
+        if (exportQuotes.length === 0 && allQuotes.length > 0 && period === "all") {
+          exportQuotes = allQuotes;
+        }
+
+        const headers = [
+          "Quote ID",
+          "Quote Number",
+          "Customer ID",
+          "Customer Name",
+          "Sales Rep",
+          "Status",
+          "Net Total ($)",
+          "Gross Margin (%)",
+          "Items Count",
+          "Created At",
+        ];
+
+        const rows = exportQuotes.map((q) => {
+          const cust = customerRepository ? customerRepository.findById(q.customerId) : null;
+          const custName = cust ? cust.name : (q.customerId || "N/A");
+          const netTotal = ((q.netTotalCents !== undefined ? q.netTotalCents : (q.totalCents || 0)) / 100).toFixed(2);
+          const margin = q.marginPercentage !== undefined ? `${q.marginPercentage}%` : "0%";
+          const itemCount = Array.isArray(q.lines) ? q.lines.length : 1;
+
+          return [
+            `"${q.id || ''}"`,
+            `"${q.quoteNumber || q.id || ''}"`,
+            `"${q.customerId || ''}"`,
+            `"${custName.replace(/"/g, '""')}"`,
+            `"${(q.salesRepName || q.salesRepId || 'N/A').replace(/"/g, '""')}"`,
+            `"${q.status || 'Draft'}"`,
+            netTotal,
+            `"${margin}"`,
+            itemCount,
+            `"${q.createdAt || ''}"`,
+          ].join(",");
+        });
+
+        const csvString = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+        const dateSlug = new Date().toISOString().slice(0, 10);
+        const filename = `dealflow360_analytics_report_${dateSlug}.csv`;
+
+        res.writeHead(200, {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Content-Length": Buffer.byteLength(csvString, "utf-8"),
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        });
+        res.end(csvString);
+        return true;
+      } catch (err) {
+        sendErrorResponse(res, 500, `CSV Export generation error: ${err.message}`);
+        return true;
+      }
+    }
+
     // Route not handled by API
     return false;
   };

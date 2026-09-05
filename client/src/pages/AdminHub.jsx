@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Pagination } from '../components/Pagination';
 import {
   Package,
   ShieldCheck,
@@ -30,6 +31,14 @@ import {
 export function AdminHub() {
   const { currentUser, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState('analytics');
+
+  // Pagination states
+  const [productPage, setProductPage] = useState(1);
+  const [productPageSize, setProductPageSize] = useState(10);
+  const [warehousePage, setWarehousePage] = useState(1);
+  const [warehousePageSize, setWarehousePageSize] = useState(10);
+  const [analyticsPage, setAnalyticsPage] = useState(1);
+  const [analyticsPageSize, setAnalyticsPageSize] = useState(10);
 
   // Tab 1: Products state
   const [products, setProducts] = useState([]);
@@ -222,37 +231,57 @@ export function AdminHub() {
     }
   };
 
-  // CSV Export for Section A7
+  // CSV Export for Section A7 - Direct native browser download to local Downloads folder
   const handleExportCsv = () => {
-    if (!analyticsData || !analyticsData.quotes || analyticsData.quotes.length === 0) {
-      showNotification('No quotes found matching current filter criteria to export.', 'error');
-      return;
+    try {
+      const params = new URLSearchParams();
+      if (filterPeriod && filterPeriod !== 'all') params.set('period', filterPeriod);
+      if (filterSalesRep && filterSalesRep !== 'all') params.set('salesRepId', filterSalesRep);
+      if (filterStatus && filterStatus !== 'all') params.set('status', filterStatus);
+      if (filterCategory && filterCategory !== 'all') params.set('category', filterCategory);
+
+      const downloadUrl = `/api/reports/export/csv?${params.toString()}`;
+      const filename = `dealflow360_analytics_report_${new Date().toISOString().slice(0, 10)}.csv`;
+
+      // Trigger native browser download directly via anchor with download attribute
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showNotification('Executive Analytics CSV report downloaded to your local Downloads folder!');
+    } catch (err) {
+      console.warn('Native download failed, attempting blob fallback:', err);
+      if (analyticsData && analyticsData.quotes && analyticsData.quotes.length > 0) {
+        const headers = ['Quote ID', 'Quote Number', 'Customer ID', 'Sales Rep', 'Status', 'Net Total ($)', 'Gross Margin (%)', 'Items Count', 'Created At'];
+        const rows = analyticsData.quotes.map((q) => [
+          `"${q.id || ''}"`,
+          `"${q.quoteNumber || 'N/A'}"`,
+          `"${q.customerId || 'N/A'}"`,
+          `"${q.salesRepName || 'N/A'}"`,
+          `"${q.status || 'Draft'}"`,
+          (q.netTotalCents / 100).toFixed(2),
+          q.marginPercentage ? `${q.marginPercentage}%` : '0%',
+          q.itemCount || 1,
+          `"${q.createdAt || 'N/A'}"`,
+        ]);
+        const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `dealflow360_analytics_report_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showNotification('Executive Analytics CSV report downloaded to your local Downloads folder!');
+      } else {
+        showNotification('Failed to download CSV export: ' + err.message, 'error');
+      }
     }
-
-    const headers = ['Quote ID', 'Quote Number', 'Customer ID', 'Sales Rep', 'Status', 'Net Total ($)', 'Gross Margin (%)', 'Items Count', 'Created At'];
-    const rows = analyticsData.quotes.map((q) => [
-      q.id,
-      q.quoteNumber || 'N/A',
-      q.customerId || 'N/A',
-      `"${q.salesRepName || 'N/A'}"`,
-      q.status || 'Draft',
-      (q.netTotalCents / 100).toFixed(2),
-      q.marginPercentage ? `${q.marginPercentage}%` : '0%',
-      q.itemCount || 1,
-      q.createdAt || 'N/A',
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `dealflow360_analytics_report_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    showNotification('Executive Analytics Report exported to CSV successfully!');
   };
 
   // Filtered products list
@@ -266,6 +295,22 @@ export function AdminHub() {
         (p.category && p.category.toLowerCase().includes(q))
     );
   }, [products, productSearch]);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (productPage - 1) * productPageSize;
+    return filteredProducts.slice(start, start + productPageSize);
+  }, [filteredProducts, productPage, productPageSize]);
+
+  const paginatedWarehouses = useMemo(() => {
+    const start = (warehousePage - 1) * warehousePageSize;
+    return warehouses.slice(start, start + warehousePageSize);
+  }, [warehouses, warehousePage, warehousePageSize]);
+
+  const rawAnalyticsQuotes = analyticsData?.quotes || [];
+  const paginatedAnalyticsQuotes = useMemo(() => {
+    const start = (analyticsPage - 1) * analyticsPageSize;
+    return rawAnalyticsQuotes.slice(start, start + analyticsPageSize);
+  }, [rawAnalyticsQuotes, analyticsPage, analyticsPageSize]);
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: '1440px', margin: '0 auto', fontFamily: "'Inter', sans-serif" }}>
@@ -281,26 +326,27 @@ export function AdminHub() {
           borderRadius: '14px',
           color: '#ffffff',
           boxShadow: '0 4px 20px rgba(15, 23, 42, 0.15)',
-          borderBottom: '3px solid #714B67',
+          borderBottom: '3px solid #0284c7',
         }}
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
             <span
               style={{
-                backgroundColor: 'rgba(113, 75, 103, 0.6)',
-                color: '#f3e8ff',
+                backgroundColor: 'rgba(2, 132, 199, 0.25)',
+                color: '#38bdf8',
                 padding: '3px 10px',
                 borderRadius: '6px',
                 fontSize: '11px',
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.6px',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
               }}
             >
               Enterprise Admin Hub
             </span>
-            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Odoo CPQ Specs Sections A1–A7</span>
+            <span style={{ color: '#94a3b8', fontSize: '13px' }}>DealFlow360 Executive Platform</span>
           </div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, margin: 0, letterSpacing: '-0.4px' }}>
             Platform Administration & Executive Control Center
@@ -327,7 +373,7 @@ export function AdminHub() {
                 width: '34px',
                 height: '34px',
                 borderRadius: '8px',
-                backgroundColor: '#714B67',
+                backgroundColor: '#0284c7',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -399,8 +445,8 @@ export function AdminHub() {
                 padding: '12px 18px',
                 border: 'none',
                 background: 'none',
-                borderBottom: isActive ? '3px solid #714B67' : '3px solid transparent',
-                color: isActive ? '#714B67' : '#64748b',
+                borderBottom: isActive ? '3px solid #0284c7' : '3px solid transparent',
+                color: isActive ? '#0284c7' : '#64748b',
                 fontWeight: isActive ? 700 : 500,
                 fontSize: '13.5px',
                 cursor: 'pointer',
@@ -434,7 +480,7 @@ export function AdminHub() {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Filter size={18} color="#714B67" />
+                <Filter size={18} color="#0284c7" />
                 <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
                   Multi-Axis Reporting Dimensions (Section A7)
                 </span>
@@ -471,14 +517,14 @@ export function AdminHub() {
                     alignItems: 'center',
                     gap: '6px',
                     padding: '8px 16px',
-                    backgroundColor: '#714B67',
+                    backgroundColor: '#0284c7',
                     border: 'none',
                     borderRadius: '8px',
                     fontSize: '12.5px',
                     fontWeight: 600,
                     color: '#ffffff',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(113, 75, 103, 0.3)',
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)',
                   }}
                 >
                   <Download size={14} />
@@ -778,7 +824,7 @@ export function AdminHub() {
                             style={{
                               height: '100%',
                               width: `${pct}%`,
-                              backgroundColor: t.tier === 'Platinum' ? '#714B67' : t.tier === 'Gold' ? '#f59e0b' : t.tier === 'Silver' ? '#94a3b8' : '#b45309',
+                              backgroundColor: t.tier === 'Platinum' ? '#0284c7' : t.tier === 'Gold' ? '#f59e0b' : t.tier === 'Silver' ? '#94a3b8' : '#b45309',
                               borderRadius: '4px',
                             }}
                           />
@@ -814,7 +860,7 @@ export function AdminHub() {
                 Filtered Quotations & Execution Ledger
               </h3>
               <span style={{ fontSize: '12px', color: '#64748b' }}>
-                Showing up to 100 matching entries
+                Showing {rawAnalyticsQuotes.length} matching entries
               </span>
             </div>
 
@@ -832,8 +878,8 @@ export function AdminHub() {
                   </tr>
                 </thead>
                 <tbody>
-                  {analyticsData && analyticsData.quotes && analyticsData.quotes.length > 0 ? (
-                    analyticsData.quotes.map((q) => (
+                  {paginatedAnalyticsQuotes && paginatedAnalyticsQuotes.length > 0 ? (
+                    paginatedAnalyticsQuotes.map((q) => (
                       <tr
                         key={q.id}
                         style={{
@@ -843,7 +889,7 @@ export function AdminHub() {
                         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                       >
-                        <td style={{ padding: '12px 18px', fontWeight: 600, color: '#714B67' }}>
+                        <td style={{ padding: '12px 18px', fontWeight: 600, color: '#0284c7' }}>
                           {q.quoteNumber || q.id}
                         </td>
                         <td style={{ padding: '12px 18px', color: '#334155' }}>
@@ -912,6 +958,19 @@ export function AdminHub() {
                 </tbody>
               </table>
             </div>
+            {rawAnalyticsQuotes.length > 0 && (
+              <Pagination
+                currentPage={analyticsPage}
+                totalItems={rawAnalyticsQuotes.length}
+                pageSize={analyticsPageSize}
+                pageSizeOptions={[10, 25, 50, 100]}
+                onPageChange={setAnalyticsPage}
+                onPageSizeChange={(newSize) => {
+                  setAnalyticsPageSize(newSize);
+                  setAnalyticsPage(1);
+                }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -1008,14 +1067,14 @@ export function AdminHub() {
                   alignItems: 'center',
                   gap: '6px',
                   padding: '9px 16px',
-                  backgroundColor: '#714B67',
+                  backgroundColor: '#0284c7',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '13px',
                   fontWeight: 600,
                   color: '#ffffff',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(113, 75, 103, 0.3)',
+                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)',
                 }}
               >
                 <Plus size={16} />
@@ -1038,13 +1097,13 @@ export function AdminHub() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.map((p) => {
+                  {paginatedProducts.map((p) => {
                     const listPrice = (p.listPriceCents || p.list_price_cents || 0) / 100;
                     const costPrice = (p.costPriceCents || p.cost_price_cents || 0) / 100;
                     const margin = listPrice > 0 ? (((listPrice - costPrice) / listPrice) * 100).toFixed(1) : 0;
                     return (
                       <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '12px 18px', fontWeight: 700, color: '#714B67' }}>{p.sku}</td>
+                        <td style={{ padding: '12px 18px', fontWeight: 700, color: '#0284c7' }}>{p.sku}</td>
                         <td style={{ padding: '12px 18px', fontWeight: 600, color: '#0f172a' }}>{p.name}</td>
                         <td style={{ padding: '12px 18px' }}>
                           <span
@@ -1081,6 +1140,19 @@ export function AdminHub() {
                 </tbody>
               </table>
             </div>
+            {filteredProducts.length > 0 && (
+              <Pagination
+                currentPage={productPage}
+                totalItems={filteredProducts.length}
+                pageSize={productPageSize}
+                pageSizeOptions={[10, 25, 50]}
+                onPageChange={setProductPage}
+                onPageSizeChange={(newSize) => {
+                  setProductPageSize(newSize);
+                  setProductPage(1);
+                }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -1254,14 +1326,14 @@ export function AdminHub() {
                   alignItems: 'center',
                   gap: '6px',
                   padding: '9px 16px',
-                  backgroundColor: '#714B67',
+                  backgroundColor: '#0284c7',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '13px',
                   fontWeight: 600,
                   color: '#ffffff',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(113, 75, 103, 0.3)',
+                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)',
                 }}
               >
                 <Plus size={16} />
@@ -1283,9 +1355,9 @@ export function AdminHub() {
                   </tr>
                 </thead>
                 <tbody>
-                  {warehouses.map((w) => (
+                  {paginatedWarehouses.map((w) => (
                     <tr key={w.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '12px 18px', fontWeight: 700, color: '#714B67' }}>{w.code}</td>
+                      <td style={{ padding: '12px 18px', fontWeight: 700, color: '#0284c7' }}>{w.code}</td>
                       <td style={{ padding: '12px 18px', fontWeight: 600, color: '#0f172a' }}>{w.name}</td>
                       <td style={{ padding: '12px 18px', color: '#334155' }}>
                         {w.city ? `${w.city}, ${w.state || 'USA'}` : w.location || 'Regional'}
@@ -1315,6 +1387,19 @@ export function AdminHub() {
                 </tbody>
               </table>
             </div>
+            {warehouses.length > 0 && (
+              <Pagination
+                currentPage={warehousePage}
+                totalItems={warehouses.length}
+                pageSize={warehousePageSize}
+                pageSizeOptions={[5, 10, 25]}
+                onPageChange={setWarehousePage}
+                onPageSizeChange={(newSize) => {
+                  setWarehousePageSize(newSize);
+                  setWarehousePage(1);
+                }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -1334,7 +1419,7 @@ export function AdminHub() {
                 boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
               }}
             >
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#714B67', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase' }}>
                 Cadence 1: Monthly Flexible
               </div>
               <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '8px 0 12px 0' }}>
@@ -1552,7 +1637,7 @@ export function AdminHub() {
                   id="isSub"
                   checked={newProduct.isSubscription}
                   onChange={(e) => setNewProduct({ ...newProduct, isSubscription: e.target.checked })}
-                  style={{ width: '16px', height: '16px', accentColor: '#714B67' }}
+                  style={{ width: '16px', height: '16px', accentColor: '#0284c7' }}
                 />
                 <label htmlFor="isSub" style={{ fontSize: '13px', fontWeight: 500, color: '#334155' }}>
                   Recurring Subscription Product
@@ -1569,7 +1654,7 @@ export function AdminHub() {
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: '9px 18px', borderRadius: '8px', border: 'none', backgroundColor: '#714B67', color: '#ffffff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ padding: '9px 18px', borderRadius: '8px', border: 'none', backgroundColor: '#0284c7', color: '#ffffff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Save Product to Catalog
                 </button>
@@ -1710,7 +1795,7 @@ export function AdminHub() {
                   id="isHub"
                   checked={newWarehouse.isPrimaryHub}
                   onChange={(e) => setNewWarehouse({ ...newWarehouse, isPrimaryHub: e.target.checked })}
-                  style={{ width: '16px', height: '16px', accentColor: '#714B67' }}
+                  style={{ width: '16px', height: '16px', accentColor: '#0284c7' }}
                 />
                 <label htmlFor="isHub" style={{ fontSize: '13px', fontWeight: 500, color: '#334155' }}>
                   Designate as Primary National Hub
@@ -1727,7 +1812,7 @@ export function AdminHub() {
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: '9px 18px', borderRadius: '8px', border: 'none', backgroundColor: '#714B67', color: '#ffffff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ padding: '9px 18px', borderRadius: '8px', border: 'none', backgroundColor: '#0284c7', color: '#ffffff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Register Warehouse
                 </button>

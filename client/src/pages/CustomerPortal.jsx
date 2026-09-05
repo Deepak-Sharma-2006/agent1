@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
 import { FallbackBanner } from '../components/FallbackBanner';
+import { Pagination } from '../components/Pagination';
 import {
   FileText,
   ShieldCheck,
@@ -67,6 +68,10 @@ export function CustomerPortal({ quoteId, onBack }) {
 
   const [availableQuotes, setAvailableQuotes] = useState([]);
   const [selectedQuoteId, setSelectedQuoteId] = useState(quoteId || null);
+
+  // Pagination for line items
+  const [linesPage, setLinesPage] = useState(1);
+  const [linesPageSize, setLinesPageSize] = useState(5);
 
   useEffect(() => {
     if (quoteId) {
@@ -710,7 +715,7 @@ export function CustomerPortal({ quoteId, onBack }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {lines.map((line, idx) => (
+                  {lines.slice((linesPage - 1) * linesPageSize, linesPage * linesPageSize).map((line, idx) => (
                     <tr key={line.id || idx}>
                       <td>
                         <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '13.5px', marginBottom: '3px' }}>
@@ -758,24 +763,10 @@ export function CustomerPortal({ quoteId, onBack }) {
                       <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '13px', whiteSpace: 'nowrap' }}>
                         {formatCurrency(line.listPriceCents)}
                       </td>
-                      <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        {(line.discountPercentage || line.discountPct) > 0 ? (
-                          <span
-                            style={{
-                              fontWeight: 700,
-                              color: '#059669',
-                              backgroundColor: '#ecfdf5',
-                              padding: '2px 7px',
-                              borderRadius: '4px',
-                              fontSize: '11.5px',
-                              display: 'inline-block',
-                            }}
-                          >
-                            -{(line.discountPercentage || line.discountPct)}%
-                          </span>
-                        ) : (
-                          <span style={{ color: 'var(--text-muted)' }}>—</span>
-                        )}
+                      <td style={{ textAlign: 'center' }}>
+                        <span className="badge badge-discount">
+                          -{line.discountPercentage || quotation?.discountPercentage || 0}%
+                        </span>
                       </td>
                       <td style={{ textAlign: 'right', fontWeight: 600, fontSize: '13px', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
                         {formatCurrency(line.netPriceCents || line.listPriceCents)}
@@ -788,6 +779,19 @@ export function CustomerPortal({ quoteId, onBack }) {
                 </tbody>
               </table>
             </div>
+            {lines.length > 5 && (
+              <Pagination
+                currentPage={linesPage}
+                totalItems={lines.length}
+                pageSize={linesPageSize}
+                pageSizeOptions={[5, 10, 20]}
+                onPageChange={setLinesPage}
+                onPageSizeChange={(newSize) => {
+                  setLinesPageSize(newSize);
+                  setLinesPage(1);
+                }}
+              />
+            )}
           </div>
 
           {/* Embedded Real-Time Negotiation Chat */}

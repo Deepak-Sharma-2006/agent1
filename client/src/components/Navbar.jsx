@@ -125,7 +125,7 @@ export function Navbar() {
               width: '32px',
               height: '32px',
               borderRadius: '50%',
-              backgroundColor: '#714B67',
+              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
               color: 'white',
               fontWeight: 700,
               fontSize: '12px',

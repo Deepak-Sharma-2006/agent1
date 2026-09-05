@@ -31,7 +31,7 @@ const roleBadgeColors = {
   Finance: { bg: '#fce7f3', text: '#9d174d', border: '#f9a8d4' },
   Customer: { bg: '#e0e7ff', text: '#3730a3', border: '#a5b4fc' },
   Warehouse: { bg: '#d1fae5', text: '#065f46', border: '#6ee7b7' },
-  Admin: { bg: '#f3e8ff', text: '#6b21a8', border: '#d8b4fe' },
+  Admin: { bg: '#f0f9ff', text: '#0284c7', border: '#bae6fd' },
 };
 
 const demoCredentials = {
@@ -95,7 +95,7 @@ export function LoginScreen() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '3px solid #714B67',
+          borderBottom: '3px solid #0284c7',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -104,11 +104,11 @@ export function LoginScreen() {
               width: '36px',
               height: '36px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #714B67, #8B5E83)',
+              background: 'linear-gradient(135deg, #0284c7, #2563eb)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(113, 75, 103, 0.4)',
+              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
             }}
           >
             <Layers size={20} color="#ffffff" />
@@ -124,11 +124,11 @@ export function LoginScreen() {
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '1px',
-                color: '#f3e8ff',
-                backgroundColor: 'rgba(113, 75, 103, 0.3)',
+                color: '#38bdf8',
+                backgroundColor: 'rgba(2, 132, 199, 0.25)',
                 padding: '3px 8px',
                 borderRadius: '4px',
-                border: '1px solid rgba(113, 75, 103, 0.5)',
+                border: '1px solid rgba(2, 132, 199, 0.4)',
               }}
             >
               Enterprise CPQ
@@ -175,8 +175,8 @@ export function LoginScreen() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    backgroundColor: 'rgba(113, 75, 103, 0.08)',
-                    color: '#714B67',
+                    backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                    color: '#0284c7',
                     borderRadius: '20px',
                     padding: '4px 12px',
                     fontSize: '11px',
@@ -270,7 +270,7 @@ export function LoginScreen() {
                         boxSizing: 'border-box',
                         transition: 'border-color 0.15s ease',
                       }}
-                      onFocus={(e) => (e.target.style.borderColor = '#714B67')}
+                      onFocus={(e) => (e.target.style.borderColor = '#0284c7')}
                       onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
                     />
                   </div>
@@ -313,7 +313,7 @@ export function LoginScreen() {
                         boxSizing: 'border-box',
                         transition: 'border-color 0.15s ease',
                       }}
-                      onFocus={(e) => (e.target.style.borderColor = '#714B67')}
+                      onFocus={(e) => (e.target.style.borderColor = '#0284c7')}
                       onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
                     />
                   </div>
@@ -327,7 +327,7 @@ export function LoginScreen() {
                     padding: '12px 16px',
                     borderRadius: '8px',
                     border: 'none',
-                    backgroundColor: '#714B67',
+                    backgroundColor: '#0284c7',
                     color: '#ffffff',
                     fontSize: '14px',
                     fontWeight: 700,
@@ -336,11 +336,11 @@ export function LoginScreen() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '8px',
-                    boxShadow: '0 2px 6px rgba(113, 75, 103, 0.3)',
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)',
                     transition: 'background-color 0.15s ease',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#583a50')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#714B67')}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0369a1')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#0284c7')}
                 >
                   <span>Sign In</span>
                   <ArrowRight size={16} />
@@ -389,7 +389,7 @@ export function LoginScreen() {
                       borderRadius: '12px',
                     }}
                   >
-                    Complete Odoo Roles
+                    Complete Enterprise Personas
                   </span>
                 </div>
                 <p style={{ fontSize: '12.5px', color: '#64748b', margin: '4px 0 0 0' }}>
@@ -415,7 +415,7 @@ export function LoginScreen() {
                         backgroundColor: '#ffffff',
                         borderRadius: '10px',
                         border: isSelected
-                          ? `2px solid #714B67`
+                          ? `2px solid #0284c7`
                           : isHovered
                           ? `2px solid ${colors.border}`
                           : '1px solid #e2e8f0',
@@ -427,7 +427,7 @@ export function LoginScreen() {
                         gap: '14px',
                         transition: 'all 0.15s ease',
                         boxShadow: isSelected
-                          ? '0 4px 12px rgba(113, 75, 103, 0.1)'
+                          ? '0 4px 12px rgba(2, 132, 199, 0.15)'
                           : isHovered
                           ? '0 2px 8px rgba(0,0,0,0.04)'
                           : 'none',
@@ -488,7 +488,7 @@ export function LoginScreen() {
                             padding: '6px 12px',
                             borderRadius: '6px',
                             border: '1px solid #cbd5e1',
-                            backgroundColor: isHovered ? '#714B67' : '#f8fafc',
+                            backgroundColor: isHovered ? '#0284c7' : '#f8fafc',
                             color: isHovered ? '#ffffff' : '#334155',
                             fontSize: '12px',
                             fontWeight: 600,

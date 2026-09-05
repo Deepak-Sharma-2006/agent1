@@ -214,11 +214,11 @@ export function ApprovalsInbox({ onOpenQuote }) {
             cursor: 'pointer',
             padding: '16px 20px',
             marginBottom: 0,
-            borderLeft: filter === 'ALL' ? '4px solid #714B67' : '4px solid transparent',
+            borderLeft: filter === 'ALL' ? '4px solid #0284c7' : '4px solid transparent',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FileText size={20} color="#714B67" />
+            <FileText size={20} color="#0284c7" />
             <div>
               <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)' }}>{quotes.length}</div>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>All Quotations</div>

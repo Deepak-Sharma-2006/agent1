@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Pagination } from '../components/Pagination';
 import {
   CreditCard,
   FileCheck,
@@ -24,6 +25,12 @@ export function BillingView() {
   const [loading, setLoading] = useState(true);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(null);
+
+  // Pagination states
+  const [subPage, setSubPage] = useState(1);
+  const [subPageSize, setSubPageSize] = useState(5);
+  const [invPage, setInvPage] = useState(1);
+  const [invPageSize, setInvPageSize] = useState(5);
 
   // Proration calculator state
   const [prorateStart, setProrateStart] = useState('2026-03-10');
@@ -166,7 +173,7 @@ export function BillingView() {
             <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
               Active Subscriptions
             </span>
-            <Layers size={18} color="#714B67" />
+            <Layers size={18} color="#0284c7" />
           </div>
           <div style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a' }}>{subscriptions.length}</div>
           <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>SLA Gold & Enterprise Cloud</div>
@@ -321,9 +328,9 @@ export function BillingView() {
               </tr>
             </thead>
             <tbody>
-              {subscriptions.map((sub) => (
+              {subscriptions.slice((subPage - 1) * subPageSize, subPage * subPageSize).map((sub) => (
                 <tr key={sub.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '12px', fontWeight: 600, color: '#714B67' }}>{sub.id}</td>
+                  <td style={{ padding: '12px', fontWeight: 600, color: '#0284c7' }}>{sub.id}</td>
                   <td style={{ padding: '12px', color: '#0f172a' }}>{sub.customerId || 'Acme Industrial'}</td>
                   <td style={{ padding: '12px', color: '#334155' }}>
                     <span style={{ fontWeight: 600 }}>{sub.productId}</span>
@@ -355,6 +362,19 @@ export function BillingView() {
               ))}
             </tbody>
           </table>
+        )}
+        {subscriptions.length > 0 && (
+          <Pagination
+            currentPage={subPage}
+            totalItems={subscriptions.length}
+            pageSize={subPageSize}
+            pageSizeOptions={[5, 10, 25]}
+            onPageChange={setSubPage}
+            onPageSizeChange={(newSize) => {
+              setSubPageSize(newSize);
+              setSubPage(1);
+            }}
+          />
         )}
       </div>
 
@@ -438,7 +458,7 @@ export function BillingView() {
             onClick={handleCalculateProration}
             style={{
               padding: '9px 18px',
-              backgroundColor: '#714B67',
+              backgroundColor: '#0284c7',
               color: '#ffffff',
               border: 'none',
               borderRadius: '6px',
@@ -544,12 +564,12 @@ export function BillingView() {
               </tr>
             </thead>
             <tbody>
-              {invoices.map((inv) => {
+              {invoices.slice((invPage - 1) * invPageSize, invPage * invPageSize).map((inv) => {
                 const isPaid = inv.status === 'paid';
                 return (
                   <tr key={inv.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a' }}>{inv.id}</td>
-                    <td style={{ padding: '12px', color: '#714B67' }}>{inv.quoteId}</td>
+                    <td style={{ padding: '12px', color: '#0284c7' }}>{inv.quoteId}</td>
                     <td style={{ padding: '12px', color: '#475569' }}>
                       <span
                         style={{
@@ -625,6 +645,19 @@ export function BillingView() {
               })}
             </tbody>
           </table>
+        )}
+        {invoices.length > 0 && (
+          <Pagination
+            currentPage={invPage}
+            totalItems={invoices.length}
+            pageSize={invPageSize}
+            pageSizeOptions={[5, 10, 25]}
+            onPageChange={setInvPage}
+            onPageSizeChange={(newSize) => {
+              setInvPageSize(newSize);
+              setInvPage(1);
+            }}
+          />
         )}
       </div>
     </div>

@@ -149,7 +149,7 @@ export function DatabaseInspector() {
               <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
                 Database Engine
               </span>
-              <Database size={16} color="#714B67" />
+              <Database size={16} color="#0284c7" />
             </div>
             <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>SQLite 3 (node:sqlite)</div>
             <div style={{ fontSize: '11.5px', color: '#10b981', marginTop: '2px' }}>Native DatabaseSync Driver</div>
@@ -259,9 +259,9 @@ export function DatabaseInspector() {
                     justifyContent: 'space-between',
                     padding: '8px 12px',
                     borderRadius: '8px',
-                    border: isSelected ? '1px solid #714B67' : '1px solid transparent',
-                    backgroundColor: isSelected ? 'rgba(113, 75, 103, 0.08)' : 'transparent',
-                    color: isSelected ? '#714B67' : '#334155',
+                    border: isSelected ? '1px solid #0284c7' : '1px solid transparent',
+                    backgroundColor: isSelected ? 'rgba(2, 132, 199, 0.08)' : 'transparent',
+                    color: isSelected ? '#0284c7' : '#334155',
                     fontWeight: isSelected ? 700 : 500,
                     fontSize: '12.5px',
                     cursor: 'pointer',
@@ -270,13 +270,13 @@ export function DatabaseInspector() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Table size={14} color={isSelected ? '#714B67' : '#94a3b8'} />
+                    <Table size={14} color={isSelected ? '#0284c7' : '#94a3b8'} />
                     <span>{t.table}</span>
                   </div>
                   <span
                     style={{
                       fontSize: '11px',
-                      backgroundColor: isSelected ? '#714B67' : '#f1f5f9',
+                      backgroundColor: isSelected ? '#0284c7' : '#f1f5f9',
                       color: isSelected ? '#ffffff' : '#64748b',
                       padding: '1px 6px',
                       borderRadius: '10px',
@@ -415,7 +415,7 @@ export function DatabaseInspector() {
                               key={col.name}
                               style={{
                                 padding: '10px 14px',
-                                color: val === null ? '#94a3b8' : isPk ? '#714B67' : '#0f172a',
+                                color: val === null ? '#94a3b8' : isPk ? '#0284c7' : '#0f172a',
                                 fontWeight: isPk ? 600 : 400,
                                 fontFamily: isPk || col.type === 'INTEGER' ? 'monospace' : 'inherit',
                                 fontSize: isPk ? '11.5px' : '12.5px',

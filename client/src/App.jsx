@@ -19,7 +19,7 @@ import { DatabaseInspector } from './pages/DatabaseInspector';
 import { AdminHub } from './pages/AdminHub';
 
 function MainLayout() {
-  const { currentUser, isAuthenticated, canManageRules, canNegotiate, isCustomer, isWarehouse, canApprove } = useAuth();
+  const { currentUser, isAuthenticated, canManageRules, canNegotiate, isCustomer, isWarehouse, canApprove, isAdmin } = useAuth();
 
   const [currentView, setCurrentView] = useState(() => {
     // Standalone portal deep link detection
@@ -63,10 +63,12 @@ function MainLayout() {
     }
     if (currentView === 'rules' && !canManageRules()) setCurrentView(defaultView);
     if (currentView === 'warehouse' && isCustomer()) setCurrentView(defaultView);
-    if (currentView === 'chat' && isWarehouse()) setCurrentView(defaultView);
     if (currentView === 'catalog' && (isWarehouse() || isCustomer())) setCurrentView(defaultView);
+    if (currentView === 'billing' && (isCustomer() || isWarehouse())) setCurrentView(defaultView);
     if (currentView === 'approvals' && !canApprove()) setCurrentView(defaultView);
-  }, [currentUser.role]);
+    if (currentView === 'database' && (!isAdmin || !isAdmin())) setCurrentView(defaultView);
+    if (currentView === 'admin-hub' && (!isAdmin || !isAdmin())) setCurrentView(defaultView);
+  }, [currentUser.role, currentView]);
 
   const handleOpenQuote = (id) => {
     setActiveQuoteId(id);
@@ -130,8 +132,8 @@ function MainLayout() {
           {currentView === 'catalog' && <CatalogView />}
           {currentView === 'billing' && <BillingView />}
           {currentView === 'warehouse' && <WarehouseView />}
-          {currentView === 'database' && <DatabaseInspector />}
-          {currentView === 'admin-hub' && <AdminHub />}
+          {currentView === 'database' && (isAdmin && isAdmin() ? <DatabaseInspector /> : <Dashboard onOpenQuote={handleOpenQuote} />)}
+          {currentView === 'admin-hub' && (isAdmin && isAdmin() ? <AdminHub /> : <Dashboard onOpenQuote={handleOpenQuote} />)}
         </main>
       </div>
       <ConflictResolutionModal />

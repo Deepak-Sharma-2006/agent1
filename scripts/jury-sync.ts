@@ -91,6 +91,14 @@ export function setJuryRemote(url: string): boolean {
 export function publishToJury(customTag?: string): boolean {
   console.log(`\n🚀 [Jury Release Pipeline] Initiating pre-publish gate barrier...`);
 
+  // Step 0: Role Validation (Only Beta can push to hackathon jury repository)
+  const profile = getActiveProfile();
+  if (profile.role !== "Beta") {
+    console.error(`\n🛑 [Publish Blocked] Role Violation: Only the BETA AUDITOR can publish to the hackathon repository (575_final).`);
+    console.error(`Current workstation role is '${profile.role}'. Alpha must push to 'agent1' and run 'npm run role:handoff' first.\n`);
+    return false;
+  }
+
   // Step 1: Execute 5-layer Beta Audit
   console.log("Step 1: Running mandatory 5-layer Beta verification audit...");
   const auditPassed = runBetaAudit();
@@ -106,20 +114,39 @@ export function publishToJury(customTag?: string): boolean {
     return false;
   }
 
-  const profile = getActiveProfile();
   const tag = customTag || `v1.0-phase-${profile.phase}`;
+  const currentBranch = execCommand("git rev-parse --abbrev-ref HEAD") || "main";
+  const cleanReleaseBranch = `jury-release-phase-${profile.phase}`;
 
   try {
-    console.log(`\nStep 2: Tagging release commit with '${tag}'...`);
-    execSync(`git tag -a ${tag} -m "Release ${tag} - Certified 5/5 by Beta Auditor"`, { stdio: "inherit" });
+    console.log(`\nStep 2: Preparing clean submission branch '${cleanReleaseBranch}' (excluding docs/dossiers/)...`);
+    execSync(`git checkout -B ${cleanReleaseBranch}`, { stdio: "inherit" });
 
-    console.log(`\nStep 3: Pushing main branch and tag to jury showcase remote...`);
-    execSync("git push jury main", { stdio: "inherit" });
-    execSync(`git push jury ${tag}`, { stdio: "inherit" });
+    // Remove internal dossiers from the jury submission branch
+    if (existsSync(join(process.cwd(), "docs/dossiers"))) {
+      try {
+        execSync("git rm -rf --cached docs/dossiers", { stdio: "inherit" });
+        execSync('git commit -m "chore: exclude internal cognitive dossiers from jury submission" --allow-empty', { stdio: "inherit" });
+      } catch {
+        // In case nothing was staged
+      }
+    }
 
-    console.log(`\n🎉 [Jury Release Published] Successfully deployed ${tag} to jury showcase repository!`);
+    console.log(`\nStep 3: Tagging release commit with '${tag}'...`);
+    execSync(`git tag -a ${tag} -m "Release ${tag} - Certified 5/5 by Beta Auditor" -f`, { stdio: "inherit" });
+
+    console.log(`\nStep 4: Pushing clean release to hackathon jury repository (575_final)...`);
+    execSync(`git push jury ${cleanReleaseBranch}:main --force`, { stdio: "inherit" });
+    execSync(`git push jury ${tag} --force`, { stdio: "inherit" });
+
+    // Restore working branch
+    execSync(`git checkout ${currentBranch}`, { stdio: "inherit" });
+
+    console.log(`\n🎉 [Jury Release Published] Successfully deployed ${tag} to hackathon repository without internal dossiers!`);
+    console.log(`Repository URL: https://github.com/Infinity915/575_final\n`);
     return true;
   } catch (err) {
+    execSync(`git checkout ${currentBranch}`, { stdio: "inherit" });
     console.error(`\n❌ Failed to push release to jury remote:`, err);
     return false;
   }

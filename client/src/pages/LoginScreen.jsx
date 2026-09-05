@@ -286,7 +286,7 @@ export function LoginScreen() {
         backgroundColor: '#ffffff',
       }}>
         <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>
-          DealFlow360 Enterprise CPQ Platform · Odoo Hackathon 2026 · Autonomous Sales Operations
+          DealFlow360 Enterprise CPQ Platform · Autonomous Sales Operations & Financial Governance
         </span>
       </footer>
     </div>

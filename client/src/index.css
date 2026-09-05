@@ -1,5 +1,5 @@
 /**
- * DealFlow360 - Enterprise Odoo-Inspired Clean Design System
+ * DealFlow360 - Enterprise Executive Clean Design System
  * Phase 5: Frontend UI Foundation & Modern Responsive SPA
  * 
  * High-density executive productivity theme with crisp typography,
@@ -203,7 +203,7 @@ html, body {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Sidebar Navigation (Odoo Style)                                            */
+/* Sidebar Navigation (Executive Style)                                       */
 /* -------------------------------------------------------------------------- */
 .sidebar {
   width: 240px;
@@ -347,7 +347,7 @@ html, body {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Tables & Grids (Odoo Dense ERP Style)                                      */
+/* Tables & Grids (Dense Executive ERP Style)                                 */
 /* -------------------------------------------------------------------------- */
 .table-wrapper {
   overflow-x: auto;

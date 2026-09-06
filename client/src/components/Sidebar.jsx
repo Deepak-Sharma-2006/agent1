@@ -28,7 +28,7 @@ export function Sidebar({ currentView, setCurrentView }) {
     { id: 'approvals', label: 'Managerial Inbox', icon: ShieldCheck, visible: canApprove() && !isAnAdmin },
     { id: 'rules', label: 'CPQ Rule Matrix', icon: Sliders, visible: canManageRules() && !isAnAdmin },
     { id: 'chat', label: 'Negotiation Feed', icon: MessageSquare, visible: canNegotiate() && !isAnAdmin },
-    { id: 'catalog', label: 'Product Catalog', icon: Package, visible: false },
+    { id: 'catalog', label: 'Product Catalog', icon: Package, visible: isCustomer() },
     { id: 'billing', label: 'Billing & Invoices', icon: CreditCard, visible: isFinanceRole },
     { id: 'warehouse', label: isWarehouse() ? 'Depot Inventory' : 'Warehouse Hubs', icon: Truck, visible: isWarehouse() },
     { id: 'database', label: 'Database Explorer', icon: Database, visible: isAnAdmin },

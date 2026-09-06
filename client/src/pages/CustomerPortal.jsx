@@ -10,8 +10,6 @@ import {
   AlertTriangle,
   Clock,
   ArrowRight,
-  Send,
-  MessageSquare,
   DollarSign,
   TrendingDown,
   Building,
@@ -40,7 +38,7 @@ import {
  */
 export function CustomerPortal({ quoteId, onBack }) {
   const { currentUser } = useAuth();
-  const { isConnected, lastEvent, sendChatMessage } = useWebSocket();
+  const { isConnected, lastEvent } = useWebSocket();
 
   const [quotation, setQuotation] = useState(null);
   const [customer, setCustomer] = useState(null);
@@ -62,9 +60,7 @@ export function CustomerPortal({ quoteId, onBack }) {
   const [signatureName, setSignatureName] = useState(currentUser.name || 'Sarah Jenkins');
   const [showSignModal, setShowSignModal] = useState(false);
 
-  // Live Chat state
-  const [chatMessages, setChatMessages] = useState([]);
-  const [newChatMessage, setNewChatMessage] = useState('');
+
 
   const [availableQuotes, setAvailableQuotes] = useState([]);
   const [selectedQuoteId, setSelectedQuoteId] = useState(quoteId || null);
@@ -142,16 +138,7 @@ export function CustomerPortal({ quoteId, onBack }) {
         }
       }
 
-      // Fetch chat messages
-      try {
-        const msgRes = await fetch(`/api/quotes/${targetId}/messages`);
-        const msgData = await msgRes.json();
-        if (msgData.messages) {
-          setChatMessages(msgData.messages);
-        }
-      } catch {
-        // Chat messages are non-blocking
-      }
+
 
       // Fetch logistics shipments & delivery tracking
       try {
@@ -189,64 +176,9 @@ export function CustomerPortal({ quoteId, onBack }) {
         setCounterSuccessMessage('Counter-offer evaluated: Terms have reverted to the guaranteed Last Approved Offer.');
       }
     }
-
-    if (activeQuoteId && lastEvent.type === 'CHAT_MESSAGE' && lastEvent.quoteId === activeQuoteId) {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: 'msg-' + Date.now(),
-          quoteId: activeQuoteId,
-          senderId: lastEvent.senderId,
-          senderRole: lastEvent.senderRole,
-          senderName: lastEvent.senderName,
-          message: lastEvent.message,
-          createdAt: lastEvent.timestamp || new Date().toISOString(),
-        },
-      ]);
-    }
   }, [lastEvent, activeQuoteId]);
 
-  const handleSendChat = (e) => {
-    e.preventDefault();
-    const msg = newChatMessage.trim();
-    if (!msg || !activeQuoteId) return;
 
-    const payload = {
-      quoteId: activeQuoteId,
-      senderId: currentUser.id || 'cust-01',
-      senderRole: 'Customer',
-      senderName: currentUser.name || 'Sarah Jenkins',
-      message: msg,
-    };
-
-    // 1. Send over WebSocket gateway if available
-    if (typeof sendChatMessage === 'function') {
-      try {
-        sendChatMessage(payload);
-      } catch (err) {
-        console.warn('WebSocket send failed, falling back to HTTP:', err);
-      }
-    }
-
-    // 2. Persist to backend SQLite via REST API
-    fetch(`/api/quotes/${activeQuoteId}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    }).catch((e) => console.warn('HTTP message sync error:', e));
-
-    // 3. Optimistic local UI update
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: 'msg-local-' + Date.now(),
-        ...payload,
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-
-    setNewChatMessage('');
-  };
 
   const handleSubmitCounterOffer = async (e) => {
     e.preventDefault();
@@ -794,87 +726,7 @@ export function CustomerPortal({ quoteId, onBack }) {
             )}
           </div>
 
-          {/* Embedded Real-Time Negotiation Chat */}
-          <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-header">
-              <span className="card-title">
-                <MessageSquare size={16} />
-                <span>Commercial Negotiation Feed</span>
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                Direct thread with Account Executive
-              </span>
-            </div>
 
-            <div
-              style={{
-                height: '240px',
-                overflowY: 'auto',
-                padding: '12px 14px',
-                backgroundColor: 'var(--bg-canvas, #f8fafc)',
-                borderRadius: '6px',
-                border: '1px solid var(--border-subtle)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                marginBottom: '12px',
-              }}
-            >
-              {chatMessages.length === 0 ? (
-                <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12.5px' }}>
-                  No messages yet. Ask questions or request clarification from your account team.
-                </div>
-              ) : (
-                chatMessages.map((msg, i) => {
-                  const isMe = msg.senderRole === 'Customer';
-                  return (
-                    <div
-                      key={msg.id || i}
-                      style={{
-                        alignSelf: isMe ? 'flex-end' : 'flex-start',
-                        maxWidth: '82%',
-                        padding: '9px 13px',
-                        borderRadius: '8px',
-                        backgroundColor: isMe ? 'var(--primary, #0284c7)' : '#ffffff',
-                        color: isMe ? '#ffffff' : 'var(--text-main)',
-                        border: isMe ? 'none' : '1px solid var(--border-subtle)',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                        fontSize: '12.5px',
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: '10.5px',
-                          fontWeight: 700,
-                          marginBottom: '3px',
-                          color: isMe ? 'rgba(255,255,255,0.85)' : 'var(--text-muted)',
-                        }}
-                      >
-                        {msg.senderName} ({msg.senderRole})
-                      </div>
-                      <div>{msg.message}</div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px' }}>
-              <input
-                type="text"
-                className="input"
-                placeholder="Type a message or request clarification..."
-                value={newChatMessage}
-                onChange={(e) => setNewChatMessage(e.target.value)}
-                style={{ flex: 1 }}
-              />
-              <button type="submit" className="btn btn-primary btn-sm" disabled={!newChatMessage.trim()}>
-                <Send size={14} />
-                <span>Send</span>
-              </button>
-            </form>
-          </div>
         </div>
 
         {/* Right Column: Financial Ledger & Interactive Counter-Offer Tray */}

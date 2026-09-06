@@ -62,7 +62,7 @@ function MainLayout() {
       setCurrentView('portal');
     }
     if (currentView === 'rules' && !canManageRules()) setCurrentView(defaultView);
-    if (currentView === 'catalog') setCurrentView(defaultView);
+    if (currentView === 'catalog' && !isCustomer()) setCurrentView(defaultView);
     if (currentView === 'warehouse' && !isWarehouse()) setCurrentView(defaultView);
     if (currentView === 'billing' && currentUser.role !== 'Finance') setCurrentView(defaultView);
     if (currentView === 'approvals' && !canApprove()) setCurrentView(defaultView);
@@ -132,7 +132,7 @@ function MainLayout() {
           {currentView === 'approvals' && (!isAdmin || !isAdmin()) && <ApprovalsInbox onOpenQuote={handleOpenQuote} />}
           {currentView === 'rules' && (!isAdmin || !isAdmin()) && <RuleMatrixBuilder />}
           {currentView === 'chat' && (!isAdmin || !isAdmin()) && <NegotiationChat initialQuoteId={activeQuoteId} />}
-          {currentView === 'catalog' && (!isAdmin || !isAdmin()) && <CatalogView />}
+          {currentView === 'catalog' && isCustomer() && <CatalogView onOpenQuote={handleOpenQuote} />}
           {currentView === 'billing' && (!isAdmin || !isAdmin()) && <BillingView />}
           {currentView === 'warehouse' && (!isAdmin || !isAdmin()) && <WarehouseView />}
           {currentView === 'database' && (isAdmin && isAdmin() ? <DatabaseInspector /> : <Dashboard onOpenQuote={handleOpenQuote} />)}

@@ -93,7 +93,7 @@ export function RuleMatrixBuilder() {
           </h1>
         </div>
         <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-          Enterprise Discount Ceilings, Multi-Level Escalation Routing, and Real-Time Governance Policies (Screen 18)
+          Enterprise Discount Ceilings, Multi-Level Escalation Routing, and Real-Time Governance Policies
         </p>
       </div>
 

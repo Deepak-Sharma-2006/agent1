@@ -231,7 +231,7 @@ export function AdminHub() {
     }
   };
 
-  // CSV Export for Section A7 - Direct native browser download to local Downloads folder
+  // CSV Export for Section A1 - Direct native browser download to local Downloads folder
   const handleExportCsv = () => {
     try {
       const params = new URLSearchParams();
@@ -426,7 +426,7 @@ export function AdminHub() {
         }}
       >
         {[
-          { id: 'analytics', label: 'Executive Analytics & Multi-Axis Reports (A7)', icon: BarChart3 },
+          { id: 'analytics', label: 'Executive Analytics & Multi-Axis Reports (A1)', icon: BarChart3 },
           { id: 'products', label: 'Products & Price Lists (A2)', icon: Package },
           { id: 'tiers', label: 'Discount Tiers & Approval Chains (A3)', icon: ShieldCheck },
           { id: 'warehouses', label: 'Multi-Depot Fulfillment (A4)', icon: Truck },
@@ -463,11 +463,11 @@ export function AdminHub() {
       </div>
 
       {/* ==================================================================== */}
-      {/* TAB 5: Executive Analytics & Multi-Axis Reports (Section A7)        */}
+      {/* TAB 5: Executive Analytics & Multi-Axis Reports (Section A1)        */}
       {/* ==================================================================== */}
       {activeTab === 'analytics' && (
         <div>
-          {/* Section A7 Filter Bar */}
+          {/* Section A1 Filter Bar */}
           <div
             style={{
               backgroundColor: '#ffffff',
@@ -482,7 +482,7 @@ export function AdminHub() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Filter size={18} color="#0284c7" />
                 <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                  Multi-Axis Reporting Dimensions (Section A7)
+                  Multi-Axis Reporting Dimensions (Section A1)
                 </span>
                 <span style={{ fontSize: '11px', color: '#64748b', backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: '10px' }}>
                   Instant Aggregation
@@ -582,9 +582,9 @@ export function AdminHub() {
                   }}
                 >
                   <option value="all">All Sales Representatives</option>
-                  <option value="rep-01">Jordan Bell (Senior AE)</option>
-                  <option value="mgr-01">Elena Vance (VP Commercial)</option>
-                  <option value="fin-01">Marcus Sterling (Finance)</option>
+                  <option value="rep-01">Sales Rep</option>
+                  <option value="mgr-01">Sales Manager</option>
+                  <option value="fin-01">Finance</option>
                 </select>
               </div>
 

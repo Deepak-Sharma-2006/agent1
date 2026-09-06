@@ -251,7 +251,7 @@ export function BillingView() {
             </div>
             <div>
               <div style={{ fontWeight: 700, fontSize: '14px', color: '#065f46' }}>
-                Payment Successfully Reconciled (Screen 15: Payment Receipt)
+                Payment Successfully Reconciled (Payment Receipt)
               </div>
               <div style={{ fontSize: '12px', color: '#047857' }}>
                 Transaction Reference: <strong>{paymentSuccess.transactionRef}</strong> · Amount Paid:{' '}
@@ -290,7 +290,7 @@ export function BillingView() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-              Active Subscription Contracts (Screen 6: SaaS & Recurring Billing)
+              Active Subscription Contracts (SaaS & Recurring Billing)
             </h2>
             <p style={{ fontSize: '12.5px', color: '#64748b', margin: '2px 0 0 0' }}>
               Recurring SLAs and Enterprise Cloud subscriptions bound to confirmed sales orders.
@@ -524,7 +524,7 @@ export function BillingView() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-              GAAP Compliance Invoices (Screen 14: Invoicing & Screen 15: Payment Receipt)
+              GAAP Compliance Invoices (Invoicing & Payment Receipt)
             </h2>
             <p style={{ fontSize: '12.5px', color: '#64748b', margin: '2px 0 0 0' }}>
               Physical hardware lines invoiced upon regional depot dispatch; SaaS invoiced upon activation.

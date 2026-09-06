@@ -11,7 +11,6 @@ import {
   Key,
   Shield,
   Clock,
-  Terminal,
 } from 'lucide-react';
 import { Pagination } from '../components/Pagination';
 
@@ -197,31 +196,6 @@ export function DatabaseInspector() {
           </div>
         </div>
       )}
-
-      {/* Terminal CLI Hint Banner */}
-      <div
-        style={{
-          backgroundColor: '#0f172a',
-          color: '#e2e8f0',
-          borderRadius: '10px',
-          padding: '12px 18px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontFamily: 'monospace',
-          fontSize: '12.5px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Terminal size={16} color="#38bdf8" />
-          <span>
-            Terminal CLI command for jury demonstration:{' '}
-            <strong style={{ color: '#38bdf8' }}>npm run db:inspect</strong> (or node scripts/db-inspector.js)
-          </span>
-        </div>
-        <span style={{ color: '#94a3b8', fontSize: '11px' }}>Prints live ASCII schema & row counts</span>
-      </div>
 
       {/* Main Section: Tables Directory + Live Records */}
       <div

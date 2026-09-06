@@ -68,6 +68,9 @@ function MainLayout() {
     if (currentView === 'approvals' && !canApprove()) setCurrentView(defaultView);
     if (currentView === 'database' && (!isAdmin || !isAdmin())) setCurrentView(defaultView);
     if (currentView === 'admin-hub' && (!isAdmin || !isAdmin())) setCurrentView(defaultView);
+    if (isAdmin && isAdmin() && ['quotes', 'approvals', 'chat', 'catalog', 'billing', 'warehouse'].includes(currentView)) {
+      setCurrentView(defaultView);
+    }
   }, [currentUser.role, currentView]);
 
   const handleOpenQuote = (id) => {
@@ -116,7 +119,7 @@ function MainLayout() {
         <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
         <main className="app-content">
           {currentView === 'dashboard' && <Dashboard onOpenQuote={handleOpenQuote} />}
-          {currentView === 'quotes' && (
+          {currentView === 'quotes' && (!isAdmin || !isAdmin()) && (
             <QuotationStudio
               quoteId={activeQuoteId}
               onBack={handleBackToDashboard}
@@ -126,12 +129,12 @@ function MainLayout() {
           {currentView === 'portal' && (
             <CustomerPortal quoteId={activeQuoteId} onBack={handleBackToDashboard} />
           )}
-          {currentView === 'approvals' && <ApprovalsInbox onOpenQuote={handleOpenQuote} />}
+          {currentView === 'approvals' && (!isAdmin || !isAdmin()) && <ApprovalsInbox onOpenQuote={handleOpenQuote} />}
           {currentView === 'rules' && <RuleMatrixBuilder />}
-          {currentView === 'chat' && <NegotiationChat initialQuoteId={activeQuoteId} />}
-          {currentView === 'catalog' && <CatalogView />}
-          {currentView === 'billing' && <BillingView />}
-          {currentView === 'warehouse' && <WarehouseView />}
+          {currentView === 'chat' && (!isAdmin || !isAdmin()) && <NegotiationChat initialQuoteId={activeQuoteId} />}
+          {currentView === 'catalog' && (!isAdmin || !isAdmin()) && <CatalogView />}
+          {currentView === 'billing' && (!isAdmin || !isAdmin()) && <BillingView />}
+          {currentView === 'warehouse' && (!isAdmin || !isAdmin()) && <WarehouseView />}
           {currentView === 'database' && (isAdmin && isAdmin() ? <DatabaseInspector /> : <Dashboard onOpenQuote={handleOpenQuote} />)}
           {currentView === 'admin-hub' && (isAdmin && isAdmin() ? <AdminHub /> : <Dashboard onOpenQuote={handleOpenQuote} />)}
         </main>

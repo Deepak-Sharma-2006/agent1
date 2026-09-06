@@ -136,7 +136,7 @@ export function LoginScreen() {
           </div>
         </div>
         <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-          Wireframe Screen 1 · Authenticated Access Gateway
+          DealFlow360 · Authenticated Access Gateway
         </div>
       </header>
 
@@ -521,7 +521,7 @@ export function LoginScreen() {
                   lineHeight: 1.4,
                 }}
               >
-                <strong>Excalidraw Screen 1 Compliance:</strong> Supports standard form typing for enterprise email & password credentials as wireframed, plus rapid 1-click persona switching across all 5 operational roles.
+                <strong>Enterprise Access Governance:</strong> Supports standard form typing for enterprise email & password credentials, plus rapid 1-click persona switching across all operational roles.
               </div>
             </div>
           </div>

@@ -68,7 +68,7 @@ function MainLayout() {
     if (currentView === 'approvals' && !canApprove()) setCurrentView(defaultView);
     if (currentView === 'database' && (!isAdmin || !isAdmin())) setCurrentView(defaultView);
     if (currentView === 'admin-hub' && (!isAdmin || !isAdmin())) setCurrentView(defaultView);
-    if (isAdmin && isAdmin() && ['quotes', 'approvals', 'chat', 'catalog', 'billing', 'warehouse'].includes(currentView)) {
+    if (isAdmin && isAdmin() && ['quotes', 'approvals', 'rules', 'chat', 'catalog', 'billing', 'warehouse'].includes(currentView)) {
       setCurrentView(defaultView);
     }
   }, [currentUser.role, currentView]);
@@ -130,7 +130,7 @@ function MainLayout() {
             <CustomerPortal quoteId={activeQuoteId} onBack={handleBackToDashboard} />
           )}
           {currentView === 'approvals' && (!isAdmin || !isAdmin()) && <ApprovalsInbox onOpenQuote={handleOpenQuote} />}
-          {currentView === 'rules' && <RuleMatrixBuilder />}
+          {currentView === 'rules' && (!isAdmin || !isAdmin()) && <RuleMatrixBuilder />}
           {currentView === 'chat' && (!isAdmin || !isAdmin()) && <NegotiationChat initialQuoteId={activeQuoteId} />}
           {currentView === 'catalog' && (!isAdmin || !isAdmin()) && <CatalogView />}
           {currentView === 'billing' && (!isAdmin || !isAdmin()) && <BillingView />}

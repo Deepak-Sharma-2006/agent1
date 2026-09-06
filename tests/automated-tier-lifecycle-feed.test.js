@@ -268,4 +268,41 @@ test("Automated Customer Tier Progression & Negotiation Deal Room Suite", async 
     assert.strictEqual(typeof auditData.unchangedCount, "number");
     assert.ok(Array.isArray(auditData.details));
   });
+
+  // ===========================================================================
+  // 6. Customer Initial Commercial Demand & Deal Room Injection
+  // ===========================================================================
+  await t.test("6. Customer Initial Commercial Demand & Deal Room Injection", async () => {
+    const createQuoteRes = await fetch(`${baseUrl}/api/quotes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        salesRepId: "rep-01",
+        salesRepName: "Sarah Jenkins",
+        customerId: "cust-acme-01",
+        requestedDiscountPercentage: 12.5,
+        customerNotes: "Fiscal year-end budget cap $45,000; requesting Net 30 terms.",
+        lines: [
+          {
+            productId: "prod-srv-01",
+            quantity: 2,
+            unitDiscountPercentage: 0,
+          },
+        ],
+      }),
+    });
+    assert.strictEqual(createQuoteRes.status, 201);
+    const quoteData = await createQuoteRes.json();
+    assert.strictEqual(quoteData.quotation.requestedDiscountPercentage, 12.5);
+    assert.strictEqual(quoteData.quotation.customerNotes, "Fiscal year-end budget cap $45,000; requesting Net 30 terms.");
+
+    // Verify initial demand card was injected into the negotiation feed
+    const msgsRes = await fetch(`${baseUrl}/api/quotes/${quoteData.quotation.id}/messages?role=SalesRep`);
+    assert.strictEqual(msgsRes.status, 200);
+    const msgsData = await msgsRes.json();
+    const demandMsg = msgsData.messages.find((m) => m.senderRole === "Customer" && m.proposedDiscountPercent === 12.5);
+    assert.ok(demandMsg, "Expected initial customer demand concession message in negotiation feed");
+    assert.ok(demandMsg.content.includes("12.5% discount"));
+    assert.ok(demandMsg.content.includes("Fiscal year-end budget cap"));
+  });
 });

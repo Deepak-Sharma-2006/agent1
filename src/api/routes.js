@@ -356,19 +356,51 @@ export function createApiRouter({ quotationService, repositories }) {
           salesRepName: body.salesRepName,
           customerId: body.customerId,
           validityPeriodDays: body.validityPeriodDays,
+          requestedDiscountPercentage: body.requestedDiscountPercentage,
+          customerNotes: body.customerNotes,
         });
+
+        const requestedDiscount = Number(body.requestedDiscountPercentage || 0);
+        const customerDemandNotes = body.customerNotes || "";
+
+        let finalQuote = newQuote;
+
         if (Array.isArray(body.lines) && body.lines.length > 0) {
           const updatedQuote = quotationService.updateQuotation(
             newQuote.id,
-            { lines: body.lines },
+            {
+              lines: body.lines,
+              requestedDiscountPercentage: requestedDiscount,
+              customerNotes: customerDemandNotes,
+            },
             newQuote.version
           );
           updatedQuote.version = 1;
           quotationService.quotationRepository.save(updatedQuote);
-          sendJsonResponse(res, 201, { success: true, quotation: updatedQuote });
-        } else {
-          sendJsonResponse(res, 201, { success: true, quotation: newQuote });
+          finalQuote = updatedQuote;
         }
+
+        // If customer provided an initial discount demand or requisition notes, post initial commercial demand message to negotiation feed
+        if (requestedDiscount > 0 || customerDemandNotes) {
+          try {
+            quotationService.addNegotiationMessage({
+              quoteId: finalQuote.id,
+              quotationId: finalQuote.id,
+              senderId: body.customerId || "customer",
+              senderName: finalQuote.customerName || "Customer Procurement",
+              senderRole: "Customer",
+              message: `Initial Procurement Demand: Requested ${requestedDiscount.toFixed(1)}% discount${customerDemandNotes ? `. Requisition Note: "${customerDemandNotes}"` : ""}`,
+              content: `Initial Procurement Demand: Requested ${requestedDiscount.toFixed(1)}% discount${customerDemandNotes ? `. Requisition Note: "${customerDemandNotes}"` : ""}`,
+              proposedDiscountPercent: requestedDiscount > 0 ? requestedDiscount : null,
+              messageType: "concession",
+              isInternal: false,
+            });
+          } catch (msgErr) {
+            console.warn("Could not post initial negotiation message:", msgErr);
+          }
+        }
+
+        sendJsonResponse(res, 201, { success: true, quotation: finalQuote });
         return true;
       } catch (err) {
         const status = err.statusCode || 400;

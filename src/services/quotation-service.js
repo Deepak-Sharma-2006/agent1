@@ -215,7 +215,7 @@ export class QuotationService {
    * @param {number} [params.validityPeriodDays=30] - Number of days quote remains valid
    * @returns {Object} Created draft quotation
    */
-  createDraftQuotation({ salesRepId, salesRepName, customerId, validityPeriodDays = 30 }) {
+  createDraftQuotation({ salesRepId, salesRepName, customerId, validityPeriodDays = 30, requestedDiscountPercentage = 0, customerNotes = "" }) {
     if (!salesRepId || !customerId) {
       throw new ValidationError("salesRepId and customerId are required to author a quotation.");
     }
@@ -240,6 +240,8 @@ export class QuotationService {
       salesRepId,
       salesRepName: salesRepName || "Sales Representative",
       status: "Draft",
+      requestedDiscountPercentage: Number(requestedDiscountPercentage || 0),
+      customerNotes: customerNotes || "",
       lines: [],
       subtotalCents: 0,
       discountTotalCents: 0,
@@ -624,6 +626,9 @@ export class QuotationService {
     if (updateData.customerId) quotation.customerId = updateData.customerId;
     if (updateData.salesRepId) quotation.salesRepId = updateData.salesRepId;
     if (updateData.customerCounterNotes !== undefined) quotation.customerCounterNotes = updateData.customerCounterNotes;
+    if (updateData.requestedDiscountPercentage !== undefined) quotation.requestedDiscountPercentage = Number(updateData.requestedDiscountPercentage);
+    if (updateData.customerNotes !== undefined) quotation.customerNotes = updateData.customerNotes;
+    if (updateData.customerDemandNotes !== undefined) quotation.customerNotes = updateData.customerDemandNotes;
 
     // If updateData contains lines, recalculate each line
     if (Array.isArray(updateData.lines)) {
@@ -1127,24 +1132,27 @@ export class QuotationService {
    * @param {string} [params.messageType="chat"]
    * @returns {Object} Persisted message record
    */
-  addNegotiationMessage({ quoteId, senderId, senderRole, senderName, message, proposedDiscountPercent, isInternal = false, messageType = "chat" }) {
-    const quotation = this.getQuotationById(quoteId);
+  addNegotiationMessage({ quoteId, quotationId, senderId, senderRole, senderName, message, content, proposedDiscountPercent, isInternal = false, messageType = "chat" }) {
+    const targetQuoteId = quoteId || quotationId;
+    const quotation = this.getQuotationById(targetQuoteId);
     if (!quotation) {
-      throw new NotFoundError(`Quotation '${quoteId}' not found.`);
+      throw new NotFoundError(`Quotation '${targetQuoteId}' not found.`);
     }
 
-    if (!message || typeof message !== "string" || !message.trim()) {
+    const messageBody = message || content;
+    if (!messageBody || typeof messageBody !== "string" || !messageBody.trim()) {
       throw new ValidationError("Message body cannot be empty.");
     }
 
     const messageRecord = {
       id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      quotationId: quoteId,
+      quotationId: targetQuoteId,
       senderId: senderId || "anonymous",
       senderRole: senderRole || "Customer",
       senderName: senderName || senderRole || "Participant",
-      message: message.trim(),
-      messageText: message.trim(),
+      message: messageBody.trim(),
+      messageText: messageBody.trim(),
+      content: messageBody.trim(),
       proposedDiscountPercent: proposedDiscountPercent != null ? Number(proposedDiscountPercent) : null,
       isInternal: Boolean(isInternal),
       messageType: messageType || "chat",
@@ -1177,13 +1185,13 @@ export class QuotationService {
       }
     }
 
-    // In-memory array fallback
-    if (!this.inMemoryMessages.has(quoteId)) {
-      this.inMemoryMessages.set(quoteId, []);
+    // 2. In-Memory fallback cache
+    if (!this.inMemoryMessages.has(targetQuoteId)) {
+      this.inMemoryMessages.set(targetQuoteId, []);
     }
-    this.inMemoryMessages.get(quoteId).push(messageRecord);
+    this.inMemoryMessages.get(targetQuoteId).push(messageRecord);
 
-    // 2. Real-time WebSocket egress
+    // 3. Real-time broadcast
     if (this.eventBroadcaster) {
       this.eventBroadcaster.emitChatMessage(messageRecord);
     }
@@ -1218,6 +1226,7 @@ export class QuotationService {
             proposedDiscountPercent: r.proposed_discount_percent,
             message: r.message_text,
             messageText: r.message_text,
+            content: r.message_text,
             isInternal: Boolean(r.is_internal),
             messageType: r.message_type || "chat",
             sentAt: r.created_at,

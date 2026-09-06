@@ -18,6 +18,12 @@ import {
   FileText,
   UserCheck,
   Building,
+  Tag,
+  Percent,
+  MessageSquare,
+  DollarSign,
+  Award,
+  ArrowUpRight,
 } from 'lucide-react';
 
 export function CatalogView({ onOpenQuote }) {
@@ -32,12 +38,15 @@ export function CatalogView({ onOpenQuote }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
 
-  // Customer Procurement Cart state
+  // Customer Procurement Cart & Commercial Demand state
   const [cart, setCart] = useState([]);
   const [cardQuantities, setCardQuantities] = useState({});
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittedQuote, setSubmittedQuote] = useState(null);
+  const [customerAccount, setCustomerAccount] = useState(null);
+  const [targetDiscountPct, setTargetDiscountPct] = useState(12);
+  const [demandNotes, setDemandNotes] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -51,6 +60,24 @@ export function CatalogView({ onOpenQuote }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Fetch customer account profile to pre-seed tier-grounded discount expectations
+  useEffect(() => {
+    const custId = currentUser?.customerId || 'cust-acme-01';
+    fetch(`/api/customers/${custId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && data.customer) {
+          setCustomerAccount(data.customer);
+          const tier = data.customer.tier || 'Bronze';
+          if (tier === 'Platinum') setTargetDiscountPct(18);
+          else if (tier === 'Gold') setTargetDiscountPct(12);
+          else if (tier === 'Silver') setTargetDiscountPct(8);
+          else setTargetDiscountPct(5);
+        }
+      })
+      .catch(() => {});
+  }, [currentUser]);
 
   const formatCurrency = (cents) =>
     `$${((cents || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -136,6 +163,8 @@ export function CatalogView({ onOpenQuote }) {
           salesRepId: 'usr-rep-01',
           salesRepName: 'Sarah Jenkins',
           lines,
+          requestedDiscountPercentage: Number(targetDiscountPct || 0),
+          customerNotes: demandNotes.trim(),
         }),
       });
 
@@ -145,6 +174,7 @@ export function CatalogView({ onOpenQuote }) {
         setCart([]);
         setIsCartOpen(false);
         setSubmittedQuote(createdQuote);
+        setDemandNotes('');
       } else {
         alert(data.error || 'Failed to submit order request. Please try again.');
       }
@@ -785,65 +815,204 @@ export function CatalogView({ onOpenQuote }) {
               )}
             </div>
 
-            {/* Cart Footer */}
-            {cart.length > 0 && (
-              <div
-                style={{
-                  padding: '16px 20px',
-                  borderTop: '1px solid var(--border-subtle)',
-                  backgroundColor: '#ffffff',
-                }}
-              >
+            {/* Cart Footer with Initial Commercial Demand */}
+            {cart.length > 0 && (() => {
+              const customerTier = customerAccount?.tier || 'Gold';
+              const tierGuideline =
+                customerTier === 'Platinum'
+                  ? 'Platinum Tier • Enterprise Range: 15% – 20%'
+                  : customerTier === 'Gold'
+                  ? 'Gold Tier • Standard Range: 10% – 15%'
+                  : customerTier === 'Silver'
+                  ? 'Silver Tier • Standard Range: 5% – 10%'
+                  : 'Bronze Tier • Standard Range: 0% – 5%';
+
+              const targetDiscountAmountCents = Math.round(totalCartCents * ((targetDiscountPct || 0) / 100));
+              const targetNetTotalCents = Math.max(0, totalCartCents - targetDiscountAmountCents);
+
+              return (
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '10px',
-                    fontSize: '13px',
+                    padding: '16px 20px',
+                    borderTop: '1px solid var(--border-subtle)',
+                    backgroundColor: '#ffffff',
+                    maxHeight: '440px',
+                    overflowY: 'auto',
                   }}
                 >
-                  <span style={{ color: 'var(--text-muted)' }}>Estimated Catalog Subtotal:</span>
-                  <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--primary)' }}>
-                    {formatCurrency(totalCartCents)}
-                  </span>
-                </div>
+                  {/* Catalog Subtotal */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px',
+                      fontSize: '13px',
+                    }}
+                  >
+                    <span style={{ color: 'var(--text-muted)' }}>Catalog List Subtotal:</span>
+                    <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)' }}>
+                      {formatCurrency(totalCartCents)}
+                    </span>
+                  </div>
 
-                <div
-                  style={{
-                    fontSize: '11px',
-                    color: 'var(--text-muted)',
-                    backgroundColor: '#f8fafc',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    marginBottom: '14px',
-                    lineHeight: 1.4,
-                  }}
-                >
-                  Submitting creates a draft quotation proposal. Your Account Executive will review, apply Gold-tier volume discounts, and publish the terms for your digital signoff.
-                </div>
+                  {/* Customer Commercial Demand Section */}
+                  <div
+                    style={{
+                      backgroundColor: '#eff6ff',
+                      border: '1px solid #bfdbfe',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '6px',
+                        flexWrap: 'wrap',
+                        gap: '4px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#1e40af' }}>
+                        <Tag size={13} />
+                        <span>Initial Requested Discount Demand:</span>
+                      </div>
+                      <span
+                        style={{
+                          backgroundColor: '#dbeafe',
+                          color: '#1d4ed8',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {tierGuideline}
+                      </span>
+                    </div>
 
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleSubmitOrderRequest}
-                  disabled={submitting}
-                  style={{
-                    width: '100%',
-                    padding: '11px',
-                    fontSize: '13.5px',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                  }}
-                >
-                  {submitting ? 'Creating Quotation...' : 'Submit Order Request to Sales Rep'}
-                  <ArrowRight size={15} />
-                </button>
-              </div>
-            )}
+                    {/* Slider & Number Input */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                      <input
+                        type="range"
+                        min="0"
+                        max="25"
+                        step="1"
+                        value={targetDiscountPct}
+                        onChange={(e) => setTargetDiscountPct(Number(e.target.value))}
+                        style={{ flex: 1, accentColor: 'var(--primary, #0284c7)', cursor: 'pointer' }}
+                      />
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #93c5fd',
+                          borderRadius: '6px',
+                          padding: '3px 8px',
+                        }}
+                      >
+                        <input
+                          type="number"
+                          min="0"
+                          max="35"
+                          step="0.5"
+                          value={targetDiscountPct}
+                          onChange={(e) => setTargetDiscountPct(Math.max(0, Math.min(35, Number(e.target.value) || 0)))}
+                          style={{
+                            width: '42px',
+                            border: 'none',
+                            outline: 'none',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            color: '#1e3a8a',
+                            textAlign: 'right',
+                          }}
+                        />
+                        <span style={{ fontWeight: 700, fontSize: '13px', color: '#1e3a8a', marginLeft: '2px' }}>%</span>
+                      </div>
+                    </div>
+
+                    {/* Live Target Budget Preview */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '12px',
+                        paddingTop: '6px',
+                        borderTop: '1px dashed #93c5fd',
+                      }}
+                    >
+                      <span style={{ color: '#1e40af' }}>
+                        Target Concession: -{formatCurrency(targetDiscountAmountCents)}
+                      </span>
+                      <span style={{ fontWeight: 800, color: '#1e3a8a', fontSize: '13.5px' }}>
+                        Target Budget: {formatCurrency(targetNetTotalCents)}
+                      </span>
+                    </div>
+
+                    {/* Commercial Demand & Justification Notes */}
+                    <div style={{ marginTop: '8px' }}>
+                      <textarea
+                        placeholder="State procurement justification, budget constraints, or delivery terms (e.g. Q4 project budget cap $45,000; requesting Net 30 payment terms)..."
+                        value={demandNotes}
+                        onChange={(e) => setDemandNotes(e.target.value)}
+                        rows={2}
+                        style={{
+                          width: '100%',
+                          padding: '6px 8px',
+                          fontSize: '11.5px',
+                          borderRadius: '6px',
+                          border: '1px solid #bfdbfe',
+                          backgroundColor: '#ffffff',
+                          outline: 'none',
+                          resize: 'none',
+                          color: 'var(--text-main)',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      color: 'var(--text-muted)',
+                      backgroundColor: '#f8fafc',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      marginBottom: '12px',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    Submitting creates a draft quotation proposal and posts your commercial demand ({targetDiscountPct}% target) directly into the Sales Rep's commercial deal room.
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleSubmitOrderRequest}
+                    disabled={submitting}
+                    style={{
+                      width: '100%',
+                      padding: '11px',
+                      fontSize: '13.5px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    {submitting ? 'Submitting RFQ...' : `Submit RFQ with ${targetDiscountPct}% Commercial Demand`}
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

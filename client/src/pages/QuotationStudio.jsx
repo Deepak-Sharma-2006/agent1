@@ -838,6 +838,93 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
       {/* Graceful Fallback Notice Banner */}
       <FallbackBanner quotation={quote} isCustomer={false} />
 
+      {/* Customer Initial Commercial Demand Banner */}
+      {(Number(quote.requestedDiscountPercentage) > 0 || quote.customerNotes) && (
+        <div
+          style={{
+            marginBottom: '16px',
+            padding: '12px 18px',
+            backgroundColor: '#eff6ff',
+            borderRadius: '8px',
+            border: '1px solid #bfdbfe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: '#dbeafe',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#1d4ed8',
+              }}
+            >
+              <DollarSign size={18} />
+            </div>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>Customer Procurement Commercial Demand:</span>
+                {Number(quote.requestedDiscountPercentage) > 0 && (
+                  <span
+                    style={{
+                      backgroundColor: '#dbeafe',
+                      color: '#1e3a8a',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {Number(quote.requestedDiscountPercentage).toFixed(1)}% Discount Requested
+                  </span>
+                )}
+              </div>
+              {quote.customerNotes && (
+                <div style={{ fontSize: '12px', color: '#2563eb', marginTop: '2px', fontStyle: 'italic' }}>
+                  Requisition Note: "{quote.customerNotes}"
+                </div>
+              )}
+            </div>
+          </div>
+
+          {canEditLines && quote.status === 'Draft' && Number(quote.requestedDiscountPercentage) > 0 && (
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={() => {
+                const targetPct = Number(quote.requestedDiscountPercentage);
+                setQuote((prev) => ({
+                  ...prev,
+                  lines: (prev.lines || []).map((l) => ({
+                    ...l,
+                    unitDiscountPercentage: targetPct,
+                    discountPercent: targetPct,
+                    discountPercentage: targetPct,
+                  })),
+                }));
+                addToast?.(
+                  'Demand Applied',
+                  `Applied customer's requested ${targetPct}% discount across all lines.`,
+                  'success'
+                );
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+            >
+              <Check size={14} />
+              <span>Apply Customer Demand ({Number(quote.requestedDiscountPercentage).toFixed(1)}%)</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Real-Time Pre-Submission Escalation Guidance Banner (Draft Mode) */}
       {quote.status === 'Draft' && !isCustomer() && !isWarehouse() && (
         <div

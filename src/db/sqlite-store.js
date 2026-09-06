@@ -1162,6 +1162,8 @@ export class SqliteQuotationRepository {
       approvalChain: rawData.approvalChain || [],
       approvalHistory: rawData.approvalChain || rawData.approvalHistory || [],
       appliedIncentives: rawData.appliedIncentives || [],
+      requestedDiscountPercentage: rawData.requestedDiscountPercentage ?? 0,
+      customerNotes: rawData.customerNotes || "",
       notes: qRow.notes,
       createdAt: qRow.created_at,
       updatedAt: qRow.updated_at,

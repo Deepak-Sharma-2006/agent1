@@ -1,0 +1,168 @@
+<svg fill="none" viewBox="0 0 850 180" width="850" height="180" xmlns="http://www.w3.org/2000/svg">
+  <foreignObject width="100%" height="100%">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <style>
+        .container {
+          position: relative;
+          width: 850px;
+          height: 180px;
+          background: #0b1329;
+          border-radius: 12px;
+          overflow: hidden;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          box-sizing: border-box;
+          border: 1px solid #1e293b;
+        }
+
+        .gradient-line {
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 3px;
+          background: linear-gradient(90deg, transparent, #0284c7, #38bdf8, #10b981, transparent);
+          animation: travel 4s linear infinite;
+        }
+
+        @keyframes travel {
+          0% { left: -100%; }
+          50% { left: 100%; }
+          100% { left: 100%; }
+        }
+
+        .glow {
+          position: absolute;
+          top: -40px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 400px;
+          height: 80px;
+          background: radial-gradient(circle, rgba(2, 132, 199, 0.35) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 80%);
+          filter: blur(20px);
+        }
+
+        .content {
+          padding: 24px 32px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          height: 100%;
+          box-sizing: border-box;
+          position: relative;
+          z-index: 2;
+        }
+
+        .top-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .badge-brand {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(2, 132, 199, 0.12);
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          border-radius: 9999px;
+          padding: 4px 12px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #38bdf8;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .pulse-dot {
+          width: 6px;
+          height: 6px;
+          background: #38bdf8;
+          border-radius: 50%;
+          box-shadow: 0 0 8px #38bdf8;
+          animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .version-tag {
+          font-size: 12px;
+          color: #64748b;
+          font-weight: 500;
+          letter-spacing: 0.04em;
+        }
+
+        .title {
+          font-size: 30px;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          margin: 4px 0 0 0;
+          background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+          font-size: 13.5px;
+          color: #94a3b8;
+          margin: 4px 0 0 0;
+          font-weight: 400;
+          letter-spacing: -0.01em;
+        }
+
+        .stats-bar {
+          display: flex;
+          gap: 20px;
+          padding-top: 10px;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .stat-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 11.5px;
+          font-weight: 600;
+          color: #cbd5e1;
+        }
+
+        .stat-indicator {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+        }
+
+        .stat-emerald { background: #10b981; box-shadow: 0 0 6px #10b981; }
+        .stat-cyan { background: #06b6d4; box-shadow: 0 0 6px #06b6d4; }
+        .stat-blue { background: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
+        .stat-amber { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+      </style>
+
+      <div class="container">
+        <div class="gradient-line"></div>
+        <div class="glow"></div>
+        <div class="content">
+          <div class="top-row">
+            <div class="badge-brand">
+              <span class="pulse-dot"></span>
+              DealFlow360 Executive
+            </div>
+            <div class="version-tag">Production Engine v1.0.0 &bull; Node.js 22+ Native</div>
+          </div>
+          <div>
+            <div class="title">Autonomous CPQ &amp; Sales Operations Platform</div>
+            <div class="subtitle">Multi-Tier Pricing Governance &bull; Distributed Warehouse Logistics &bull; GAAP Milestone Billing</div>
+          </div>
+          <div class="stats-bar">
+            <div class="stat-item"><span class="stat-indicator stat-emerald"></span> 179/179 Unit Tests Passing</div>
+            <div class="stat-item"><span class="stat-indicator stat-cyan"></span> 48ms Cold Boot</div>
+            <div class="stat-item"><span class="stat-indicator stat-blue"></span> Zero Ghost Packages</div>
+            <div class="stat-item"><span class="stat-indicator stat-amber"></span> RFC 6455 Real-Time</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </foreignObject>
+</svg>

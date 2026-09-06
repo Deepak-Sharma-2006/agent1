@@ -1,0 +1,132 @@
+<svg fill="none" viewBox="0 0 850 260" width="850" height="260" xmlns="http://www.w3.org/2000/svg">
+  <foreignObject width="100%" height="100%">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <style>
+        .term-window {
+          width: 850px;
+          height: 260px;
+          background: #090e1a;
+          border-radius: 10px;
+          box-sizing: border-box;
+          border: 1px solid #1e293b;
+          font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+          color: #e2e8f0;
+          overflow: hidden;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .term-header {
+          background: #0f172a;
+          padding: 10px 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          border-bottom: 1px solid #1e293b;
+        }
+
+        .dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+        }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+
+        .term-title {
+          font-size: 11.5px;
+          color: #64748b;
+          font-weight: 500;
+          margin-left: 12px;
+          letter-spacing: 0.04em;
+        }
+
+        .term-body {
+          padding: 16px 20px;
+          font-size: 12.5px;
+          line-height: 1.6;
+        }
+
+        .prompt {
+          color: #38bdf8;
+          font-weight: 600;
+        }
+
+        .cmd {
+          color: #ffffff;
+        }
+
+        .line {
+          opacity: 0;
+          animation: fadeIn 0.4s forwards;
+        }
+
+        .line-1 { animation-delay: 0.2s; }
+        .line-2 { animation-delay: 0.8s; }
+        .line-3 { animation-delay: 1.4s; }
+        .line-4 { animation-delay: 2.0s; }
+        .line-5 { animation-delay: 2.6s; }
+
+        @keyframes fadeIn {
+          to { opacity: 1; }
+        }
+
+        .pass-tag {
+          color: #10b981;
+          font-weight: bold;
+        }
+
+        .info-tag {
+          color: #06b6d4;
+          font-weight: 600;
+        }
+
+        .num-tag {
+          color: #f59e0b;
+          font-weight: 600;
+        }
+
+        .cursor {
+          display: inline-block;
+          width: 7px;
+          height: 14px;
+          background: #38bdf8;
+          vertical-align: middle;
+          margin-left: 4px;
+          animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      </style>
+
+      <div class="term-window">
+        <div class="term-header">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+          <span class="term-title">agy@dealflow360: ~/workspace (pure-native node22)</span>
+        </div>
+        <div class="term-body">
+          <div class="line line-1">
+            <span class="prompt">$</span> <span class="cmd">npm run test:unit</span>
+          </div>
+          <div class="line line-2">
+            <span class="pass-tag">&#10003; Phase 1–11 Test Suites</span>: <span class="info-tag">Entities, REST API, SQLite WAL, RFC6455 Realtime, CPQ Studio, BAFO, ATP Split, PWA</span>
+          </div>
+          <div class="line line-3">
+            <span class="pass-tag">&#10003; 179 passed</span> &bull; <span class="num-tag">0 failed</span> &bull; 0 skipped &bull; <span class="info-tag">Duration: 14.09s</span> &bull; <span class="num-tag">0 ghost packages</span>
+          </div>
+          <div class="line line-4">
+            <span class="prompt">$</span> <span class="cmd">npm start</span>
+          </div>
+          <div class="line line-5">
+            <span class="info-tag">&#9658; [Server Bootstrapped]</span> dealflow360-service listening on port <span class="num-tag">3000</span> <span class="pass-tag">(Cold boot: 48ms &bull; WAL OCC active)</span><span class="cursor"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </foreignObject>
+</svg>

@@ -318,33 +318,61 @@ In Section 3 ("User Roles") of the Odoo problem statement, exactly **5 human and
 
 ## 4.5. Advanced Real-World Governance Mechanisms
 
-### 1. Dynamic Customer Tier Progression (Upgradation & Degradation Engine)
+### 1. Dynamic Customer Tier Progression (Automated Upgradation & Degradation Engine)
 In enterprise B2B sales (IT hardware, networking, industrial equipment), account tiers are not static badges; they are living classifications driven by spend velocity, order cadence, and payment discipline.
 
-- **Realistic Tier Metrics & Progression Thresholds**:
-  1. **Bronze (Onboarding / Occasional Account)**:
-     - Spend Baseline: $0 - $24,999 annual spend.
-     - Default Terms: Net 0 (Pre-payment / Credit Card).
-     - Standard Discretionary Ceiling: 5%.
-  2. **Silver (Growth / Regular Account)**:
-     - *Upgrade Qualification*: Trailing 90-Day spend $\ge \$25,000$ (2,500,000 cents) OR $\ge 6$ orders in trailing 90 days with aggregate spend $\ge \$15,000$.
-     - Credit Requirement: Average Days Sales Outstanding (DSO) $\le 30$ days, zero invoices $> 15$ days overdue.
-     - Benefits: Payment Terms Net 15, default discount up to 8%.
-     - *Degradation Trigger*: Inactivity ($0$ orders in $> 90$ days), or trailing 90-day spend drops below $\$10,000$, or $> 1$ invoice overdue $> 30$ days $\rightarrow$ Degraded back to Bronze.
-  3. **Gold (Consistent High-Value Account)**:
-     - *Upgrade Qualification*: Trailing 180-Day spend $\ge \$100,000$ (10,000,000 cents) OR high cadence ($\ge 12$ orders in trailing 90 days, e.g. weekly/bi-weekly replenishment) with aggregate spend $\ge \$60,000$.
-     - Credit Requirement: Flawless credit health: DSO $\le 25$ days, zero overdue invoices $> 15$ days, lifetime payment default rate $0\%$.
-     - Benefits: Payment Terms Net 30, default discount up to 14%, priority warehouse dispatch buffer.
-     - *Degradation Trigger*: Dormancy ($0$ orders in $> 60$ days), or trailing 90-day spend drops below $\$35,000$, or any payment overdue $> 30$ days $\rightarrow$ Degraded to Silver.
-  4. **Platinum (Strategic / Enterprise VIP Partner)**:
-     - *Upgrade Qualification*: Trailing 365-Day spend $\ge \$350,000$ (35,000,000 cents) AND consistent ordering ($\ge 1$ order every 30 days average, $\ge 12$ orders/year).
-     - Credit Requirement: DSO $\le 20$ days, zero 30+ day payment defaults in trailing 24 months.
-     - Benefits: Payment Terms Net 45/60, default discount up to 20%, dedicated account manager SLA, zero warehouse handling fees.
-     - *Degradation Trigger*: Severe cadence drop ($0$ orders in $> 90$ days) or trailing 180-day spend drops below $\$75,000$ $\rightarrow$ Degraded to Gold. Any unpaid invoice overdue $> 45$ days immediately degrades account to Silver and locks credit lines until settled.
+> **Codebase Mathematical Grounding**: All automated progression, degradation, and escalation thresholds strictly utilize the verified mathematical models and logic already codified in [`src/domain/tier-engine.js`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/src/domain/tier-engine.js) (`TierEngine.evaluateCustomerTier`) and [`src/domain/escalation-engine.js`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/src/domain/escalation-engine.js) (`EscalationEngine.assessEscalation` & `computeBlendedRiskScore`). Zero ad-hoc or conflicting math is introduced.
 
-- **Direct Escalation Impact**:
-  - **Premium (Gold/Platinum) Customers**: Reps have wider pre-approved discount bands (up to 10% self-approved by rep, low risk score penalty). Escalates slower because customer lifetime relationship margin is high.
-  - **Degraded / At-Risk Accounts**: Escalation sensitivity multiplies (1.5x risk score weight); any discount over 5% immediately triggers Sales Manager review to protect margin on volatile accounts.
+#### Realistic Tier Metrics, Cadence & Progression Thresholds:
+1. **Bronze (Baseline / Spot Accounts)**:
+   - Spend Baseline: $< \$25,000$ trailing 90-day spend ($0 - \$24,999$).
+   - Default Terms: **Net 0** (Pre-payment / Credit Card required).
+   - Standard Discretionary Ceiling: **5%**. Margin floor $\ge 25\%$.
+   - Assigned Commercial Desk: **Level 1 — Sales Representative Desk** (Sarah Jenkins).
+2. **Silver (Growth / Regular Accounts)**:
+   - *Upgrade Qualification*: Trailing 90-Day spend $\ge \$25,000$ (2,500,000 cents) OR $\ge 6$ orders in trailing 90 days with aggregate spend $\ge \$15,000$.
+   - Credit Requirement: Average Days Sales Outstanding (DSO) $\le 30$ days, zero invoices $> 15$ days overdue.
+   - Benefits: Payment Terms **Net 15**, default discount up to **8%**. Margin floor $\ge 22\%$.
+   - Assigned Commercial Desk: **Level 1 — Sales Representative Desk** with 1-click **"Escalate to Sales Manager"** action for concessions $>8\%$.
+   - *Degradation Trigger*: Inactivity ($0$ orders in $> 90$ days), or trailing 90-day spend drops below $\$10,000$, or invoice overdue $> 30$ days $\rightarrow$ Demoted to Bronze.
+3. **Gold (Consistent High-Value Enterprise Accounts)**:
+   - *Upgrade Qualification*: Trailing 180-Day spend $\ge \$100,000$ (10,000,000 cents) OR high cadence ($\ge 12$ orders in trailing 90 days, e.g. weekly/bi-weekly replenishment) with aggregate spend $\ge \$60,000$.
+   - Credit Requirement: Flawless credit health: DSO $\le 25$ days, zero overdue invoices $> 15$ days, lifetime payment default rate $0\%$.
+   - Benefits: Payment Terms **Net 30**, default discount up to **14%**, priority warehouse dispatch buffer. Margin floor $\ge 18\%$.
+   - Assigned Commercial Desk: **Level 2 — Sales Manager Executive Lead** (Marcus Vance) directly connected.
+   - *Degradation Trigger*: Dormancy ($0$ orders in $> 60$ days), or trailing 90-day spend drops below $\$35,000$, or any payment overdue $> 30$ days $\rightarrow$ Demoted to Silver.
+4. **Platinum (Strategic / Enterprise VIP Partner)**:
+   - *Upgrade Qualification*: Trailing 365-Day spend $\ge \$350,000$ (35,000,000 cents) AND consistent enterprise ordering ($\ge 1$ order every 30 days average, $\ge 12$ orders/year).
+   - Credit Requirement: DSO $\le 20$ days, zero 30+ day payment defaults in trailing 24 months.
+   - Benefits: Payment Terms **Net 45/60**, default discount up to **20%**, dedicated account manager SLA, zero warehouse handling fees. Margin floor $\ge 18\%$.
+   - Assigned Commercial Desk: **Level 3 — Sales Leadership & Finance Controller Joint Desk** directly connected.
+   - *Degradation Trigger*: Severe cadence drop ($0$ orders in $> 90$ days) or trailing 180-day spend drops below $\$75,000$ $\rightarrow$ Demoted to Gold. Critical delinquency (unpaid invoice overdue $> 45$ days) immediately demotes account to Silver, locks credit lines, and suspends Net terms.
+
+#### Real-World Business Timelines & Aging Delinquency Cliffs:
+- **0 - 15 Days Past Due**: Standard operational grace period. Account remains in current tier.
+- **16 - 30 Days Past Due**: Soft warning state. Discretionary discount ceiling reduced by 2%.
+- **31 - 45 Days Past Due**: Dormancy/Delinquency threshold. Silver accounts demoted to Bronze.
+- **> 45 Days Past Due (Critical Cliff)**: Breaches commercial credit insurance covenants and working capital limits. Triggers **immediate automated demotion** (Gold/Silver $\rightarrow$ Bronze, Platinum $\rightarrow$ Silver with credit freeze). Payment terms locked to Net 0 Prepayment.
+- **Credit Curing Timeline**: When delinquent balances are settled in full and DSO drops back $\le 25$ days, the system allows an automated Credit Cure re-evaluation.
+
+#### Automated Lifecycle Triggers (Zero Manual Overhead):
+1. **Trigger A: Instant Order Confirmation Progression (`confirmFinalQuotation`)**:
+   - Customer signs digital quotation $\rightarrow$ Net total added to customer trailing spend metrics.
+   - Order cadence incremented; dormancy reset (`daysSinceLastOrder = 0`).
+   - `TierEngine.evaluateCustomerTier(customer)` runs automatically.
+   - If promoted: SQLite updated, WebSocket `CUSTOMER_TIER_UPDATED` emitted, and automated promotion announcement card injected into deal feed.
+2. **Trigger B: Real-Time Delinquency Degradation (`auditCustomerDelinquency`)**:
+   - Open invoice aging exceeds 45 days overdue or default recorded.
+   - `TierEngine` demotes tier, forces `paymentTerms = 'Net0'`.
+   - Relegates deal from Executive Desk back to Junior Rep Collections Desk, displaying a prominent red delinquency warning.
+3. **Trigger C: Automated Batch Governance (`POST /api/governance/tier-audit`)**:
+   - Simulates enterprise nightly/monthly reconciliation cron, scanning all active accounts against rolling spend and aging metrics.
+
+#### Dynamic Negotiation Desk Routing in the Deal Room:
+- **Bronze & Silver Accounts**: Routed to **Sales Representative Desk (Sarah Jenkins)**. Rep discretionary ceiling: 5% (Bronze), 8% (Silver). Concessions exceeding ceiling trigger in-feed **"Escalate to Sales Manager"** action.
+- **Gold Accounts**: Routed directly to **Sales Manager Executive Lead (Marcus Vance)**.
+- **Platinum Accounts**: Routed directly to **Sales Leadership & Finance Controller Joint Desk**.
+- **Degraded Accounts**: Executive privileges instantly revoked; re-routed to Junior Rep Collections Desk; terms locked to Net 0 Prepayment.
 
 ---
 

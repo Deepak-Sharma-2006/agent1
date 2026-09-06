@@ -222,10 +222,65 @@ export class EventBroadcaster {
       senderRole: messageRecord.senderRole,
       senderName: messageRecord.senderName || messageRecord.senderRole,
       message: messageRecord.message,
+      messageText: messageRecord.message,
+      isInternal: Boolean(messageRecord.isInternal || messageRecord.is_internal),
+      messageType: messageRecord.messageType || messageRecord.message_type || "chat",
+      proposedDiscountPercent: messageRecord.proposedDiscountPercent ?? messageRecord.proposed_discount_percent ?? null,
       quoteVersion: messageRecord.quoteVersion,
-      sentAt: messageRecord.sentAt || new Date().toISOString(),
+      sentAt: messageRecord.sentAt || messageRecord.createdAt || new Date().toISOString(),
+      createdAt: messageRecord.sentAt || messageRecord.createdAt || new Date().toISOString(),
     };
 
     this.channelManager.broadcast(`quotation:${messageRecord.quotationId}`, event);
   }
+
+  /**
+   * Broadcasts dynamic customer tier progression (promotion) events.
+   * @param {Object} customer
+   * @param {Object} evaluationResult
+   */
+  emitTierUpdated(customer, evaluationResult = {}) {
+    if (!customer || !customer.id) return;
+
+    const event = {
+      type: "CUSTOMER_TIER_UPDATED",
+      customerId: customer.id,
+      customerName: customer.name,
+      previousTier: evaluationResult.currentTier,
+      currentTier: customer.tier,
+      recommendedPaymentTerms: customer.paymentTerms,
+      reason: evaluationResult.reason,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.channelManager.broadcast(`customer:${customer.id}`, event);
+    this.channelManager.broadcast("role:manager", event);
+    this.channelManager.broadcast("role:finance", event);
+  }
+
+  /**
+   * Broadcasts customer tier delinquency demotion (degradation) alerts.
+   * @param {Object} customer
+   * @param {Object} evaluationResult
+   */
+  emitTierDegraded(customer, evaluationResult = {}) {
+    if (!customer || !customer.id) return;
+
+    const event = {
+      type: "CUSTOMER_TIER_DEGRADED",
+      customerId: customer.id,
+      customerName: customer.name,
+      previousTier: evaluationResult.currentTier,
+      currentTier: customer.tier,
+      recommendedPaymentTerms: customer.paymentTerms,
+      maxOverdueDays: customer.maxOverdueDays || 0,
+      reason: evaluationResult.reason,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.channelManager.broadcast(`customer:${customer.id}`, event);
+    this.channelManager.broadcast("role:manager", event);
+    this.channelManager.broadcast("role:salesrep", event);
+  }
 }
+

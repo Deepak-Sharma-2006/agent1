@@ -93,6 +93,9 @@ export function createServer(config = defaultConfig, customDependencies = null) 
         senderRole: data.senderRole,
         senderName: data.senderName,
         message: data.message,
+        proposedDiscountPercent: data.proposedDiscountPercent,
+        isInternal: Boolean(data.isInternal),
+        messageType: data.messageType || "chat",
       });
     } catch (err) {
       if (data.client && data.client.readyState === 1) {

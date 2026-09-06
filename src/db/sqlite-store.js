@@ -275,6 +275,8 @@ export class SqliteDatabase {
         sender_name TEXT NOT NULL,
         proposed_discount_percent REAL,
         message_text TEXT NOT NULL,
+        is_internal INTEGER NOT NULL DEFAULT 0,
+        message_type TEXT NOT NULL DEFAULT 'chat',
         created_at TEXT NOT NULL,
         FOREIGN KEY (quotation_id) REFERENCES quotations(id) ON DELETE CASCADE
       );
@@ -337,6 +339,17 @@ export class SqliteDatabase {
       CREATE INDEX IF NOT EXISTS idx_inv_quote ON invoices(quotation_id);
       CREATE INDEX IF NOT EXISTS idx_inv_status ON invoices(status);
     `);
+
+    try {
+      this.db.exec("ALTER TABLE negotiation_messages ADD COLUMN is_internal INTEGER NOT NULL DEFAULT 0;");
+    } catch {
+      // Ignored if column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE negotiation_messages ADD COLUMN message_type TEXT NOT NULL DEFAULT 'chat';");
+    } catch {
+      // Ignored if column already exists
+    }
   }
 
   /**
@@ -507,13 +520,21 @@ export class SqliteCustomerRepository {
       tier: row.tier,
       annualSpendCents: row.annual_spend_cents,
       dsoDays: row.dso_days,
+      averageDSO: row.dso_days ?? rawData.averageDSO ?? 30,
       overdueDays: row.overdue_days,
       maxOverdueDays: row.max_overdue_days,
       cadenceOrders90d: row.cadence_orders_90d,
+      ordersTrailing90Days: row.cadence_orders_90d ?? rawData.ordersTrailing90Days ?? 0,
+      ordersTrailing365Days: rawData.ordersTrailing365Days ?? (row.cadence_orders_90d ? row.cadence_orders_90d * 4 : 0),
       trailing90dSpendCents: row.trailing_90d_spend_cents,
       trailing180dSpendCents: row.trailing_180d_spend_cents,
       trailing365dSpendCents: row.trailing_365d_spend_cents,
+      trailing90DaySpendCents: row.trailing_90d_spend_cents ?? rawData.trailing90DaySpendCents ?? 0,
+      trailing180DaySpendCents: row.trailing_180d_spend_cents ?? rawData.trailing180DaySpendCents ?? 0,
+      trailing365DaySpendCents: row.trailing_365d_spend_cents ?? rawData.trailing365DaySpendCents ?? 0,
+      daysSinceLastOrder: rawData.daysSinceLastOrder ?? 0,
       defaultRate: row.default_rate,
+      defaultCount: rawData.defaultCount ?? (row.default_rate > 0 ? 1 : 0),
       creditLimitCents: row.credit_limit_cents,
       paymentTerms: row.payment_terms,
       createdAt: row.created_at,

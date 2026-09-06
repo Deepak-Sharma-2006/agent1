@@ -12,6 +12,7 @@ import { EscalationEngine } from "../domain/escalation-engine.js";
 import { FallbackEngine } from "../domain/fallback-engine.js";
 import { IncentiveEngine } from "../domain/incentive-engine.js";
 import { WarehouseAllocationEngine } from "../domain/warehouse-allocation-engine.js";
+import { TierEngine } from "../domain/tier-engine.js";
 import {
   createSubscriptionContract,
   calculateProration,
@@ -1054,6 +1055,56 @@ export class QuotationService {
       }
     }
 
+    // Automated Customer Tier Progression Hook (uses existing TierEngine rules/maths)
+    if (this.customerRepository && quotation.customerId) {
+      try {
+        const customer = this.customerRepository.findById(quotation.customerId);
+        if (customer) {
+          const netTotal = quotation.netTotalCents || quotation.subtotalCents || 0;
+          customer.annualSpendCents = (customer.annualSpendCents || 0) + netTotal;
+          customer.trailing90DaySpendCents = (customer.trailing90DaySpendCents || customer.trailing90dSpendCents || 0) + netTotal;
+          customer.trailing180DaySpendCents = (customer.trailing180DaySpendCents || customer.trailing180dSpendCents || 0) + netTotal;
+          customer.trailing365DaySpendCents = (customer.trailing365DaySpendCents || customer.trailing365dSpendCents || 0) + netTotal;
+          customer.trailing90dSpendCents = customer.trailing90DaySpendCents;
+          customer.trailing180dSpendCents = customer.trailing180DaySpendCents;
+          customer.trailing365dSpendCents = customer.trailing365DaySpendCents;
+          customer.ordersTrailing90Days = (customer.ordersTrailing90Days || customer.cadenceOrders90d || 0) + 1;
+          customer.cadenceOrders90d = customer.ordersTrailing90Days;
+          customer.ordersTrailing365Days = (customer.ordersTrailing365Days || 0) + 1;
+          customer.daysSinceLastOrder = 0;
+
+          const tierEval = TierEngine.evaluateCustomerTier(customer);
+          if (tierEval.upgraded) {
+            customer.tier = tierEval.recommendedTier;
+            customer.paymentTerms = tierEval.recommendedPaymentTerms;
+            this.customerRepository.save(customer);
+
+            if (this.eventBroadcaster && typeof this.eventBroadcaster.emitTierUpdated === "function") {
+              this.eventBroadcaster.emitTierUpdated(customer, tierEval);
+            }
+
+            try {
+              this.addNegotiationMessage({
+                quoteId: quotation.id,
+                senderId: "system",
+                senderRole: "System",
+                senderName: "Tier Engine Governance",
+                message: `🎉 Account Tier Promoted! Trailing spend reached $${(customer.trailing365DaySpendCents / 100).toLocaleString()}. Upgraded to ${tierEval.recommendedTier} with ${tierEval.recommendedPaymentTerms} terms.`,
+                messageType: "tier_announcement",
+                isInternal: false,
+              });
+            } catch {
+              // Non-blocking
+            }
+          } else {
+            this.customerRepository.save(customer);
+          }
+        }
+      } catch (tierErr) {
+        console.error("Non-blocking error during automated tier evaluation on confirmation:", tierErr);
+      }
+    }
+
     if (this.eventBroadcaster) {
       this.eventBroadcaster.emitQuoteConfirmed(quotation);
     }
@@ -1071,9 +1122,12 @@ export class QuotationService {
    * @param {string} params.senderRole
    * @param {string} [params.senderName]
    * @param {string} params.message
+   * @param {number|null} [params.proposedDiscountPercent]
+   * @param {boolean} [params.isInternal=false]
+   * @param {string} [params.messageType="chat"]
    * @returns {Object} Persisted message record
    */
-  addNegotiationMessage({ quoteId, senderId, senderRole, senderName, message }) {
+  addNegotiationMessage({ quoteId, senderId, senderRole, senderName, message, proposedDiscountPercent, isInternal = false, messageType = "chat" }) {
     const quotation = this.getQuotationById(quoteId);
     if (!quotation) {
       throw new NotFoundError(`Quotation '${quoteId}' not found.`);
@@ -1090,8 +1144,13 @@ export class QuotationService {
       senderRole: senderRole || "Customer",
       senderName: senderName || senderRole || "Participant",
       message: message.trim(),
+      messageText: message.trim(),
+      proposedDiscountPercent: proposedDiscountPercent != null ? Number(proposedDiscountPercent) : null,
+      isInternal: Boolean(isInternal),
+      messageType: messageType || "chat",
       quoteVersion: quotation.version || 1,
       sentAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
     // 1. Persist to SQLite if available
@@ -1099,16 +1158,18 @@ export class QuotationService {
       try {
         const stmt = this.database.db.prepare(`
           INSERT INTO negotiation_messages (
-            id, quotation_id, sender_role, sender_name, proposed_discount_percent, message_text, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            id, quotation_id, sender_role, sender_name, proposed_discount_percent, message_text, is_internal, message_type, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         stmt.run(
           messageRecord.id,
           messageRecord.quotationId,
           messageRecord.senderRole,
           messageRecord.senderName,
-          messageRecord.proposedDiscountPercent || null,
+          messageRecord.proposedDiscountPercent,
           messageRecord.message,
+          messageRecord.isInternal ? 1 : 0,
+          messageRecord.messageType,
           messageRecord.sentAt
         );
       } catch (err) {
@@ -1131,12 +1192,14 @@ export class QuotationService {
   }
 
   /**
-   * Retrieves all negotiation chat messages for a quotation.
+   * Retrieves all negotiation chat messages for a quotation, applying tenant isolation.
    * 
    * @param {string} quoteId
+   * @param {string} [userRole="Customer"]
    * @returns {Array<Object>}
    */
-  getNegotiationMessages(quoteId) {
+  getNegotiationMessages(quoteId, userRole = "Customer") {
+    let list = [];
     if (this.database && this.database.db && typeof this.database.db.prepare === "function") {
       try {
         const stmt = this.database.db.prepare(`
@@ -1146,7 +1209,7 @@ export class QuotationService {
         `);
         const rows = stmt.all(quoteId);
         if (rows && rows.length > 0) {
-          return rows.map(r => ({
+          list = rows.map(r => ({
             id: r.id,
             quotationId: r.quotation_id,
             senderId: r.sender_role,
@@ -1155,6 +1218,8 @@ export class QuotationService {
             proposedDiscountPercent: r.proposed_discount_percent,
             message: r.message_text,
             messageText: r.message_text,
+            isInternal: Boolean(r.is_internal),
+            messageType: r.message_type || "chat",
             sentAt: r.created_at,
             createdAt: r.created_at,
           }));
@@ -1164,7 +1229,209 @@ export class QuotationService {
       }
     }
 
-    return this.inMemoryMessages.get(quoteId) || [];
+    if (list.length === 0) {
+      list = this.inMemoryMessages.get(quoteId) || [];
+    }
+
+    // Role-based tenant masking: Customers never see internal notes
+    if (userRole === "Customer") {
+      return list.filter(m => !m.isInternal && m.is_internal !== 1);
+    }
+
+    return list;
+  }
+
+  /**
+   * Escalates a quotation deal directly from the negotiation deal room.
+   * 
+   * @param {string} quotationId
+   * @param {Object} options
+   * @param {string} [options.targetRole="SalesManager"]
+   * @param {string} [options.reason=""]
+   * @param {number} [options.requestedDiscountPct]
+   * @returns {Object}
+   */
+  escalateQuotationDeal(quotationId, { targetRole = "SalesManager", reason = "", requestedDiscountPct } = {}) {
+    const quotation = this.getQuotationById(quotationId);
+    if (!quotation) {
+      throw new NotFoundError(`Quotation '${quotationId}' not found.`);
+    }
+
+    const previousRole = quotation.escalationTier || "SalesRep";
+    quotation.status = "PendingApproval";
+    quotation.escalationTier = targetRole;
+    quotation.requiredApprovalTier = targetRole;
+
+    if (requestedDiscountPct != null) {
+      quotation.discountPct = Number(requestedDiscountPct);
+      quotation.discountPercentage = Number(requestedDiscountPct);
+    }
+
+    quotation.approvalChain.push({
+      action: "DealEscalated",
+      role: targetRole,
+      approverName: "Escalation Sentinel",
+      timestamp: new Date().toISOString(),
+      note: reason || `Deal escalated from ${previousRole} to ${targetRole} for commercial exception.`,
+    });
+
+    this._syncCompatibilityAliases(quotation);
+    this._incrementVersion(quotation);
+    this.quotationRepository.save(quotation);
+
+    // In-feed notification
+    try {
+      this.addNegotiationMessage({
+        quoteId: quotation.id,
+        senderId: "system",
+        senderRole: "System",
+        senderName: "Commercial Escalation Desk",
+        message: `Deal escalated to ${targetRole}. Reason: ${reason || 'Discount exceeds representative authority ceiling.'}`,
+        messageType: "escalation",
+        isInternal: false,
+      });
+    } catch {
+      // Non-blocking
+    }
+
+    if (this.eventBroadcaster) {
+      this.eventBroadcaster.emitApprovalRequired(quotation, {
+        requiredTier: targetRole,
+        escalationReason: reason,
+      });
+      this.eventBroadcaster.emitQuoteUpdated(quotation, "DEAL_ESCALATED");
+    }
+
+    return quotation;
+  }
+
+  /**
+   * Evaluates invoice aging and credit hygiene for a customer using TierEngine rules.
+   * If overdue > 45 days or defaults > 0, demotes account to Bronze (or Silver if Platinum)
+   * and enforces Net 0 Prepayment.
+   * 
+   * @param {string} customerId
+   * @returns {Object}
+   */
+  auditCustomerDelinquency(customerId) {
+    const customer = this.customerRepository.findById(customerId);
+    if (!customer) {
+      throw new NotFoundError(`Customer '${customerId}' not found.`);
+    }
+
+    const invoices = this.invoiceRepository && typeof this.invoiceRepository.findByCustomerId === "function"
+      ? this.invoiceRepository.findByCustomerId(customerId)
+      : (this.invoiceRepository && typeof this.invoiceRepository.findAll === "function"
+          ? this.invoiceRepository.findAll().filter(i => i.customerId === customerId)
+          : []);
+
+    let maxOverdue = 0;
+    const nowMs = Date.now();
+    for (const inv of invoices) {
+      if (inv.status !== "Paid" && inv.dueDate) {
+        const dueMs = new Date(inv.dueDate).getTime();
+        if (nowMs > dueMs) {
+          const days = Math.floor((nowMs - dueMs) / (1000 * 60 * 60 * 24));
+          if (days > maxOverdue) maxOverdue = days;
+        }
+      }
+    }
+
+    customer.maxOverdueDays = Math.max(customer.maxOverdueDays || 0, maxOverdue);
+    customer.overdueDays = customer.maxOverdueDays;
+
+    const evaluation = TierEngine.evaluateCustomerTier(customer);
+
+    if (evaluation.degraded) {
+      customer.tier = evaluation.recommendedTier;
+      customer.paymentTerms = evaluation.recommendedPaymentTerms;
+      this.customerRepository.save(customer);
+
+      if (this.eventBroadcaster && typeof this.eventBroadcaster.emitTierDegraded === "function") {
+        this.eventBroadcaster.emitTierDegraded(customer, evaluation);
+      }
+
+      // Inject credit warning into active quotes
+      const allQuotes = this.quotationRepository.findAll ? this.quotationRepository.findAll() : [];
+      const activeQuotes = allQuotes.filter(
+        q => q.customerId === customerId && !["Confirmed", "Rejected"].includes(q.status)
+      );
+
+      for (const q of activeQuotes) {
+        try {
+          this.addNegotiationMessage({
+            quoteId: q.id,
+            senderId: "system",
+            senderRole: "System",
+            senderName: "Credit Risk Sentinel",
+            message: `⚠️ Account Degraded: Delinquent invoice overdue by ${customer.maxOverdueDays} days. Demoted to ${evaluation.recommendedTier} with Net 0 Prepayment strictly enforced. Re-routing desk to Collections & Remediation.`,
+            messageType: "tier_announcement",
+            isInternal: false,
+          });
+        } catch {
+          // Non-blocking
+        }
+      }
+
+      return { customer, evaluation, degraded: true };
+    }
+
+    if (evaluation.upgraded) {
+      customer.tier = evaluation.recommendedTier;
+      customer.paymentTerms = evaluation.recommendedPaymentTerms;
+      this.customerRepository.save(customer);
+
+      if (this.eventBroadcaster && typeof this.eventBroadcaster.emitTierUpdated === "function") {
+        this.eventBroadcaster.emitTierUpdated(customer, evaluation);
+      }
+      return { customer, evaluation, upgraded: true };
+    }
+
+    this.customerRepository.save(customer);
+    return { customer, evaluation, degraded: false, upgraded: false };
+  }
+
+  /**
+   * Enterprise batch governance audit evaluating all customer accounts against
+   * spend velocity, cadence, and invoice delinquency using TierEngine rules.
+   * 
+   * @returns {Object}
+   */
+  auditAllCustomersGovernance() {
+    const customers = this.customerRepository.findAll ? this.customerRepository.findAll() : [];
+    const report = {
+      totalAudited: customers.length,
+      upgradedCount: 0,
+      degradedCount: 0,
+      unchangedCount: 0,
+      details: [],
+    };
+
+    for (const c of customers) {
+      try {
+        const res = this.auditCustomerDelinquency(c.id);
+        if (res.upgraded) report.upgradedCount++;
+        else if (res.degraded) report.degradedCount++;
+        else report.unchangedCount++;
+
+        report.details.push({
+          customerId: c.id,
+          name: c.name,
+          currentTier: c.tier,
+          upgraded: Boolean(res.upgraded),
+          degraded: Boolean(res.degraded),
+          reason: res.evaluation ? res.evaluation.reason : "Audited",
+        });
+      } catch (err) {
+        report.details.push({
+          customerId: c.id,
+          name: c.name,
+          error: err.message,
+        });
+      }
+    }
+
+    return report;
   }
 
   /**

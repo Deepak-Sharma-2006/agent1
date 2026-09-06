@@ -161,9 +161,37 @@ export function createApiRouter({ quotationService, repositories }) {
         sendErrorResponse(res, 404, `Customer '${customerId}' not found.`);
         return true;
       }
+      const body = await parseJsonRequestBody(req).catch(() => ({}));
+      if (body.maxOverdueDays !== undefined) {
+        customer.maxOverdueDays = Number(body.maxOverdueDays);
+        customer.overdueDays = customer.maxOverdueDays;
+      }
+      if (body.defaultCount !== undefined) {
+        customer.defaultCount = Number(body.defaultCount);
+      }
       const tierEvaluation = TierEngine.evaluateCustomerTier(customer);
-      sendJsonResponse(res, 200, { customerId, tierEvaluation });
+      const shouldApply = parsedUrl.searchParams.get("apply") === "true" || body?.apply === true;
+
+      if (shouldApply && (tierEvaluation.upgraded || tierEvaluation.degraded)) {
+        customer.tier = tierEvaluation.recommendedTier;
+        customer.paymentTerms = tierEvaluation.recommendedPaymentTerms;
+        customerRepository.save(customer);
+      }
+
+      sendJsonResponse(res, 200, { customerId, tierEvaluation, applied: shouldApply });
       return true;
+    }
+
+    // Batch Governance Tier Audit
+    if (pathname === "/api/governance/tier-audit" && method === "POST") {
+      try {
+        const report = quotationService.auditAllCustomersGovernance();
+        sendJsonResponse(res, 200, report);
+        return true;
+      } catch (err) {
+        sendErrorResponse(res, 500, `Governance audit failed: ${err.message}`);
+        return true;
+      }
     }
 
     // 3. Products Catalog Endpoints
@@ -730,7 +758,8 @@ export function createApiRouter({ quotationService, repositories }) {
     if (messagesMatch && method === "GET") {
       const quoteId = messagesMatch[1];
       try {
-        const messages = quotationService.getNegotiationMessages(quoteId);
+        const userRole = parsedUrl.searchParams.get("role") || req.headers["x-user-role"] || "Customer";
+        const messages = quotationService.getNegotiationMessages(quoteId, userRole);
         sendJsonResponse(res, 200, { count: messages.length, messages });
         return true;
       } catch (err) {
@@ -756,9 +785,31 @@ export function createApiRouter({ quotationService, repositories }) {
           senderName: body.senderName || body.senderRole || "Participant",
           message: body.message,
           proposedDiscountPercent: body.proposedDiscountPercent,
+          isInternal: Boolean(body.isInternal),
+          messageType: body.messageType || "chat",
         });
 
         sendJsonResponse(res, 201, { message: messageRecord });
+        return true;
+      } catch (err) {
+        const status = err.statusCode || 400;
+        sendErrorResponse(res, status, err.message);
+        return true;
+      }
+    }
+
+    // In-Feed Deal Escalation
+    const escalateMatch = pathname.match(/^\/api\/quotes\/([^/]+)\/escalate$/);
+    if (escalateMatch && method === "POST") {
+      const quoteId = escalateMatch[1];
+      try {
+        const body = await parseJsonRequestBody(req);
+        const escalatedQuote = quotationService.escalateQuotationDeal(quoteId, {
+          targetRole: body.targetRole || "SalesManager",
+          reason: body.reason || "",
+          requestedDiscountPct: body.requestedDiscountPct,
+        });
+        sendJsonResponse(res, 200, { quotation: escalatedQuote });
         return true;
       } catch (err) {
         const status = err.statusCode || 400;

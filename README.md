@@ -183,38 +183,38 @@ DealFlow360 includes 6 pre-configured enterprise personas accessible via the top
 
 ```mermaid
 flowchart TB
-    subgraph ClientLayer [React 18 SPA — DealFlow360 Executive Theme]
-        UI_Login[LoginScreen.jsx<br/>6-Actor Switcher]
-        UI_Studio[QuotationStudio.jsx<br/>CPQ & Gauges]
-        UI_Portal[CustomerPortal.jsx<br/>Cloaked Negotiation]
-        UI_Admin[AdminHub.jsx<br/>A1-A7 Management]
-        UI_Wh[WarehouseView.jsx<br/>6-Depot Dispatch]
-        UI_Bill[BillingView.jsx<br/>GAAP Invoicing]
-        UI_PWA[sw.js + indexeddb.js<br/>Offline OCC Engine]
+    subgraph ClientLayer ["React 18 SPA — DealFlow360 Executive Theme"]
+        UI_Login["LoginScreen.jsx<br/>6-Actor Switcher"]
+        UI_Studio["QuotationStudio.jsx<br/>CPQ & Gauges"]
+        UI_Portal["CustomerPortal.jsx<br/>Cloaked Negotiation"]
+        UI_Admin["AdminHub.jsx<br/>A1-A7 Management"]
+        UI_Wh["WarehouseView.jsx<br/>6-Depot Dispatch"]
+        UI_Bill["BillingView.jsx<br/>GAAP Invoicing"]
+        UI_PWA["sw.js + indexeddb.js<br/>Offline OCC Engine"]
     end
 
-    subgraph RealTimeLayer [Real-Time Collaboration]
-        WS_Server[Native RFC 6455 Gateway<br/>Presence & Channel Manager]
+    subgraph RealTimeLayer ["Real-Time Collaboration"]
+        WS_Server["Native RFC 6455 Gateway<br/>Presence & Channel Manager"]
     end
 
-    subgraph BackendLayer [Zero-Dependency Native Node.js Server]
-        Router[src/api/routes.js<br/>High-Performance REST Router]
-        Service[src/services/quotation-service.js<br/>Quotation Lifecycle State Machine]
+    subgraph BackendLayer ["Zero-Dependency Native Node.js Server"]
+        Router["src/api/routes.js<br/>High-Performance REST Router"]
+        Service["src/services/quotation-service.js<br/>Quotation Lifecycle State Machine"]
         
-        subgraph DomainEngines [Pure Domain Logic Engines]
-            Calc[quotation-calculator.js<br/>Integer-Cents Financial Math]
-            Tier[tier-engine.js<br/>Pricing Matrices & Margin Floors]
-            Esc[escalation-engine.js<br/>Multi-Level Approval Matrix]
-            Alloc[warehouse-allocation-engine.js<br/>O(W*K) Split ATP Logistics]
-            Bill[billing-engine.js<br/>GAAP Milestone & Daily Proration]
-            Health[deal-health-engine.js<br/>Commercial Anomaly Surveillance]
-            Fall[fallback-engine.js<br/>BAFO Graceful Rollback]
+        subgraph DomainEngines ["Pure Domain Logic Engines"]
+            Calc["quotation-calculator.js<br/>Integer-Cents Financial Math"]
+            Tier["tier-engine.js<br/>Pricing Matrices & Margin Floors"]
+            Esc["escalation-engine.js<br/>Multi-Level Approval Matrix"]
+            Alloc["warehouse-allocation-engine.js<br/>O(W*K) Split ATP Logistics"]
+            Bill["billing-engine.js<br/>GAAP Milestone & Daily Proration"]
+            Health["deal-health-engine.js<br/>Commercial Anomaly Surveillance"]
+            Fall["fallback-engine.js<br/>BAFO Graceful Rollback"]
         end
     end
 
-    subgraph PersistenceLayer [Dual-Store Persistence Tier]
-        SQLite[(Native node:sqlite<br/>WAL Mode + OCC)]
-        MemStore[(High-Velocity<br/>In-Memory Store)]
+    subgraph PersistenceLayer ["Dual-Store Persistence Tier"]
+        SQLite[("Native node:sqlite<br/>WAL Mode + OCC")]
+        MemStore[("High-Velocity<br/>In-Memory Store")]
     end
 
     UI_Studio <-->|REST + OCC| Router

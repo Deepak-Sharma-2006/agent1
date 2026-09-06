@@ -1,132 +1,85 @@
-<svg fill="none" viewBox="0 0 850 260" width="850" height="260" xmlns="http://www.w3.org/2000/svg">
-  <foreignObject width="100%" height="100%">
-    <div xmlns="http://www.w3.org/1999/xhtml">
-      <style>
-        .term-window {
-          width: 850px;
-          height: 260px;
-          background: #090e1a;
-          border-radius: 10px;
-          box-sizing: border-box;
-          border: 1px solid #1e293b;
-          font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-          color: #e2e8f0;
-          overflow: hidden;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-        }
+<svg viewBox="0 0 850 240" width="850" height="240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .term-text {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12.5px;
+      }
 
-        .term-header {
-          background: #0f172a;
-          padding: 10px 16px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          border-bottom: 1px solid #1e293b;
-        }
+      .line-1 { animation: showL1 0.4s forwards; opacity: 0; }
+      .line-2 { animation: showL2 0.4s 0.6s forwards; opacity: 0; }
+      .line-3 { animation: showL3 0.4s 1.2s forwards; opacity: 0; }
+      .line-4 { animation: showL4 0.4s 1.8s forwards; opacity: 0; }
+      .line-5 { animation: showL5 0.4s 2.4s forwards; opacity: 0; }
+      .term-cursor { animation: blinkCur 1s step-end infinite; }
 
-        .dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-        }
-        .dot-red { background: #ef4444; }
-        .dot-yellow { background: #f59e0b; }
-        .dot-green { background: #10b981; }
+      @keyframes showL1 { to { opacity: 1; } }
+      @keyframes showL2 { to { opacity: 1; } }
+      @keyframes showL3 { to { opacity: 1; } }
+      @keyframes showL4 { to { opacity: 1; } }
+      @keyframes showL5 { to { opacity: 1; } }
 
-        .term-title {
-          font-size: 11.5px;
-          color: #64748b;
-          font-weight: 500;
-          margin-left: 12px;
-          letter-spacing: 0.04em;
-        }
+      @keyframes blinkCur {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+    </style>
+  </defs>
 
-        .term-body {
-          padding: 16px 20px;
-          font-size: 12.5px;
-          line-height: 1.6;
-        }
+  <!-- Terminal Window Frame -->
+  <rect width="850" height="240" rx="10" fill="#090e1a" stroke="#1e293b" stroke-width="1.5"/>
 
-        .prompt {
-          color: #38bdf8;
-          font-weight: 600;
-        }
+  <!-- Window Header Bar -->
+  <rect width="850" height="34" rx="10" fill="#0f172a"/>
+  <!-- Prevent rounded bottom on header -->
+  <rect y="24" width="850" height="10" fill="#0f172a"/>
+  <line x1="0" y1="34" x2="850" y2="34" stroke="#1e293b" stroke-width="1"/>
 
-        .cmd {
-          color: #ffffff;
-        }
+  <!-- Window Dots -->
+  <circle cx="20" cy="17" r="5" fill="#ef4444"/>
+  <circle cx="36" cy="17" r="5" fill="#f59e0b"/>
+  <circle cx="52" cy="17" r="5" fill="#10b981"/>
 
-        .line {
-          opacity: 0;
-          animation: fadeIn 0.4s forwards;
-        }
+  <!-- Window Title -->
+  <text x="75" y="21" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11.5" fill="#64748b" font-weight="500">
+    agy@dealflow360: ~/workspace (pure-native node22)
+  </text>
 
-        .line-1 { animation-delay: 0.2s; }
-        .line-2 { animation-delay: 0.8s; }
-        .line-3 { animation-delay: 1.4s; }
-        .line-4 { animation-delay: 2.0s; }
-        .line-5 { animation-delay: 2.6s; }
+  <!-- Line 1: Command -->
+  <g class="line-1 term-text">
+    <text x="24" y="65" fill="#38bdf8" font-weight="700">$</text>
+    <text x="38" y="65" fill="#ffffff" font-weight="600">npm run test:unit</text>
+  </g>
 
-        @keyframes fadeIn {
-          to { opacity: 1; }
-        }
+  <!-- Line 2: Test Suites Output -->
+  <g class="line-2 term-text">
+    <text x="24" y="95" fill="#10b981" font-weight="700">&#10003; Phase 1–11 Test Suites:</text>
+    <text x="215" y="95" fill="#94a3b8">Entities, REST API, SQLite WAL, RFC6455 Realtime, CPQ, ATP Split, PWA</text>
+  </g>
 
-        .pass-tag {
-          color: #10b981;
-          font-weight: bold;
-        }
+  <!-- Line 3: 179 Passed Summary -->
+  <g class="line-3 term-text">
+    <text x="24" y="125" fill="#10b981" font-weight="700">&#10003; 179 passed</text>
+    <text x="120" y="125" fill="#64748b">&bull;</text>
+    <text x="135" y="125" fill="#f59e0b" font-weight="700">0 failed</text>
+    <text x="195" y="125" fill="#64748b">&bull; 0 skipped &bull;</text>
+    <text x="280" y="125" fill="#38bdf8">Duration: 14.09s</text>
+    <text x="400" y="125" fill="#64748b">&bull;</text>
+    <text x="415" y="125" fill="#10b981">0 ghost packages detected</text>
+  </g>
 
-        .info-tag {
-          color: #06b6d4;
-          font-weight: 600;
-        }
+  <!-- Line 4: Next Command -->
+  <g class="line-4 term-text">
+    <text x="24" y="160" fill="#38bdf8" font-weight="700">$</text>
+    <text x="38" y="160" fill="#ffffff" font-weight="600">npm start</text>
+  </g>
 
-        .num-tag {
-          color: #f59e0b;
-          font-weight: 600;
-        }
-
-        .cursor {
-          display: inline-block;
-          width: 7px;
-          height: 14px;
-          background: #38bdf8;
-          vertical-align: middle;
-          margin-left: 4px;
-          animation: blink 1s step-end infinite;
-        }
-
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      </style>
-
-      <div class="term-window">
-        <div class="term-header">
-          <span class="dot dot-red"></span>
-          <span class="dot dot-yellow"></span>
-          <span class="dot dot-green"></span>
-          <span class="term-title">agy@dealflow360: ~/workspace (pure-native node22)</span>
-        </div>
-        <div class="term-body">
-          <div class="line line-1">
-            <span class="prompt">$</span> <span class="cmd">npm run test:unit</span>
-          </div>
-          <div class="line line-2">
-            <span class="pass-tag">&#10003; Phase 1–11 Test Suites</span>: <span class="info-tag">Entities, REST API, SQLite WAL, RFC6455 Realtime, CPQ Studio, BAFO, ATP Split, PWA</span>
-          </div>
-          <div class="line line-3">
-            <span class="pass-tag">&#10003; 179 passed</span> &bull; <span class="num-tag">0 failed</span> &bull; 0 skipped &bull; <span class="info-tag">Duration: 14.09s</span> &bull; <span class="num-tag">0 ghost packages</span>
-          </div>
-          <div class="line line-4">
-            <span class="prompt">$</span> <span class="cmd">npm start</span>
-          </div>
-          <div class="line line-5">
-            <span class="info-tag">&#9658; [Server Bootstrapped]</span> dealflow360-service listening on port <span class="num-tag">3000</span> <span class="pass-tag">(Cold boot: 48ms &bull; WAL OCC active)</span><span class="cursor"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </foreignObject>
+  <!-- Line 5: Server Running & Cursor -->
+  <g class="line-5 term-text">
+    <text x="24" y="195" fill="#06b6d4" font-weight="700">&#9658; [Server Bootstrapped]</text>
+    <text x="200" y="195" fill="#cbd5e1">dealflow360-service listening on port</text>
+    <text x="450" y="195" fill="#f59e0b" font-weight="700">3000</text>
+    <text x="495" y="195" fill="#10b981">(Cold boot: 48ms &bull; WAL OCC active)</text>
+    <rect class="term-cursor" x="785" y="183" width="8" height="15" fill="#38bdf8"/>
+  </g>
 </svg>

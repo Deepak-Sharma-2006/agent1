@@ -1,191 +1,105 @@
-<svg fill="none" viewBox="0 0 850 280" width="850" height="280" xmlns="http://www.w3.org/2000/svg">
-  <foreignObject width="100%" height="100%">
-    <div xmlns="http://www.w3.org/1999/xhtml">
-      <style>
-        .flow-container {
-          width: 850px;
-          height: 280px;
-          background: #090e1a;
-          border-radius: 12px;
-          border: 1px solid #1e293b;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          color: #f1f5f9;
-          box-sizing: border-box;
-          padding: 20px 24px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          position: relative;
-          overflow: hidden;
-        }
+<svg viewBox="0 0 850 240" width="850" height="240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pipeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
 
-        .flow-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          padding-bottom: 10px;
-        }
+    <filter id="glowFilt" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
 
-        .flow-title {
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: #38bdf8;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
+    <style>
+      .sig-flow-1 {
+        animation: flow1 2s linear infinite;
+      }
+      .sig-flow-2 {
+        animation: flow2 2s linear 1s infinite;
+      }
+      @keyframes flow1 {
+        0% { transform: translateX(0px); opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { transform: translateX(65px); opacity: 0; }
+      }
+      @keyframes flow2 {
+        0% { transform: translateX(0px); opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { transform: translateX(65px); opacity: 0; }
+      }
 
-        .pulse-indicator {
-          width: 8px;
-          height: 8px;
-          background: #10b981;
-          border-radius: 50%;
-          animation: ringPulse 2s infinite;
-        }
+      .pulse-ring {
+        animation: ringP 2s infinite;
+      }
+      @keyframes ringP {
+        0% { r: 3.5; opacity: 1; }
+        50% { r: 5; opacity: 0.5; }
+        100% { r: 3.5; opacity: 1; }
+      }
 
-        @keyframes ringPulse {
-          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-          70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
+      .txt-hdr { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 700; fill: #38bdf8; letter-spacing: 1px; text-transform: uppercase; }
+      .txt-m-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; fill: #64748b; }
+      .txt-m-val { fill: #cbd5e1; font-weight: 600; }
+      .txt-tag { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; font-weight: 700; fill: #94a3b8; letter-spacing: 0.5px; text-transform: uppercase; }
+      .txt-node-t { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; fill: #ffffff; }
+      .txt-node-d { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #94a3b8; }
+    </style>
+  </defs>
 
-        .flow-grid {
-          display: grid;
-          grid-template-columns: 1fr 40px 1.2fr 40px 1fr;
-          align-items: center;
-          margin-top: 15px;
-          height: 180px;
-        }
+  <!-- Frame -->
+  <rect width="850" height="240" rx="12" fill="#090e1a" stroke="#1e293b" stroke-width="1.5"/>
 
-        .node-box {
-          background: #0f172a;
-          border: 1px solid #334155;
-          border-radius: 8px;
-          padding: 14px 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          transition: border-color 0.3s;
-        }
+  <!-- Top Bar -->
+  <circle class="pulse-ring" cx="30" cy="24" r="4" fill="#10b981" filter="url(#glowFilt)"/>
+  <text x="44" y="28" class="txt-hdr">Real-Time Transactional Execution Pipeline</text>
 
-        .node-box:hover {
-          border-color: #38bdf8;
-        }
+  <text x="560" y="28" class="txt-m-label">Roundtrip: <tspan class="txt-m-val">&lt; 0.4ms</tspan></text>
+  <text x="670" y="28" class="txt-m-label">WS Broadcast: <tspan class="txt-m-val">&lt; 5ms</tspan></text>
+  <text x="770" y="28" class="txt-m-label">OCC: <tspan class="txt-m-val">Strict</tspan></text>
 
-        .node-tag {
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #94a3b8;
-        }
+  <line x1="20" y1="42" x2="830" y2="42" stroke="#1e293b" stroke-width="1"/>
 
-        .node-title {
-          font-size: 14px;
-          font-weight: 700;
-          color: #ffffff;
-        }
+  <!-- Node 1: Client Tier -->
+  <g transform="translate(24, 60)">
+    <rect width="210" height="150" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+    <text x="16" y="28" class="txt-tag">Client Tier</text>
+    <text x="16" y="52" class="txt-node-t">React 18 SPA</text>
+    <text x="16" y="78" class="txt-node-d">&bull; Quotation Studio</text>
+    <text x="16" y="100" class="txt-node-d">&bull; Cloaked Customer Portal</text>
+    <text x="16" y="122" class="txt-node-d">&bull; Offline IndexedDB PWA</text>
+  </g>
 
-        .node-desc {
-          font-size: 11px;
-          color: #94a3b8;
-          line-height: 1.4;
-        }
+  <!-- Pipe 1 -->
+  <g transform="translate(234, 130)">
+    <line x1="0" y1="0" x2="65" y2="0" stroke="#334155" stroke-width="2"/>
+    <circle class="sig-flow-1" cx="0" cy="0" r="4" fill="#38bdf8" filter="url(#glowFilt)"/>
+  </g>
 
-        .pipe {
-          position: relative;
-          height: 2px;
-          background: #334155;
-          overflow: hidden;
-        }
+  <!-- Node 2: Native Server -->
+  <g transform="translate(299, 60)">
+    <rect width="250" height="150" rx="8" fill="#0f172a" stroke="#0284c7" stroke-width="1.5"/>
+    <text x="16" y="28" class="txt-tag" fill="#38bdf8">Native Node.js Server</text>
+    <text x="16" y="52" class="txt-node-t">Router &amp; Domain Engines</text>
+    <text x="16" y="78" class="txt-node-d">&bull; RFC 6455 Real-Time WebSockets</text>
+    <text x="16" y="100" class="txt-node-d">&bull; Integer-Cents Financial Math</text>
+    <text x="16" y="122" class="txt-node-d">&bull; BAFO Fallback &amp; O(W&times;K) Split</text>
+  </g>
 
-        .packet {
-          position: absolute;
-          top: 0;
-          left: -20px;
-          width: 20px;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, #38bdf8, #10b981);
-          animation: flowSignal 1.8s linear infinite;
-        }
+  <!-- Pipe 2 -->
+  <g transform="translate(549, 130)">
+    <line x1="0" y1="0" x2="65" y2="0" stroke="#334155" stroke-width="2"/>
+    <circle class="sig-flow-2" cx="0" cy="0" r="4" fill="#10b981" filter="url(#glowFilt)"/>
+  </g>
 
-        .pipe-reverse .packet {
-          animation: flowSignalReverse 1.8s linear infinite;
-          background: linear-gradient(90deg, #10b981, #38bdf8, transparent);
-        }
-
-        @keyframes flowSignal {
-          0% { left: -20px; }
-          100% { left: 100%; }
-        }
-
-        @keyframes flowSignalReverse {
-          0% { left: 100%; }
-          100% { left: -20px; }
-        }
-
-        .footer-metrics {
-          display: flex;
-          gap: 24px;
-          font-size: 11.5px;
-          color: #64748b;
-        }
-
-        .metric-val {
-          color: #f1f5f9;
-          font-weight: 600;
-        }
-      </style>
-
-      <div class="flow-container">
-        <div class="flow-header">
-          <div class="flow-title">
-            <span class="pulse-indicator"></span>
-            Real-Time Transactional Execution Pipeline
-          </div>
-          <div class="footer-metrics">
-            <span>Roundtrip Latency: <span class="metric-val">&lt; 0.4ms</span></span>
-            <span>WebSocket Broadcast: <span class="metric-val">&lt; 5ms</span></span>
-            <span>Concurrency Isolation: <span class="metric-val">OCC Strict</span></span>
-          </div>
-        </div>
-
-        <div class="flow-grid">
-          <!-- Client Layer -->
-          <div class="node-box">
-            <span class="node-tag">Client Tier</span>
-            <span class="node-title">React 18 SPA</span>
-            <span class="node-desc">Quotation Studio &bull; Customer Portal &bull; Offline Service Worker</span>
-          </div>
-
-          <!-- Connecting Pipe 1 -->
-          <div class="pipe">
-            <div class="packet"></div>
-          </div>
-
-          <!-- Gateway & Domain -->
-          <div class="node-box" style="border-color: rgba(56, 189, 248, 0.4);">
-            <span class="node-tag" style="color: #38bdf8;">Native Node.js Server</span>
-            <span class="node-title">Router &amp; Domain Engines</span>
-            <span class="node-desc">RFC 6455 WebSockets &bull; Integer-Cents Math &bull; BAFO Fallback &bull; O(W&times;K) ATP</span>
-          </div>
-
-          <!-- Connecting Pipe 2 -->
-          <div class="pipe">
-            <div class="packet" style="animation-delay: 0.9s;"></div>
-          </div>
-
-          <!-- Storage Tier -->
-          <div class="node-box">
-            <span class="node-tag">Persistence Tier</span>
-            <span class="node-title">SQLite WAL + MemStore</span>
-            <span class="node-desc">Foreign Keys &bull; Transactional OCC &bull; Sub-1ms Query Execution</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </foreignObject>
+  <!-- Node 3: Persistence Tier -->
+  <g transform="translate(614, 60)">
+    <rect width="210" height="150" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+    <text x="16" y="28" class="txt-tag">Persistence Tier</text>
+    <text x="16" y="52" class="txt-node-t">SQLite WAL + Cache</text>
+    <text x="16" y="78" class="txt-node-d">&bull; Foreign Keys &amp; Cascades</text>
+    <text x="16" y="100" class="txt-node-d">&bull; Concurrency Control (OCC)</text>
+    <text x="16" y="122" class="txt-node-d">&bull; Sub-1ms Atomic Commits</text>
+  </g>
 </svg>

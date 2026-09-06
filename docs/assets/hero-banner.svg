@@ -1,168 +1,94 @@
-<svg fill="none" viewBox="0 0 850 180" width="850" height="180" xmlns="http://www.w3.org/2000/svg">
-  <foreignObject width="100%" height="100%">
-    <div xmlns="http://www.w3.org/1999/xhtml">
-      <style>
-        .container {
-          position: relative;
-          width: 850px;
-          height: 180px;
-          background: #0b1329;
-          border-radius: 12px;
-          overflow: hidden;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-          box-sizing: border-box;
-          border: 1px solid #1e293b;
-        }
+<svg viewBox="0 0 850 180" width="850" height="180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1329"/>
+      <stop offset="100%" stop-color="#070d1e"/>
+    </linearGradient>
 
-        .gradient-line {
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 3px;
-          background: linear-gradient(90deg, transparent, #0284c7, #38bdf8, #10b981, transparent);
-          animation: travel 4s linear infinite;
-        }
+    <linearGradient id="beamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="1"/>
+      <stop offset="80%" stop-color="#10b981" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </linearGradient>
 
-        @keyframes travel {
-          0% { left: -100%; }
-          50% { left: 100%; }
-          100% { left: 100%; }
-        }
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
 
-        .glow {
-          position: absolute;
-          top: -40px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 400px;
-          height: 80px;
-          background: radial-gradient(circle, rgba(2, 132, 199, 0.35) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 80%);
-          filter: blur(20px);
-        }
+    <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
 
-        .content {
-          padding: 24px 32px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          height: 100%;
-          box-sizing: border-box;
-          position: relative;
-          z-index: 2;
-        }
+    <style>
+      .glow-beam {
+        animation: beamMove 4s linear infinite;
+      }
+      @keyframes beamMove {
+        0% { transform: translateX(-850px); }
+        100% { transform: translateX(850px); }
+      }
 
-        .top-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
+      .pulse-dot-cyan {
+        animation: pulseCyan 2s ease-in-out infinite;
+      }
+      @keyframes pulseCyan {
+        0%, 100% { opacity: 1; r: 3.5; }
+        50% { opacity: 0.4; r: 2.5; }
+      }
 
-        .badge-brand {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(2, 132, 199, 0.12);
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          border-radius: 9999px;
-          padding: 4px 12px;
-          font-size: 11px;
-          font-weight: 600;
-          color: #38bdf8;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
+      .pulse-dot-emerald {
+        animation: pulseEmerald 2.5s ease-in-out infinite;
+      }
+      @keyframes pulseEmerald {
+        0%, 100% { opacity: 1; r: 3.5; }
+        50% { opacity: 0.4; r: 2.5; }
+      }
 
-        .pulse-dot {
-          width: 6px;
-          height: 6px;
-          background: #38bdf8;
-          border-radius: 50%;
-          box-shadow: 0 0 8px #38bdf8;
-          animation: pulse 2s ease-in-out infinite;
-        }
+      .txt-brand { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 1px; fill: #38bdf8; text-transform: uppercase; }
+      .txt-ver { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; fill: #64748b; }
+      .txt-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 26px; fill: url(#titleGrad); letter-spacing: -0.5px; }
+      .txt-sub { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #94a3b8; }
+      .txt-stat { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 600; fill: #cbd5e1; }
+    </style>
+  </defs>
 
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.85); }
-        }
+  <!-- Container Box -->
+  <rect width="850" height="180" rx="12" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="1.5"/>
 
-        .version-tag {
-          font-size: 12px;
-          color: #64748b;
-          font-weight: 500;
-          letter-spacing: 0.04em;
-        }
+  <!-- Top Animated Gradient Beam -->
+  <g clip-path="url(#beamClip)">
+    <clipPath id="beamClip">
+      <rect x="0" y="0" width="850" height="4" rx="2"/>
+    </clipPath>
+    <rect class="glow-beam" x="0" y="0" width="850" height="3" fill="url(#beamGrad)"/>
+  </g>
 
-        .title {
-          font-size: 30px;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          margin: 4px 0 0 0;
-          background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
+  <!-- Top Row: Badge & Version -->
+  <rect x="28" y="24" width="160" height="24" rx="12" fill="#0284c7" fill-opacity="0.12" stroke="#38bdf8" stroke-opacity="0.3"/>
+  <circle class="pulse-dot-cyan" cx="42" cy="36" r="3.5" fill="#38bdf8" filter="url(#glowFilter)"/>
+  <text x="54" y="40" class="txt-brand">DEALFLOW360</text>
+  <text x="822" y="40" text-anchor="end" class="txt-ver">Production Engine v1.0.0 &bull; Node.js 22+ Native</text>
 
-        .subtitle {
-          font-size: 13.5px;
-          color: #94a3b8;
-          margin: 4px 0 0 0;
-          font-weight: 400;
-          letter-spacing: -0.01em;
-        }
+  <!-- Hero Titles -->
+  <text x="28" y="86" class="txt-title">Autonomous CPQ &amp; Sales Operations Platform</text>
+  <text x="28" y="112" class="txt-sub">Multi-Tier Pricing Governance &bull; Distributed Warehouse Logistics &bull; GAAP Milestone Billing</text>
 
-        .stats-bar {
-          display: flex;
-          gap: 20px;
-          padding-top: 10px;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
+  <!-- Divider -->
+  <line x1="28" y1="134" x2="822" y2="134" stroke="#1e293b" stroke-width="1"/>
 
-        .stat-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 11.5px;
-          font-weight: 600;
-          color: #cbd5e1;
-        }
+  <!-- Bottom Stats Row -->
+  <circle class="pulse-dot-emerald" cx="35" cy="154" r="3.5" fill="#10b981" filter="url(#glowFilter)"/>
+  <text x="46" y="158" class="txt-stat">179/179 Unit Tests Passing</text>
 
-        .stat-indicator {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-        }
+  <circle class="pulse-dot-cyan" cx="260" cy="154" r="3.5" fill="#06b6d4" filter="url(#glowFilter)"/>
+  <text x="271" y="158" class="txt-stat">48ms Cold Boot</text>
 
-        .stat-emerald { background: #10b981; box-shadow: 0 0 6px #10b981; }
-        .stat-cyan { background: #06b6d4; box-shadow: 0 0 6px #06b6d4; }
-        .stat-blue { background: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
-        .stat-amber { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
-      </style>
+  <circle cx="430" cy="154" r="3.5" fill="#3b82f6"/>
+  <text x="441" y="158" class="txt-stat">Zero Ghost Packages</text>
 
-      <div class="container">
-        <div class="gradient-line"></div>
-        <div class="glow"></div>
-        <div class="content">
-          <div class="top-row">
-            <div class="badge-brand">
-              <span class="pulse-dot"></span>
-              DealFlow360 Executive
-            </div>
-            <div class="version-tag">Production Engine v1.0.0 &bull; Node.js 22+ Native</div>
-          </div>
-          <div>
-            <div class="title">Autonomous CPQ &amp; Sales Operations Platform</div>
-            <div class="subtitle">Multi-Tier Pricing Governance &bull; Distributed Warehouse Logistics &bull; GAAP Milestone Billing</div>
-          </div>
-          <div class="stats-bar">
-            <div class="stat-item"><span class="stat-indicator stat-emerald"></span> 179/179 Unit Tests Passing</div>
-            <div class="stat-item"><span class="stat-indicator stat-cyan"></span> 48ms Cold Boot</div>
-            <div class="stat-item"><span class="stat-indicator stat-blue"></span> Zero Ghost Packages</div>
-            <div class="stat-item"><span class="stat-indicator stat-amber"></span> RFC 6455 Real-Time</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </foreignObject>
+  <circle cx="630" cy="154" r="3.5" fill="#f59e0b"/>
+  <text x="641" y="158" class="txt-stat">RFC 6455 Real-Time WebSockets</text>
 </svg>

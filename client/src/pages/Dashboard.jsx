@@ -104,17 +104,23 @@ export function Dashboard({ onOpenQuote }) {
     if (isCustomer()) {
       if (q.customerId !== currentUser.customerId) return false;
     }
-    // 2. SalesRep: strictly quotes assigned to their ID (or seed id 'usr-rep-01' / 'rep-01')
+    // 2. SalesRep: strictly quotes assigned to their ID or name
     else if (isSalesRep()) {
       const isMyQuote =
         q.salesRepId === currentUser.id ||
         q.salesRepId === 'usr-rep-01' ||
         q.salesRepId === 'rep-01' ||
-        !q.salesRepId ||
-        q.salesRepName === currentUser.name;
+        q.salesRepName === currentUser.name ||
+        !q.salesRepId;
       if (!isMyQuote) return false;
     }
-    // 3. Warehouse: only Confirmed orders ready for dispatch
+    // 3. SalesManager: team pipeline overview; hide other reps' incomplete drafts from general "ALL" view
+    else if (isSalesManager()) {
+      if (filter === 'ALL' && q.status === 'Draft' && q.salesRepId && q.salesRepId !== currentUser.id) {
+        return false;
+      }
+    }
+    // 4. Warehouse: only Confirmed orders ready for dispatch
     else if (isWarehouse()) {
       if (q.status !== 'Confirmed') return false;
     }
@@ -124,8 +130,8 @@ export function Dashboard({ onOpenQuote }) {
   const displayedQuotes = roleFilteredQuotes.filter((q) => {
     const st = (q.status || '').toLowerCase();
     // Status Filter Tabs
-    if (filter === 'DRAFT') return st === 'draft';
-    if (filter === 'PENDING') return st === 'pendingapproval';
+    if (filter === 'DRAFT' || filter === 'DRAFTS') return st === 'draft';
+    if (filter === 'PENDING' || filter === 'PENDING APPROVAL') return st === 'pendingapproval';
     if (filter === 'APPROVED') return st === 'approved';
     if (filter === 'CONFIRMED') return st === 'confirmed';
     return true;
@@ -323,7 +329,7 @@ export function Dashboard({ onOpenQuote }) {
           <div className={`kpi-tile ${pendingCount > 0 ? 'kpi-warning' : ''}`}>
             <span className="kpi-label">Awaiting Manager Signoff</span>
             <span className="kpi-value">{pendingCount}</span>
-            <span className="kpi-subtext">Submitted to Marcus Vance</span>
+            <span className="kpi-subtext">Transferred to Elena Vance</span>
           </div>
         </div>
       )}
@@ -345,7 +351,10 @@ export function Dashboard({ onOpenQuote }) {
             </span>
             {!isWarehouse() && (
               <div style={{ display: 'flex', gap: '4px' }}>
-                {['ALL', 'DRAFT', 'PENDING', 'APPROVED', 'CONFIRMED'].map((f) => (
+                {(isSalesManager()
+                  ? ['ALL', 'PENDING APPROVAL', 'APPROVED', 'CONFIRMED', 'DRAFTS']
+                  : ['ALL', 'DRAFT', 'PENDING', 'APPROVED', 'CONFIRMED']
+                ).map((f) => (
                   <button
                     key={f}
                     className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
@@ -476,13 +485,25 @@ export function Dashboard({ onOpenQuote }) {
                               : 'badge-fallback'
                           }`}
                         >
-                          {quote.status}
+                          {quote.status === 'PendingApproval'
+                            ? isSalesRep()
+                              ? `🔒 Transferred to ${quote.escalationTier === 'Finance' ? 'Finance' : 'Manager'}`
+                              : isSalesManager()
+                              ? '⚠️ Review Required'
+                              : 'Pending Approval'
+                            : quote.status === 'Approved'
+                            ? Number(quote.discountPercentage || 0) <= 10
+                              ? '✓ Self-Authorized'
+                              : '✓ Approved'
+                            : quote.status === 'Confirmed'
+                            ? 'Won / Confirmed'
+                            : quote.status}
                         </span>
                       </td>
 
                       <td style={{ textAlign: 'right' }}>
                         <button
-                          className="btn btn-secondary btn-sm"
+                          className={`btn ${isSalesManager() && quote.status === 'PendingApproval' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
                           onClick={() => onOpenQuote(quote.id)}
                         >
                           <span>
@@ -490,6 +511,12 @@ export function Dashboard({ onOpenQuote }) {
                               ? 'Inspect Slip'
                               : isCustomer()
                               ? 'Review Proposal'
+                              : isSalesManager() && quote.status === 'PendingApproval'
+                              ? 'Review & Sign Off'
+                              : isSalesRep() && quote.status === 'PendingApproval'
+                              ? 'View (Locked)'
+                              : isSalesRep() && quote.status === 'Draft'
+                              ? 'Edit Draft'
                               : 'Open'}
                           </span>
                           <ArrowUpRight size={13} />

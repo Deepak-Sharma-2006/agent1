@@ -31,6 +31,9 @@ import {
   Package,
   ExternalLink,
   RotateCcw,
+  Lock,
+  Clock,
+  ShieldCheck,
 } from 'lucide-react';
 import { MarginSpeedometerGauge } from '../components/MarginSpeedometerGauge';
 import { TierSpendVelocityCurve } from '../components/TierSpendVelocityCurve';
@@ -38,7 +41,7 @@ import { BlendedRiskRadarChart } from '../components/BlendedRiskRadarChart';
 import { FallbackBanner } from '../components/FallbackBanner';
 
 export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
-  const { currentUser, canApprove, canViewInternalMargins, isCustomer, isWarehouse, canCreateQuotes } = useAuth();
+  const { currentUser, canApprove, canViewInternalMargins, isCustomer, isWarehouse, canCreateQuotes, isSalesRep, isSalesManager, isFinance } = useAuth();
   const { sendAction, lastEvent, addToast } = useWebSocket();
   const { isOnline, enqueueAction } = useOffline();
 
@@ -56,6 +59,16 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
   const [shipments, setShipments] = useState([]);
   const [backorders, setBackorders] = useState([]);
   const [allocating, setAllocating] = useState(false);
+
+  // Real-time escalation and governance calculations
+  const maxLineDiscount = quote?.lines && quote.lines.length > 0
+    ? Math.max(...quote.lines.map((l) => Number(l.unitDiscountPercentage ?? l.discountPercent ?? l.discountPercentage ?? 0)))
+    : 0;
+  const currentDealMargin = preview?.grossMarginPercent ?? quote?.grossMarginPercent ?? 30;
+  const isHardFloorBreach = currentDealMargin < 18.0 || maxLineDiscount > 35;
+  const isFinanceEscalation = maxLineDiscount > 20 && !isHardFloorBreach;
+  const isManagerEscalation = (maxLineDiscount > 10 || currentDealMargin < 25) && !isFinanceEscalation && !isHardFloorBreach;
+  const isSelfAuthorized = !isHardFloorBreach && !isFinanceEscalation && !isManagerEscalation;
 
   // Helper for product category discount ceilings
   const getCategoryCeiling = (category) => {
@@ -628,9 +641,22 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                 <Save size={15} />
                 <span>Save Draft</span>
               </button>
-              <button className="btn btn-primary" onClick={handleSubmitForApproval} disabled={saving}>
+              <button
+                className={`btn ${isHardFloorBreach ? 'btn-secondary' : isSelfAuthorized ? 'btn-success' : 'btn-primary'}`}
+                onClick={handleSubmitForApproval}
+                disabled={saving || isHardFloorBreach}
+                title={isHardFloorBreach ? 'Gross margin floor breach (<18%) prohibits submission' : ''}
+              >
                 <Send size={15} />
-                <span>Submit for Approval</span>
+                <span>
+                  {isHardFloorBreach
+                    ? 'Hard Blocked (Margin Floor)'
+                    : isSelfAuthorized
+                    ? 'Self-Authorize & Approve'
+                    : isFinanceEscalation
+                    ? 'Submit & Transfer to Finance'
+                    : 'Submit & Transfer to Manager'}
+                </span>
               </button>
             </>
           )}
@@ -691,6 +717,105 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
 
       {/* Graceful Fallback Notice Banner */}
       <FallbackBanner quotation={quote} isCustomer={false} />
+
+      {/* Real-Time Pre-Submission Escalation Guidance Banner (Draft Mode) */}
+      {quote.status === 'Draft' && !isCustomer() && !isWarehouse() && (
+        <div
+          style={{
+            padding: '11px 16px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            backgroundColor: isHardFloorBreach
+              ? 'rgba(239, 68, 68, 0.08)'
+              : isFinanceEscalation
+              ? 'rgba(168, 85, 247, 0.08)'
+              : isManagerEscalation
+              ? 'rgba(245, 158, 11, 0.08)'
+              : 'rgba(34, 197, 94, 0.08)',
+            border: `1px solid ${
+              isHardFloorBreach
+                ? 'rgba(239, 68, 68, 0.3)'
+                : isFinanceEscalation
+                ? 'rgba(168, 85, 247, 0.3)'
+                : isManagerEscalation
+                ? 'rgba(245, 158, 11, 0.3)'
+                : 'rgba(34, 197, 94, 0.3)'
+            }`,
+          }}
+        >
+          {isHardFloorBreach ? (
+            <ShieldAlert size={18} color="#ef4444" />
+          ) : isFinanceEscalation ? (
+            <AlertTriangle size={18} color="#a855f7" />
+          ) : isManagerEscalation ? (
+            <Clock size={18} color="#f59e0b" />
+          ) : (
+            <CheckCircle size={18} color="#22c55e" />
+          )}
+          <div style={{ flex: 1, fontSize: '12.5px' }}>
+            {isHardFloorBreach ? (
+              <div>
+                <strong style={{ color: '#dc2626' }}>Commercial Hard Block (Statutory 18.0% Floor Breach):</strong>{' '}
+                <span style={{ color: 'var(--text-main)' }}>
+                  Current projected deal margin is <strong>{currentDealMargin.toFixed(1)}%</strong>, which breaches corporate policy floor of 18.0% (or max discount {maxLineDiscount}% &gt; 35%). Submission is prohibited.
+                </span>
+              </div>
+            ) : isFinanceEscalation ? (
+              <div>
+                <strong style={{ color: '#7e22ce' }}>Executive Finance Escalation Required:</strong>{' '}
+                <span style={{ color: 'var(--text-main)' }}>
+                  Discount of <strong>{maxLineDiscount}%</strong> exceeds Sales Manager limit (20%). Submitting will transfer this quote to <strong>Corporate Finance Controller Marcus Sterling</strong>.
+                </span>
+              </div>
+            ) : isManagerEscalation ? (
+              <div>
+                <strong style={{ color: '#b45309' }}>Managerial Escalation Required:</strong>{' '}
+                <span style={{ color: 'var(--text-main)' }}>
+                  Discount of <strong>{maxLineDiscount}%</strong> exceeds your 10% representative discretion limit (or margin is below 25%). Submitting will transfer ownership to <strong>Sales Manager Elena Vance</strong>.
+                </span>
+              </div>
+            ) : (
+              <div>
+                <strong style={{ color: '#15803d' }}>Self-Authorization Eligible:</strong>{' '}
+                <span style={{ color: 'var(--text-main)' }}>
+                  Discount of <strong>{maxLineDiscount}%</strong> is within your 10% representative discretion limit and gross margin ({currentDealMargin.toFixed(1)}% ≥ 25%) meets statutory targets. Submitting will immediately approve this quotation.
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Transferred to Management & Locked Banner (PendingApproval Mode) */}
+      {quote.status === 'PendingApproval' && (
+        <div
+          style={{
+            padding: '12px 16px',
+            backgroundColor: 'rgba(245, 158, 11, 0.08)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          <Lock size={20} color="#f59e0b" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, color: '#b45309', fontSize: '13px' }}>
+              Transferred to {quote.escalationTier === 'Finance' ? 'Corporate Finance Controller (Marcus Sterling)' : 'Sales Manager (Elena Vance)'} for Review
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              {isSalesRep()
+                ? 'This proposal is currently locked under managerial review. Pricing and line item editing are frozen until authorized or returned.'
+                : 'This proposal requires your authorization before client release. Review commercial line items, gross margin health, and risk score.'}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Grid: Line Items + Real-Time Deal Health */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.15fr', gap: '20px' }}>

@@ -311,7 +311,13 @@ export function CustomerPortal({ quoteId, onBack }) {
   const isConfirmed = quotation?.status === 'Confirmed';
   const isPending = quotation?.status === 'PendingApproval';
   const isApproved = quotation?.status === 'Approved';
-  const isFallback = quotation?.status === 'FallbackReverted' || (isApproved && quotation?.lastApprovedSnapshot);
+  const isFallback =
+    quotation?.status === 'FallbackReverted' ||
+    Boolean(quotation?.isFallbackReverted) ||
+    Boolean(
+      Array.isArray(quotation?.approvalChain) &&
+      quotation.approvalChain.some((a) => a.action === 'FallbackReverted' || a.action === 'GracefulFallbackExecuted')
+    );
 
   // Projected counter net total calculation
   const projectedDiscountAmount = (subtotal * counterDiscount) / 100;

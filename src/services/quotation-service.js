@@ -673,13 +673,16 @@ export class QuotationService {
 
   /**
    * Submits a quotation for governance review and escalation assessment.
+   * Rep is self-authorized if <= 10% discount and no explicit managerial escalation is requested.
+   * If rep chooses to transfer/escalate to Sales Manager or Finance, transitions to PendingApproval.
    * 
    * @param {string} quotationId
    * @param {string} [salesRepJustificationNote=""]
    * @param {number|undefined} [expectedVersion]
+   * @param {string|null} [requestedTargetRole=null] - Explicitly escalate to 'SalesManager' or 'Finance'
    * @returns {Object}
    */
-  submitQuotationForApproval(quotationId, salesRepJustificationNote = "", expectedVersion) {
+  submitQuotationForApproval(quotationId, salesRepJustificationNote = "", expectedVersion, requestedTargetRole = null) {
     const quotation = this.getQuotationById(quotationId);
     this._assertConcurrencyVersion(quotation, expectedVersion);
 
@@ -712,9 +715,12 @@ export class QuotationService {
       throw new ValidationError(`Commercial Hard Block: ${assessment.blockReason}`);
     }
 
-    if (assessment.requiredTier === "SalesRep") {
+    const isExplicitEscalation = requestedTargetRole === "SalesManager" || requestedTargetRole === "Finance";
+
+    if (!isExplicitEscalation && assessment.requiredTier === "SalesRep") {
       // Rep is self-authorized (<= 10% discount, zero rebate)
       quotation.status = "Approved";
+      quotation.isFallbackReverted = false;
       quotation.approvalChain.push({
         action: "SelfAuthorized",
         role: "SalesRep",
@@ -731,14 +737,18 @@ export class QuotationService {
         "Self-authorized baseline terms."
       );
     } else {
-      // Escalation required (SalesManager or Finance)
+      // Escalation required by policy OR explicitly transferred to Manager / Finance by sales rep!
+      const targetTier = requestedTargetRole || assessment.requiredTier;
       quotation.status = "PendingApproval";
+      quotation.escalationTier = targetTier === "Finance" ? "Finance" : "SalesManager";
+      quotation.requiredApprovalLevel = quotation.escalationTier === "Finance" ? "Finance" : "Manager";
+      quotation.isFallbackReverted = false;
       quotation.approvalChain.push({
         action: "SubmittedForApproval",
         role: "SalesRep",
         approverName: quotation.salesRepName,
         timestamp: new Date().toISOString(),
-        note: salesRepJustificationNote || `Escalated to ${assessment.requiredTier} (Risk Score: ${assessment.blendedRiskScore}).`,
+        note: salesRepJustificationNote || `Transferred to ${quotation.escalationTier} for review and managerial discount authorization.`,
       });
     }
 
@@ -775,8 +785,8 @@ export class QuotationService {
     const quotation = this.getQuotationById(quotationId);
     this._assertConcurrencyVersion(quotation, expectedVersion);
 
-    if (quotation.status !== "PendingApproval") {
-      throw new ValidationError(`Quotation must be in 'PendingApproval' status to be approved. Current status is '${quotation.status}'.`);
+    if (quotation.status !== "PendingApproval" && quotation.status !== "Draft") {
+      throw new ValidationError(`Quotation must be in 'PendingApproval' or 'Draft' status to be approved. Current status is '${quotation.status}'.`);
     }
 
     if (approverRole !== "SalesManager" && approverRole !== "Finance") {
@@ -790,7 +800,9 @@ export class QuotationService {
     }
 
     quotation.status = "Approved";
+    quotation.isFallbackReverted = false;
     quotation.escalationTier = "SalesRep";
+    quotation.requiredApprovalLevel = approverRole === "Finance" ? "Finance" : "Manager";
 
     const approvalRecord = {
       action: "Approved",
@@ -859,6 +871,7 @@ export class QuotationService {
         approverName || "Reviewer",
         rejectionReason || "Reverted to prior approved best offer."
       );
+      quotation.isFallbackReverted = true;
 
       for (const line of (quotation.lines || [])) {
         line.discountPercentage = line.discountPct;

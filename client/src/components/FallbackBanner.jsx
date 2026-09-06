@@ -17,9 +17,15 @@ export function FallbackBanner({ quotation, onAcceptFallback, isCustomer = true 
 
   const isReverted =
     quotation.status === 'FallbackReverted' ||
-    quotation.status === 'Approved' && quotation.lastApprovedSnapshot;
+    Boolean(quotation.isFallbackReverted) ||
+    Boolean(
+      Array.isArray(quotation.approvalChain) &&
+      quotation.approvalChain.some(
+        (a) => a.action === 'FallbackReverted' || a.action === 'GracefulFallbackExecuted'
+      )
+    );
 
-  if (!isReverted && quotation.status !== 'FallbackReverted') {
+  if (!isReverted) {
     return null;
   }
 

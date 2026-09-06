@@ -119,6 +119,7 @@ export class FallbackEngine {
     quotation.discountPct = quotation.discountPercentage;
     quotation.grossMarginPct = snapshot.approvedMarginPct;
     quotation.status = 'Approved'; // Reverted to active approved offer for 1-click buyer confirmation
+    quotation.isFallbackReverted = true;
     quotation.escalationTier = snapshot.approverRole === 'Finance' ? 'Finance' : 'SalesManager';
 
     const fallbackExplanation = 

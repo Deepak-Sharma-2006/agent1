@@ -602,7 +602,8 @@ export function createApiRouter({ quotationService, repositories }) {
         const submittedQuote = quotationService.submitQuotationForApproval(
           quoteId,
           body.justificationNote || "",
-          expectedVersion
+          expectedVersion,
+          body.targetRole || body.escalateTo || null
         );
         sendJsonResponse(res, 200, { quotation: submittedQuote });
         return true;

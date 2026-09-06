@@ -488,13 +488,23 @@ export function Dashboard({ onOpenQuote }) {
                           {quote.status === 'PendingApproval'
                             ? isSalesRep()
                               ? `🔒 Transferred to ${quote.escalationTier === 'Finance' ? 'Finance' : 'Manager'}`
-                              : isSalesManager()
+                              : isSalesManager() || isFinance()
                               ? '⚠️ Review Required'
                               : 'Pending Approval'
                             : quote.status === 'Approved'
-                            ? Number(quote.discountPercentage || 0) <= 10
-                              ? '✓ Self-Authorized'
-                              : '✓ Approved'
+                            ? (() => {
+                                const lastApproval = (quote.approvalChain || []).filter(c => c.action === 'Approved' || c.action === 'SelfAuthorized').slice(-1)[0];
+                                if (lastApproval?.role === 'Finance' || lastApproval?.approverRole === 'Finance' || quote.requiredApprovalLevel === 'Finance') {
+                                  return '✓ Approved (Finance)';
+                                }
+                                if (lastApproval?.role === 'SalesManager' || lastApproval?.approverRole === 'SalesManager' || quote.requiredApprovalLevel === 'Manager') {
+                                  return '✓ Approved (Manager)';
+                                }
+                                if (lastApproval?.action === 'SelfAuthorized' || lastApproval?.role === 'SalesRep' || quote.requiredApprovalLevel === 'Self') {
+                                  return '✓ Self-Authorized';
+                                }
+                                return '✓ Approved';
+                              })()
                             : quote.status === 'Confirmed'
                             ? 'Won / Confirmed'
                             : quote.status}
@@ -503,7 +513,7 @@ export function Dashboard({ onOpenQuote }) {
 
                       <td style={{ textAlign: 'right' }}>
                         <button
-                          className={`btn ${isSalesManager() && quote.status === 'PendingApproval' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                          className={`btn ${(isSalesManager() || isFinance()) && quote.status === 'PendingApproval' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
                           onClick={() => onOpenQuote(quote.id)}
                         >
                           <span>
@@ -511,7 +521,7 @@ export function Dashboard({ onOpenQuote }) {
                               ? 'Inspect Slip'
                               : isCustomer()
                               ? 'Review Proposal'
-                              : isSalesManager() && quote.status === 'PendingApproval'
+                              : (isSalesManager() || isFinance()) && quote.status === 'PendingApproval'
                               ? 'Review & Sign Off'
                               : isSalesRep() && quote.status === 'PendingApproval'
                               ? 'View (Locked)'

@@ -70,6 +70,13 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
   const isManagerEscalation = (maxLineDiscount > 10 || currentDealMargin < 25) && !isFinanceEscalation && !isHardFloorBreach;
   const isSelfAuthorized = !isHardFloorBreach && !isFinanceEscalation && !isManagerEscalation;
 
+  // Manager and Finance editing liberty
+  const isManagerOrFinance = isSalesManager() || isFinance() || (currentUser && (currentUser.role === 'SalesManager' || currentUser.role === 'Finance' || currentUser.role === 'Admin'));
+  const isRepEditingDraft = canCreateQuotes() && quote?.status === 'Draft';
+  const isManagerEditing = isManagerOrFinance && (quote?.status === 'PendingApproval' || quote?.status === 'Draft' || quote?.status === 'Approved');
+  const canEditLines = isRepEditingDraft || isManagerEditing;
+  const actorCeiling = isFinance() || currentUser?.role === 'Admin' ? 35 : isSalesManager() ? 20 : 10;
+
   // Helper for product category discount ceilings
   const getCategoryCeiling = (category) => {
     const cat = (category || '').toLowerCase();
@@ -407,13 +414,13 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
     }
   };
 
-  // Submit for Approval
-  const handleSubmitForApproval = async () => {
+  // Submit for Approval / Escalation
+  const handleSubmitForApproval = async (targetRole = null) => {
     try {
       setSaving(true);
       let targetQuote = quote;
 
-      // Ensure quotation is persisted on server first (especially if new draft)
+      // Ensure quotation is persisted on server first (especially if new draft or line items updated)
       const isNew = targetQuote.id.startsWith('quote-new-');
       const saveUrl = isNew ? '/api/quotes' : `/api/quotes/${targetQuote.id}`;
       const saveMethod = isNew ? 'POST' : 'PUT';
@@ -446,17 +453,27 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
         saveOfflineQuote(targetQuote).catch(() => {});
       }
 
-      // Submit for Approval with valid persisted server ID
+      // Submit for Approval with valid persisted server ID and explicit targetRole
       const res = await fetch(`/api/quotes/${targetQuote.id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expectedVersion: targetQuote.version }),
+        body: JSON.stringify({
+          expectedVersion: targetQuote.version,
+          targetRole: targetRole,
+          escalateTo: targetRole,
+          justificationNote: targetRole ? `Transferred to ${targetRole} for review and authorization.` : '',
+        }),
       }).then((r) => r.json());
 
       if (res.success || res.quotation) {
-        setQuote(res.quotation);
-        saveOfflineQuote(res.quotation).catch(() => {});
-        addToast('Submitted', 'Quotation submitted for managerial approval.', 'info');
+        const q = res.quotation || targetQuote;
+        setQuote(q);
+        saveOfflineQuote(q).catch(() => {});
+        if (q.status === 'Approved') {
+          addToast('Self-Authorized', 'Quotation self-authorized and released for customer presentation.', 'success');
+        } else {
+          addToast('Transferred', `Quotation transferred to ${targetRole === 'Finance' ? 'Corporate Finance (Marcus Sterling)' : 'Sales Manager (Elena Vance)'} for review.`, 'info');
+        }
       } else {
         addToast('Submission Failed', res.error || 'Unable to submit quotation.', 'danger');
       }
@@ -471,19 +488,43 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
   const handleApprove = async () => {
     try {
       setSaving(true);
+      // Persist any adjusted line items first so manager discounts are recorded
+      const saveRes = await fetch(`/api/quotes/${quote.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: quote.customerId,
+          salesRepId: quote.salesRepId,
+          lines: quote.lines,
+          expectedVersion: quote.version,
+        }),
+      });
+
+      let targetVersion = quote.version;
+      if (saveRes.ok) {
+        const saveData = await saveRes.json();
+        if (saveData.quotation) {
+          targetVersion = saveData.quotation.version;
+        }
+      }
+
       const res = await fetch(`/api/quotes/${quote.id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           approverId: currentUser.id,
           approverRole: currentUser.role,
-          expectedVersion: quote.version,
+          approverName: currentUser.name,
+          approvalNote: `Authorized by ${currentUser.name} (${currentUser.role}) with approved discounts up to ${maxLineDiscount}%.`,
+          expectedVersion: targetVersion,
         }),
       }).then((r) => r.json());
 
-      if (res.success) {
-        setQuote(res.quotation);
-        addToast('Approved', `Quotation authorized by ${currentUser.name}`, 'success');
+      if (res.success || res.quotation) {
+        const q = res.quotation || quote;
+        setQuote(q);
+        saveOfflineQuote(q).catch(() => {});
+        addToast('Authorized & Signed Off', `Quotation officially authorized by ${currentUser.name}!`, 'success');
       } else {
         addToast('Approval Failed', res.error, 'danger');
       }
@@ -635,34 +676,75 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
             </button>
           )}
 
+          {/* Sales Rep Draft Actions */}
           {canCreateQuotes() && quote.status === 'Draft' && (
             <>
               <button className="btn btn-secondary" onClick={handleSave} disabled={saving}>
                 <Save size={15} />
                 <span>Save Draft</span>
               </button>
-              <button
-                className={`btn ${isHardFloorBreach ? 'btn-secondary' : isSelfAuthorized ? 'btn-success' : 'btn-primary'}`}
-                onClick={handleSubmitForApproval}
-                disabled={saving || isHardFloorBreach}
-                title={isHardFloorBreach ? 'Gross margin floor breach (<18%) prohibits submission' : ''}
-              >
-                <Send size={15} />
-                <span>
-                  {isHardFloorBreach
-                    ? 'Hard Blocked (Margin Floor)'
-                    : isSelfAuthorized
-                    ? 'Self-Authorize & Approve'
-                    : isFinanceEscalation
-                    ? 'Submit & Transfer to Finance'
-                    : 'Submit & Transfer to Manager'}
-                </span>
-              </button>
+
+              {isHardFloorBreach ? (
+                <button
+                  className="btn btn-secondary"
+                  disabled={true}
+                  title="Statutory 18% floor breach (<18%) or discount >35% prohibits submission"
+                  style={{ opacity: 0.65 }}
+                >
+                  <ShieldAlert size={15} />
+                  <span>Hard Blocked (Margin Floor)</span>
+                </button>
+              ) : isSelfAuthorized ? (
+                <>
+                  <button
+                    className="btn btn-success"
+                    onClick={() => handleSubmitForApproval(null)}
+                    disabled={saving}
+                    title="Self-authorize and approve immediately within 10% discretion limit"
+                  >
+                    <CheckCircle size={15} />
+                    <span>Self-Authorize & Release</span>
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleSubmitForApproval('SalesManager')}
+                    disabled={saving}
+                    title="Transfer to Sales Manager Elena Vance for higher discount concession or managerial sign-off"
+                  >
+                    <Send size={15} />
+                    <span>Transfer to Sales Manager</span>
+                  </button>
+                </>
+              ) : isFinanceEscalation ? (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleSubmitForApproval('Finance')}
+                  disabled={saving}
+                  style={{ backgroundColor: '#7e22ce', borderColor: '#7e22ce' }}
+                >
+                  <Send size={15} />
+                  <span>Submit & Transfer to Finance</span>
+                </button>
+              ) : (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleSubmitForApproval('SalesManager')}
+                  disabled={saving}
+                >
+                  <Send size={15} />
+                  <span>Submit & Transfer to Manager</span>
+                </button>
+              )}
             </>
           )}
 
-          {canApprove() && quote.status === 'PendingApproval' && (
+          {/* Sales Manager / Finance Actions in PendingApproval */}
+          {isManagerOrFinance && quote.status === 'PendingApproval' && (
             <>
+              <button className="btn btn-secondary" onClick={handleSave} disabled={saving} title="Save line adjustments without sign-off">
+                <Save size={15} />
+                <span>Save Adjustments</span>
+              </button>
               <button
                 className="btn btn-secondary"
                 onClick={handleRejectAndFallback}
@@ -679,9 +761,47 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                 <XCircle size={15} />
                 <span>Reject & Revert to Fallback</span>
               </button>
-              <button className="btn btn-success" onClick={handleApprove} disabled={saving}>
+
+              {isSalesManager() && maxLineDiscount > 20 ? (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleSubmitForApproval('Finance')}
+                  disabled={saving}
+                  style={{ backgroundColor: '#7e22ce', borderColor: '#7e22ce' }}
+                  title="Discount > 20% exceeds Sales Manager discretion. Escalate to Finance Controller Marcus Sterling."
+                >
+                  <Send size={15} />
+                  <span>Transfer to Finance (Marcus Sterling)</span>
+                </button>
+              ) : (
+                <button
+                  className="btn btn-success"
+                  onClick={handleApprove}
+                  disabled={saving || isHardFloorBreach}
+                  title={isHardFloorBreach ? 'Statutory 18% floor breach prohibits sign-off' : ''}
+                >
+                  <CheckCircle size={15} />
+                  <span>Authorize Quotation ({currentUser.name})</span>
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Sales Manager / Finance Actions on Approved Quotes (Concession Revision) */}
+          {isManagerOrFinance && quote.status === 'Approved' && (
+            <>
+              <button className="btn btn-secondary" onClick={handleSave} disabled={saving} title="Save revised commercial terms">
+                <Save size={15} />
+                <span>Save Terms</span>
+              </button>
+              <button
+                className="btn btn-success"
+                onClick={handleApprove}
+                disabled={saving || isHardFloorBreach}
+                title="Apply managerial concessions and re-authorize proposal"
+              >
                 <CheckCircle size={15} />
-                <span>Authorize Quotation</span>
+                <span>Grant Managerial Concession ({currentUser.name})</span>
               </button>
             </>
           )}
@@ -699,7 +819,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
             </>
           )}
 
-          {canCreateQuotes() && quote.status === 'Approved' && (
+          {(canCreateQuotes() || isManagerOrFinance) && quote.status === 'Approved' && (
             <button className="btn btn-success" onClick={handleConfirm} disabled={saving || isFloorBreached}>
               <CheckCircle size={15} />
               <span>Finalize Order</span>
@@ -789,7 +909,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
         </div>
       )}
 
-      {/* Transferred to Management & Locked Banner (PendingApproval Mode) */}
+      {/* Transferred to Management & Review Banner (PendingApproval Mode) */}
       {quote.status === 'PendingApproval' && (
         <div
           style={{
@@ -806,12 +926,20 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
           <Lock size={20} color="#f59e0b" />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, color: '#b45309', fontSize: '13px' }}>
-              Transferred to {quote.escalationTier === 'Finance' ? 'Corporate Finance Controller (Marcus Sterling)' : 'Sales Manager (Elena Vance)'} for Review
+              {isSalesManager()
+                ? '✍️ Sales Manager Authorization Station (Elena Vance)'
+                : isFinance()
+                ? '⚖️ Corporate Finance Authorization Station (Marcus Sterling)'
+                : `Transferred to ${quote.escalationTier === 'Finance' ? 'Corporate Finance Controller (Marcus Sterling)' : 'Sales Manager (Elena Vance)'} for Review`}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
               {isSalesRep()
-                ? 'This proposal is currently locked under managerial review. Pricing and line item editing are frozen until authorized or returned.'
-                : 'This proposal requires your authorization before client release. Review commercial line items, gross margin health, and risk score.'}
+                ? 'This proposal is currently under managerial review. Pricing and line item editing are locked for sales representative until signed off.'
+                : isSalesManager()
+                ? 'You have full liberty to grant discounts up to 20% (or escalate to Marcus Sterling if >20%). You can edit SKU lines and discount percentages below before authorizing.'
+                : isFinance()
+                ? 'You have full authority to grant discounts up to 35% while enforcing statutory 18% gross margin floors. You can adjust line items and authorize below.'
+                : 'This proposal requires authorization before client release. Review commercial line items, gross margin health, and risk score.'}
             </div>
           </div>
         </div>
@@ -825,7 +953,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
             <span className="card-title">
               {isWarehouse() ? 'Warehouse Picking & Packing SKU Items' : isCustomer() ? 'Proposal Line Items' : 'Commercial Line Items Matrix'}
             </span>
-            {canCreateQuotes() && quote.status === 'Draft' && (
+            {canEditLines && (
               <button className="btn btn-secondary btn-sm" onClick={handleAddLine}>
                 <Plus size={14} />
                 <span>Add SKU Line</span>
@@ -843,7 +971,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                   <th style={{ textAlign: 'center', whiteSpace: 'nowrap', minWidth: '100px' }}>Discount %</th>
                   <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Net Price</th>
                   <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Line Total</th>
-                  {!isCustomer() && quote.status === 'Draft' && <th style={{ width: '40px' }}></th>}
+                  {!isCustomer() && canEditLines && <th style={{ width: '40px' }}></th>}
                 </tr>
               </thead>
               <tbody>
@@ -854,14 +982,15 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                   const netPrice = Math.round(listPrice * (1 - discountPct / 100));
                   const lineTotal = netPrice * (Number(line.quantity) || 1);
                   const ceiling = getCategoryCeiling(product.category);
-                  const isCeilingBreached = discountPct > ceiling;
+                  const roleCeiling = isFinance() || currentUser?.role === 'Admin' ? 35 : isSalesManager() ? 20 : 10;
+                  const isCeilingBreached = discountPct > roleCeiling;
                   const qtyLength = String(line.quantity || 1).length;
                   const dynamicQtyWidth = Math.max(72, qtyLength * 11 + 36);
 
                   return (
                     <tr key={line.id}>
                       <td>
-                        {!isCustomer() && quote.status === 'Draft' ? (
+                        {!isCustomer() && canEditLines ? (
                           <div>
                             <select
                               className="form-control"
@@ -876,7 +1005,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                               ))}
                             </select>
                             <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              Category: {product.category || 'Hardware'} • Ceiling: {ceiling}%
+                              Category: {product.category || 'Hardware'} • Your Ceiling: {roleCeiling}%
                             </div>
                           </div>
                         ) : (
@@ -890,7 +1019,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                       </td>
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{formatCurrency(listPrice)}</td>
                       <td className="qty-cell" style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        {canCreateQuotes() && quote.status === 'Draft' ? (
+                        {canEditLines ? (
                           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                             <input
                               type="number"
@@ -919,7 +1048,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                         )}
                       </td>
                       <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        {canCreateQuotes() && quote.status === 'Draft' ? (
+                        {canEditLines ? (
                           <div>
                             <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                               <input
@@ -944,7 +1073,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                             </div>
                             {isCeilingBreached && (
                               <div style={{ fontSize: '9.5px', color: 'var(--danger, #ef4444)', fontWeight: 600, marginTop: '2px' }}>
-                                &gt; {ceiling}% cap!
+                                &gt; {roleCeiling}% {isSalesManager() ? 'Manager Cap' : isFinance() ? 'Finance Cap' : 'Rep Cap'}!
                               </div>
                             )}
                           </div>
@@ -961,7 +1090,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
                       </td>
                       <td style={{ textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatCurrency(netPrice)}</td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>{formatCurrency(lineTotal)}</td>
-                      {canCreateQuotes() && quote.status === 'Draft' && (
+                      {canEditLines && (
                         <td>
                           <button
                             className="btn btn-secondary btn-sm"

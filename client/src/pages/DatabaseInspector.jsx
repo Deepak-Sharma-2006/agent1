@@ -97,20 +97,6 @@ export function DatabaseInspector() {
             <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
               Live SQLite Database Explorer
             </h1>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                backgroundColor: '#f1f5f9',
-                color: '#475569',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                border: '1px solid #cbd5e1',
-              }}
-            >
-              Jury Architecture Telemetry
-            </span>
           </div>
           <p style={{ fontSize: '13.5px', color: '#64748b', margin: '4px 0 0 0' }}>
             Inspect physical database tables, relational schemas, ACID journal mode, and live records powered by native Node.js <code>node:sqlite</code>.

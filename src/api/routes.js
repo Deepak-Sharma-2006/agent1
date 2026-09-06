@@ -329,7 +329,18 @@ export function createApiRouter({ quotationService, repositories }) {
           customerId: body.customerId,
           validityPeriodDays: body.validityPeriodDays,
         });
-        sendJsonResponse(res, 201, { quotation: newQuote });
+        if (Array.isArray(body.lines) && body.lines.length > 0) {
+          const updatedQuote = quotationService.updateQuotation(
+            newQuote.id,
+            { lines: body.lines },
+            newQuote.version
+          );
+          updatedQuote.version = 1;
+          quotationService.quotationRepository.save(updatedQuote);
+          sendJsonResponse(res, 201, { success: true, quotation: updatedQuote });
+        } else {
+          sendJsonResponse(res, 201, { success: true, quotation: newQuote });
+        }
         return true;
       } catch (err) {
         const status = err.statusCode || 400;
@@ -386,7 +397,7 @@ export function createApiRouter({ quotationService, repositories }) {
           : body.expectedVersion;
 
         const updatedQuote = quotationService.updateQuotation(quoteId, body, expectedVersion);
-        sendJsonResponse(res, 200, { quotation: updatedQuote });
+        sendJsonResponse(res, 200, { success: true, quotation: updatedQuote });
         return true;
       } catch (err) {
         const status = err.statusCode || 400;

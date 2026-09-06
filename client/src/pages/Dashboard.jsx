@@ -99,7 +99,7 @@ export function Dashboard({ onOpenQuote }) {
   }, [lastEvent]);
 
   // Role-isolated quote filtering: strictly eliminate feature and data bleed
-  const displayedQuotes = quotes.filter((q) => {
+  const roleFilteredQuotes = quotes.filter((q) => {
     // 1. Customer: strictly their own account quotes
     if (isCustomer()) {
       if (q.customerId !== currentUser.customerId) return false;
@@ -109,18 +109,25 @@ export function Dashboard({ onOpenQuote }) {
       const isMyQuote =
         q.salesRepId === currentUser.id ||
         q.salesRepId === 'usr-rep-01' ||
-        q.salesRepId === 'rep-01';
+        q.salesRepId === 'rep-01' ||
+        !q.salesRepId ||
+        q.salesRepName === currentUser.name;
       if (!isMyQuote) return false;
     }
     // 3. Warehouse: only Confirmed orders ready for dispatch
     else if (isWarehouse()) {
       if (q.status !== 'Confirmed') return false;
     }
+    return true;
+  });
 
+  const displayedQuotes = roleFilteredQuotes.filter((q) => {
+    const st = (q.status || '').toLowerCase();
     // Status Filter Tabs
-    if (filter === 'PENDING') return q.status === 'PendingApproval';
-    if (filter === 'APPROVED') return q.status === 'Approved';
-    if (filter === 'CONFIRMED') return q.status === 'Confirmed';
+    if (filter === 'DRAFT') return st === 'draft';
+    if (filter === 'PENDING') return st === 'pendingapproval';
+    if (filter === 'APPROVED') return st === 'approved';
+    if (filter === 'CONFIRMED') return st === 'confirmed';
     return true;
   });
 
@@ -129,13 +136,14 @@ export function Dashboard({ onOpenQuote }) {
     currentPage * pageSize
   );
 
-  const totalPipelineCents = displayedQuotes.reduce((sum, q) => sum + (q.netTotalCents || 0), 0);
-  const pendingCount = displayedQuotes.filter((q) => q.status === 'PendingApproval').length;
-  const approvedCount = displayedQuotes.filter((q) => q.status === 'Approved').length;
-  const confirmedCount = displayedQuotes.filter((q) => q.status === 'Confirmed').length;
+  const totalPipelineCents = roleFilteredQuotes.reduce((sum, q) => sum + (q.netTotalCents !== undefined ? q.netTotalCents : (q.totalCents || 0)), 0);
+  const draftCount = roleFilteredQuotes.filter((q) => (q.status || '').toLowerCase() === 'draft').length;
+  const pendingCount = roleFilteredQuotes.filter((q) => (q.status || '').toLowerCase() === 'pendingapproval').length;
+  const approvedCount = roleFilteredQuotes.filter((q) => (q.status || '').toLowerCase() === 'approved').length;
+  const confirmedCount = roleFilteredQuotes.filter((q) => (q.status || '').toLowerCase() === 'confirmed').length;
   const avgMargin =
-    displayedQuotes.length > 0
-      ? displayedQuotes.reduce((sum, q) => sum + (q.grossMarginPercent || 0), 0) / displayedQuotes.length
+    roleFilteredQuotes.length > 0
+      ? roleFilteredQuotes.reduce((sum, q) => sum + (q.grossMarginPercent || 0), 0) / roleFilteredQuotes.length
       : 0;
 
   // High-escalation deals count for Finance (discount > 15% or margin breach or PendingApproval)
@@ -305,7 +313,7 @@ export function Dashboard({ onOpenQuote }) {
           <div className="kpi-tile">
             <span className="kpi-label">My Active Deals</span>
             <span className="kpi-value">{displayedQuotes.length}</span>
-            <span className="kpi-subtext">{approvedCount} approved, {confirmedCount} confirmed</span>
+            <span className="kpi-subtext">{draftCount} drafts, {pendingCount} pending, {approvedCount} approved</span>
           </div>
           <div className={`kpi-tile ${avgMargin >= 25 ? 'kpi-success' : avgMargin >= 18 ? 'kpi-warning' : 'kpi-danger'}`}>
             <span className="kpi-label">Average Deal Margin</span>
@@ -337,7 +345,7 @@ export function Dashboard({ onOpenQuote }) {
             </span>
             {!isWarehouse() && (
               <div style={{ display: 'flex', gap: '4px' }}>
-                {['ALL', 'PENDING', 'APPROVED', 'CONFIRMED'].map((f) => (
+                {['ALL', 'DRAFT', 'PENDING', 'APPROVED', 'CONFIRMED'].map((f) => (
                   <button
                     key={f}
                     className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
@@ -422,7 +430,7 @@ export function Dashboard({ onOpenQuote }) {
                       )}
 
                       <td style={{ fontWeight: 600 }}>
-                        {isWarehouse() ? `${quoteUnits} Units` : formatCurrency(quote.netTotalCents)}
+                        {isWarehouse() ? `${quoteUnits} Units` : formatCurrency(quote.netTotalCents !== undefined ? quote.netTotalCents : (quote.totalCents || 0))}
                       </td>
 
                       {canViewInternalMargins() && !isCustomer() && (

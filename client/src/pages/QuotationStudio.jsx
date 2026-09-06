@@ -290,6 +290,7 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
       const payload = {
         customerId: quote.customerId,
         salesRepId: quote.salesRepId || currentUser.id,
+        salesRepName: currentUser.name,
         lines: quote.lines,
         expectedVersion: quote.version,
       };
@@ -329,10 +330,11 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
 
       if (res.ok) {
         const data = await res.json();
-        if (data.success) {
-          setQuote(data.quotation);
-          saveOfflineQuote(data.quotation).catch(() => {});
-          addToast('Saved', `Quotation ${data.quotation.quoteNumber || data.quotation.id} saved successfully!`, 'success');
+        if (data.success || data.quotation) {
+          const q = data.quotation || data;
+          setQuote(q);
+          saveOfflineQuote(q).catch(() => {});
+          addToast('Saved', `Quotation ${q.quoteNumber || q.id} saved successfully!`, 'success');
         } else {
           addToast('Save Failed', data.error || 'Conflict detected', 'danger');
         }
@@ -377,20 +379,57 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
   const handleSubmitForApproval = async () => {
     try {
       setSaving(true);
-      const res = await fetch(`/api/quotes/${quote.id}/submit`, {
+      let targetQuote = quote;
+
+      // Ensure quotation is persisted on server first (especially if new draft)
+      const isNew = targetQuote.id.startsWith('quote-new-');
+      const saveUrl = isNew ? '/api/quotes' : `/api/quotes/${targetQuote.id}`;
+      const saveMethod = isNew ? 'POST' : 'PUT';
+
+      const savePayload = {
+        customerId: targetQuote.customerId,
+        salesRepId: targetQuote.salesRepId || currentUser.id,
+        salesRepName: currentUser.name,
+        lines: targetQuote.lines || [],
+        expectedVersion: targetQuote.version,
+      };
+
+      const saveRes = await fetch(saveUrl, {
+        method: saveMethod,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savePayload),
+      });
+
+      if (!saveRes.ok) {
+        const errData = await saveRes.json().catch(() => ({}));
+        addToast('Save Failed', errData.error || 'Failed to save quote before submission', 'danger');
+        setSaving(false);
+        return;
+      }
+
+      const saveData = await saveRes.json();
+      if (saveData.quotation) {
+        targetQuote = saveData.quotation;
+        setQuote(targetQuote);
+        saveOfflineQuote(targetQuote).catch(() => {});
+      }
+
+      // Submit for Approval with valid persisted server ID
+      const res = await fetch(`/api/quotes/${targetQuote.id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expectedVersion: quote.version }),
+        body: JSON.stringify({ expectedVersion: targetQuote.version }),
       }).then((r) => r.json());
 
-      if (res.success) {
+      if (res.success || res.quotation) {
         setQuote(res.quotation);
+        saveOfflineQuote(res.quotation).catch(() => {});
         addToast('Submitted', 'Quotation submitted for managerial approval.', 'info');
       } else {
-        addToast('Submission Failed', res.error, 'danger');
+        addToast('Submission Failed', res.error || 'Unable to submit quotation.', 'danger');
       }
-    } catch {
-      addToast('Error', 'Failed to submit quote for approval', 'danger');
+    } catch (err) {
+      addToast('Error', err.message || 'Failed to submit quote for approval', 'danger');
     } finally {
       setSaving(false);
     }

@@ -62,13 +62,13 @@ function MainLayout() {
       setCurrentView('portal');
     }
     if (currentView === 'rules' && !canManageRules()) setCurrentView(defaultView);
-    if (currentView === 'warehouse' && isCustomer()) setCurrentView(defaultView);
-    if (currentView === 'catalog' && (isWarehouse() || isCustomer())) setCurrentView(defaultView);
-    if (currentView === 'billing' && (isCustomer() || isWarehouse())) setCurrentView(defaultView);
+    if (currentView === 'catalog') setCurrentView(defaultView);
+    if (currentView === 'warehouse' && !isWarehouse()) setCurrentView(defaultView);
+    if (currentView === 'billing' && currentUser.role !== 'Finance') setCurrentView(defaultView);
     if (currentView === 'approvals' && !canApprove()) setCurrentView(defaultView);
     if (currentView === 'database' && (!isAdmin || !isAdmin())) setCurrentView(defaultView);
     if (currentView === 'admin-hub' && (!isAdmin || !isAdmin())) setCurrentView(defaultView);
-    if (isAdmin && isAdmin() && ['quotes', 'approvals', 'rules', 'chat', 'catalog', 'billing', 'warehouse'].includes(currentView)) {
+    if (isAdmin && isAdmin() && ['dashboard', 'quotes', 'approvals', 'rules', 'chat', 'catalog', 'billing', 'warehouse'].includes(currentView)) {
       setCurrentView(defaultView);
     }
   }, [currentUser.role, currentView]);
@@ -118,7 +118,7 @@ function MainLayout() {
       <div className="app-main">
         <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
         <main className="app-content">
-          {currentView === 'dashboard' && <Dashboard onOpenQuote={handleOpenQuote} />}
+          {currentView === 'dashboard' && (isAdmin && isAdmin() ? <AdminHub /> : <Dashboard onOpenQuote={handleOpenQuote} />)}
           {currentView === 'quotes' && (!isAdmin || !isAdmin()) && (
             <QuotationStudio
               quoteId={activeQuoteId}

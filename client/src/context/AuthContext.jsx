@@ -147,7 +147,7 @@ export function AuthProvider({ children }) {
     currentUser.role === 'SalesManager' ||
     currentUser.role === 'Finance' ||
     currentUser.role === 'Admin';
-  const canManageRules = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance' || currentUser.role === 'Admin';
+  const canManageRules = () => currentUser.role === 'SalesManager' || currentUser.role === 'Finance' || currentUser.role === 'SalesRep';
   const canCreateQuotes = () =>
     currentUser.role === 'SalesRep' ||
     currentUser.role === 'SalesManager' ||

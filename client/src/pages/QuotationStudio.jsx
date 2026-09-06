@@ -92,11 +92,30 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
       if (res.success) {
         setShipments(res.shipments || []);
         setBackorders(res.backorders || []);
-        addToast?.(
-          'Allocation Completed',
-          `Split ${res.shipments.length} shipment order(s) across regional depots.`,
-          'success'
-        );
+        if (res.shipments?.length === 0) {
+          const hasHardware = quote?.lines?.some(
+            (l) => (l.category || '').toLowerCase() === 'hardware'
+          );
+          if (!hasHardware) {
+            addToast?.(
+              'Digital Deliverables Order',
+              'This quotation contains only Services & Subscriptions. Intangibles bypass physical warehouse dispatch.',
+              'info'
+            );
+          } else {
+            addToast?.(
+              'Backordered Allocation',
+              'Physical stock depleted across all depots. Generated backorder tickets.',
+              'warning'
+            );
+          }
+        } else {
+          addToast?.(
+            'Allocation Completed',
+            `Split ${res.shipments.length} shipment order(s) across regional depots.`,
+            'success'
+          );
+        }
       } else {
         addToast?.('Allocation Failed', res.error, 'danger');
       }
@@ -860,11 +879,22 @@ export function QuotationStudio({ quoteId, onBack, onOpenPortal }) {
 
               {shipments.length === 0 ? (
                 <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', padding: '4px 0' }}>
-                  <div>No warehouse shipments dispatched yet. Stock will be auto-allocated across 6 continental depots upon digital contract confirmation.</div>
+                  {!quote?.lines?.some((l) => (l.category || '').toLowerCase() === 'hardware') ? (
+                    <div style={{ padding: '8px 10px', backgroundColor: 'rgba(2, 132, 199, 0.08)', borderRadius: '6px', border: '1px solid rgba(2, 132, 199, 0.2)', marginBottom: '8px', color: 'var(--text-main)' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--primary)', marginBottom: '2px', fontSize: '12px' }}>
+                        ⚡ Intangibles Only (Services & Subscriptions)
+                      </div>
+                      <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                        This order contains no physical hardware. Intangible deliverables bypass physical depot routing and warehouse dispatch. Add physical hardware (e.g. Enterprise Server Pro 2U) to allocate across the 6 continental depots.
+                      </div>
+                    </div>
+                  ) : (
+                    <div>No warehouse shipments dispatched yet. Stock will be auto-allocated across 6 continental depots upon digital contract confirmation.</div>
+                  )}
                   {quote?.id && !isCustomer() && (
                     <button
                       className="btn btn-secondary btn-sm"
-                      style={{ marginTop: '10px', fontSize: '11.5px', width: '100%' }}
+                      style={{ marginTop: '6px', fontSize: '11.5px', width: '100%' }}
                       onClick={handleTriggerAllocation}
                       disabled={allocating}
                     >

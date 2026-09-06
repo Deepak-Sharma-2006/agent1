@@ -21,6 +21,7 @@ import {
   Truck,
   MapPin,
   Package,
+  Send,
 } from 'lucide-react';
 
 /**

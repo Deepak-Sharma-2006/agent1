@@ -12,10 +12,11 @@ import {
   CreditCard,
   Database,
   Settings,
+  LogOut,
 } from 'lucide-react';
 
 export function Sidebar({ currentView, setCurrentView }) {
-  const { currentUser, canApprove, canManageRules, canNegotiate, isCustomer, isWarehouse, isAdmin } = useAuth();
+  const { currentUser, logout, canApprove, canManageRules, canNegotiate, isCustomer, isWarehouse, isAdmin } = useAuth();
 
   const isAnAdmin = Boolean(isAdmin && isAdmin());
   const isFinanceRole = Boolean(currentUser.role === 'Finance');
@@ -66,6 +67,38 @@ export function Sidebar({ currentView, setCurrentView }) {
         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
           Mode: {currentUser.role}
         </div>
+        <button
+          onClick={logout}
+          style={{
+            marginTop: '10px',
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            padding: '6px 10px',
+            backgroundColor: '#f1f5f9',
+            border: '1px solid #cbd5e1',
+            borderRadius: '6px',
+            fontSize: '11.5px',
+            fontWeight: 600,
+            color: '#334155',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          title="Return to Login / Landing Screen to switch roles"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#e2e8f0';
+            e.currentTarget.style.color = '#0f172a';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#f1f5f9';
+            e.currentTarget.style.color = '#334155';
+          }}
+        >
+          <LogOut size={13} />
+          <span>Switch Persona / Landing</span>
+        </button>
       </div>
     </aside>
   );

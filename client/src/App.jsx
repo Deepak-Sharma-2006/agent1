@@ -92,8 +92,15 @@ function MainLayout() {
     setCurrentView(ROLE_DEFAULT_VIEWS[currentUser.role] || 'dashboard');
   };
 
-  // Auth Gate: Show login screen if not authenticated
-  if (!isAuthenticated) {
+  // Check if explicitly requesting landing / login screen via URL
+  const isExplicitLoginRoute =
+    typeof window !== 'undefined' &&
+    (window.location.pathname === '/login' ||
+     window.location.pathname === '/landing' ||
+     window.location.pathname === '/signin');
+
+  // Auth Gate: Show login screen if not authenticated or explicitly requesting landing/login
+  if (!isAuthenticated || isExplicitLoginRoute) {
     return <LoginScreen />;
   }
 

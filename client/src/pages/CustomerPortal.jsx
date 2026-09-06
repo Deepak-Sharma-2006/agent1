@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Clock,
   ArrowRight,
+  Send,
   DollarSign,
   TrendingDown,
   Building,
@@ -676,14 +677,14 @@ export function CustomerPortal({ quoteId, onBack }) {
                               (line.category || '').toLowerCase().includes('hardware')
                                 ? '#eff6ff'
                                 : (line.category || '').toLowerCase().includes('service')
-                                ? '#fdf4ff'
-                                : '#f0fdf4',
+                                  ? '#fdf4ff'
+                                  : '#f0fdf4',
                             color:
                               (line.category || '').toLowerCase().includes('hardware')
                                 ? '#1d4ed8'
                                 : (line.category || '').toLowerCase().includes('service')
-                                ? '#a21caf'
-                                : '#15803d',
+                                  ? '#a21caf'
+                                  : '#15803d',
                           }}
                         >
                           {line.category || 'Hardware'}

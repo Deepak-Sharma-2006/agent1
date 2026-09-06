@@ -79,31 +79,50 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('dealflow360_user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        // Fallback
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('dealflow360_user');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          // Fallback
+        }
       }
     }
     return ENTERPRISE_USERS.salesRep;
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('dealflow360_authenticated') === 'true';
+    if (typeof window !== 'undefined') {
+      // Clear legacy permanent localStorage keys so fresh browser sessions start cleanly on Login/Landing screen
+      try {
+        localStorage.removeItem('dealflow360_authenticated');
+        localStorage.removeItem('dealflow360_user');
+      } catch (_) {}
+      return sessionStorage.getItem('dealflow360_authenticated') === 'true';
+    }
+    return false;
   });
 
   useEffect(() => {
-    localStorage.setItem('dealflow360_user', JSON.stringify(currentUser));
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('dealflow360_user', JSON.stringify(currentUser));
+    }
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('dealflow360_authenticated', String(isAuthenticated));
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('dealflow360_authenticated', String(isAuthenticated));
+    }
   }, [isAuthenticated]);
 
   const login = (identifier, password) => {
     if (!identifier) return { success: false, error: 'Please enter your enterprise email.' };
+
+    // Reset URL if logging in from explicit /login or /landing route
+    if (typeof window !== 'undefined' && (window.location.pathname === '/login' || window.location.pathname === '/landing' || window.location.pathname === '/signin')) {
+      window.history.pushState({}, '', '/');
+    }
 
     // 1. Direct user key match (e.g. 'salesRep')
     if (ENTERPRISE_USERS[identifier]) {
@@ -135,8 +154,15 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('dealflow360_user');
-    localStorage.removeItem('dealflow360_authenticated');
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('dealflow360_user');
+      sessionStorage.removeItem('dealflow360_authenticated');
+      localStorage.removeItem('dealflow360_user');
+      localStorage.removeItem('dealflow360_authenticated');
+      if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
+        window.history.pushState({}, '', '/');
+      }
+    }
     setCurrentUser(ENTERPRISE_USERS.salesRep);
   };
 

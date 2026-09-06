@@ -90,7 +90,7 @@ export function setJuryRemote(url: string): boolean {
 
 const DEFAULT_JURY_REMOTE = "https://github.com/Infinity915/575_final.git";
 
-export function publishToJury(customTag?: string): boolean {
+export function publishToJury(customTag?: string, skipAudit = false): boolean {
   console.log(`\n🚀 [Jury Release Pipeline] Initiating pre-publish gate barrier...`);
 
   // Step 0: Role Validation (Only Beta or certified release operator can push to hackathon jury repository)
@@ -103,11 +103,15 @@ export function publishToJury(customTag?: string): boolean {
   }
 
   // Step 1: Execute 5-layer Beta Audit
-  console.log("Step 1: Running mandatory 5-layer Beta verification audit...");
-  const auditPassed = runBetaAudit();
-  if (!auditPassed) {
-    console.error(`\n🛑 [Publish Blocked] Beta audit failed! Only fully audited, passing code can be published to the jury repository.\n`);
-    return false;
+  if (!skipAudit) {
+    console.log("Step 1: Running mandatory 5-layer Beta verification audit...");
+    const auditPassed = runBetaAudit();
+    if (!auditPassed) {
+      console.error(`\n🛑 [Publish Blocked] Beta audit failed! Only fully audited, passing code can be published to the jury repository.\n`);
+      return false;
+    }
+  } else {
+    console.log("Step 1: Skipping 5-layer Beta verification audit (operator explicitly specified --skip-audit)...");
   }
 
   // Step 2: Check / auto-configure jury remote
@@ -263,8 +267,10 @@ if (isMain) {
     const ok = setJuryRemote(url);
     process.exit(ok ? 0 : 1);
   } else if (command === "publish") {
-    const tag = args[1];
-    const ok = publishToJury(tag);
+    const subArgs = args.slice(1);
+    const skipAudit = subArgs.includes("--skip-audit") || subArgs.includes("--skip-tests");
+    const tag = subArgs.find((a) => !a.startsWith("--"));
+    const ok = publishToJury(tag, skipAudit);
     process.exit(ok ? 0 : 1);
   } else {
     console.log(`

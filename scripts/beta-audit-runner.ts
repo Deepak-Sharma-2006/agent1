@@ -1,9 +1,10 @@
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
+import { fileURLToPath } from "node:url";
 
-export interface AuditLayerResult {
-  layer: number;
+export interface AuditPillarResult {
+  pillar: number;
   name: string;
   passed: boolean;
   details: string;
@@ -12,61 +13,81 @@ export interface AuditLayerResult {
 export function runBetaAudit(): boolean {
   console.log(`
 ================================================================================
-           BETA AUDITOR ADVERSARIAL VERIFICATION BATTERY (6 LAYERS)
+     ENTERPRISE 2-PERSON DUAL-LEAD AUDIT BATTERY (6 PILLARS)
+================================================================================
+Assigned Lead : Adversarial Systems, SDET & Product Lead (Lead 2 / Beta)
+Mandate       : Independent Adversarial Probes, Chaos Fuzzing, AppSec & Release
 ================================================================================`);
 
-  const results: AuditLayerResult[] = [];
+  const results: AuditPillarResult[] = [];
 
-  // Layer 1: Zero-Secret Shield
-  console.log("\n▶ [Layer 1/6] Zero-Secret Shield (Credential & Token Leak Scan)...");
+  // Pillar 1: Zero-Secret & Anti-Hallucination Shield
+  console.log("\n▶ [Pillar 1/6] Zero-Secret & Anti-Hallucination Shield...");
+  let p1Ok = true;
+  let p1Details = "Zero secrets and zero ghost packages detected";
   try {
     execSync("node --experimental-strip-types scripts/secret-scanner.ts", { stdio: "inherit" });
-    results.push({ layer: 1, name: "Zero-Secret Shield", passed: true, details: "Zero secrets detected" });
-  } catch {
-    results.push({ layer: 1, name: "Zero-Secret Shield", passed: false, details: "Hardcoded secret or token detected" });
-  }
-
-  // Layer 2: Anti-Hallucination & Ghost Package Check
-  console.log("\n▶ [Layer 2/6] Anti-Hallucination Shield (Ghost Package AST Scan)...");
-  try {
     execSync("node --experimental-strip-types scripts/anti-hallucination-checker.ts scripts src tests", { stdio: "inherit" });
-    results.push({ layer: 2, name: "Anti-Hallucination Shield", passed: true, details: "Zero ghost packages detected" });
   } catch {
-    results.push({ layer: 2, name: "Anti-Hallucination Shield", passed: false, details: "Undeclared dependencies found" });
+    p1Ok = false;
+    p1Details = "Secret leak or undeclared dependency detected";
   }
+  results.push({ pillar: 1, name: "Zero-Secret & Anti-Hallucination Shield", passed: p1Ok, details: p1Details });
 
-  // Layer 3: Strict TypeScript Compilation
-  console.log("\n▶ [Layer 3/6] Strict TypeScript Compilation (tsc --noEmit)...");
+  // Pillar 2: Strict Typing & Architectural Invariants
+  console.log("\n▶ [Pillar 2/6] Strict TypeScript & Architectural Contracts (tsc --noEmit)...");
+  let p2Ok = true;
+  let p2Details = "0 errors, strict mode enforced";
   try {
     execSync("npx tsc --noEmit", { stdio: "inherit" });
-    results.push({ layer: 3, name: "Strict TypeScript Check", passed: true, details: "0 errors, strict mode enforced" });
   } catch {
-    results.push({ layer: 3, name: "Strict TypeScript Check", passed: false, details: "TypeScript type-checking errors detected" });
+    p2Ok = false;
+    p2Details = "TypeScript type-checking or contract compilation errors";
   }
+  results.push({ pillar: 2, name: "Strict TypeScript & Contract Check", passed: p2Ok, details: p2Details });
 
-  // Layer 4: Behavioral Contract Harness (4/4 Golden Evals)
-  console.log("\n▶ [Layer 4/6] Behavioral Contract Harness (4/4 Golden Evals)...");
+  // Pillar 3: Core Domain Unit & Behavioral Contracts
+  console.log("\n▶ [Pillar 3/6] Core Domain Unit & Golden Behavioral Evals...");
+  let p3Ok = true;
+  let p3Details = "Unit contracts and 4/4 behavioral evals passed";
   try {
+    execSync("node --experimental-strip-types --test tests/bootstrap.test.ts", { stdio: "inherit" });
     execSync("node --experimental-strip-types .agents/harness/eval-runner.ts", { stdio: "inherit" });
-    results.push({ layer: 4, name: "Behavioral Harness Evals", passed: true, details: "4/4 test contracts passed" });
   } catch {
-    results.push({ layer: 4, name: "Behavioral Harness Evals", passed: false, details: "Harness contract failure" });
+    p3Ok = false;
+    p3Details = "Core unit or behavioral evaluation failure";
   }
+  results.push({ pillar: 3, name: "Domain Unit & Behavioral Contracts", passed: p3Ok, details: p3Details });
 
-  // Layer 5: Strix AI Dynamic DAST Pentest
-  console.log("\n▶ [Layer 5/6] Strix/Styx AI Dynamic DAST Pentest...");
+  // Pillar 4: Independent Adversarial SDET & Concurrency Battery (Authored by Lead 2)
+  console.log("\n▶ [Pillar 4/6] Independent Adversarial SDET & Concurrency Battery...");
+  let p4Ok = true;
+  let p4Details = "All 12 adversarial, concurrency, fuzzing & chaos tests passed";
+  try {
+    execSync("node --experimental-strip-types scripts/adversarial-suite-runner.ts", { stdio: "inherit" });
+  } catch {
+    p4Ok = false;
+    p4Details = "Adversarial concurrency or payload vulnerability detected";
+  }
+  results.push({ pillar: 4, name: "Adversarial SDET & Concurrency Fuzzer", passed: p4Ok, details: p4Details });
+
+  // Pillar 5: Strix AI Dynamic DAST & Privilege Escalation Pentest
+  console.log("\n▶ [Pillar 5/6] Strix/Styx AI Dynamic DAST & Privilege Escalation Pentest...");
+  let p5Ok = true;
+  let p5Details = "Zero unverified exploits detected";
   try {
     execSync("node --experimental-strip-types scripts/pen-test-runner.ts", { stdio: "inherit" });
-    results.push({ layer: 5, name: "Strix AI DAST Pentest", passed: true, details: "Zero unverified exploits detected" });
   } catch {
-    results.push({ layer: 5, name: "Strix AI DAST Pentest", passed: false, details: "Penetration test exploit detected" });
+    p5Ok = false;
+    p5Details = "Penetration test exploit detected";
   }
+  results.push({ pillar: 5, name: "Dynamic DAST & AppSec Pentest", passed: p5Ok, details: p5Details });
 
-  // Layer 6: Cognitive Comprehension Dossier Validation (6 Techniques)
-  console.log("\n▶ [Layer 6/6] Cognitive Comprehension Dossier Validation (6 Techniques)...");
+  // Pillar 6: Product UX Acceptance & Cognitive Dossier Certification
+  console.log("\n▶ [Pillar 6/6] Product UX Acceptance & Cognitive Dossier Certification...");
   const dossierDir = join(process.cwd(), "docs/dossiers");
-  let dossierOk = false;
-  let dossierDetails = "No dossier found";
+  let p6Ok = false;
+  let p6Details = "No dossier found";
 
   if (existsSync(dossierDir)) {
     const files = readdirSync(dossierDir).filter((f) => f.endsWith(".md"));
@@ -91,43 +112,47 @@ export function runBetaAudit(): boolean {
       }
 
       if (allTechniquesPresent) {
-        dossierOk = true;
-        dossierDetails = `Validated ${files.length} dossier(s) with all 6 required cognitive techniques`;
+        p6Ok = true;
+        p6Details = `Validated ${files.length} dossier(s) with all 6 required cognitive techniques`;
         console.log(`✅ [Dossiers Validated] Found ${files.length} compliant cognitive comprehension dossier(s).`);
       } else {
-        dossierDetails = "Dossier missing one or more of the 6 mandatory techniques";
+        p6Details = "Dossier missing one or more of the 6 mandatory techniques";
         console.error("❌ [Dossier Incomplete] Missing mandatory cognitive reading techniques.");
       }
     }
   }
-
-  results.push({ layer: 6, name: "Cognitive Dossier Verification", passed: dossierOk, details: dossierDetails });
+  results.push({ pillar: 6, name: "Product UX & Cognitive Dossier Sign-Off", passed: p6Ok, details: p6Details });
 
   // Summary Scorecard
   console.log(`
 ================================================================================
-                  BETA AUDIT SCORECARD & CERTIFICATION
+            ENTERPRISE DUAL-LEAD AUDIT SCORECARD & CERTIFICATION
 ================================================================================`);
 
   let allPassed = true;
   for (const r of results) {
     const icon = r.passed ? "✅" : "❌";
-    console.log(`  [Layer ${r.layer}] ${r.name.padEnd(35)} : ${icon} ${r.details}`);
+    console.log(`  [Pillar ${r.pillar}] ${r.name.padEnd(40)} : ${icon} ${r.details}`);
     if (!r.passed) allPassed = false;
   }
 
   console.log("================================================================================");
 
   if (allPassed) {
-    console.log(`\n🎉 [Beta Audit Complete] 6/6 Verification Layers Passed! Codebase is certified for release.\n`);
+    console.log(`
+🎉 [ENTERPRISE CERTIFIED] All 6 Verification Pillars Passed!
+   Lead 2 (Adversarial Systems & Product Lead) has signed off on this release.
+   The codebase is hardened, adversarially verified, and ready for production handoff.
+`);
+    return true;
   } else {
-    console.error(`\n🚨 [Beta Audit Failed] One or more verification layers failed. Resolve before merging.\n`);
+    console.error(`
+🚨 [AUDIT REJECTED] One or more verification pillars failed.
+   Lead 2 must either apply hardening fixes or request architectural remediation.
+`);
+    return false;
   }
-
-  return allPassed;
 }
-
-import { fileURLToPath } from "node:url";
 
 const isMain = process.argv[1] && (
   fileURLToPath(import.meta.url) === process.argv[1] ||
@@ -136,6 +161,6 @@ const isMain = process.argv[1] && (
 );
 
 if (isMain) {
-  const ok = runBetaAudit();
-  process.exit(ok ? 0 : 1);
+  const success = runBetaAudit();
+  process.exit(success ? 0 : 1);
 }

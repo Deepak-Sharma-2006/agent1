@@ -46,8 +46,15 @@ export function createServer(config: ServerConfig = defaultConfig): Server {
       return;
     }
 
+    // Security Shield: Reject path traversal / injection attacks
+    if (url.includes("..") || url.includes("<") || url.includes("%00") || /passwd|win\.ini|system32/i.test(url)) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Bad Request: Invalid path syntax" }));
+      return;
+    }
+
     res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Not Found", path: url }));
+    res.end(JSON.stringify({ error: "Not Found" }));
   });
 }
 

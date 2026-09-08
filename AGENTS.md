@@ -21,13 +21,21 @@
 
 ---
 
-## 2. Multi-Operator Distributed Concurrency & Lease Locks
+## 2. Enterprise 2-Person Dual-Lead Architecture & Domain Leases (50/50 Balance)
 
-1. **Check Locks Before Mutation**:
-   - Before modifying any source file in a functional domain (e.g., `src/auth/*`, `src/database/*`), inspect `.agents/state/locks/` or execute `npx ts-node scripts/lock-manager.ts status`.
-   - If an active, unexpired lease lock is held by another operator (e.g., Node Alpha or Node Beta), you MUST abort file mutations and alert the human operator.
-2. **Phase Alternation Respect**:
-   - Respect the current phase assignment (Alpha = Primary Builder; Beta = Adversarial Auditor). If operating on a machine in the Beta role for the current phase, restrict actions to review, penetration testing, failure path audit, and test execution—do not write feature code without an explicit role handoff.
+1. **50/50 Co-Equal Enterprise Leadership**:
+   - The workspace operates as a balanced two-person engineering team, translating an entire enterprise engineering organization into two co-equal leads:
+     - **Lead 1 (Alpha / Feature Architect & Core Domain Lead - 50% Workload)**: Owns domain modeling, business logic, public API contracts, white-box unit TDD (`tests/unit/`), and system architecture dossiers.
+     - **Lead 2 (Beta / Adversarial Systems, SDET & Product Lead - 50% Workload)**: Owns independent black-box adversarial suites (`tests/adversarial/*.test.ts`), concurrency & race fuzzing, malicious payload injection, AppSec DAST pentesting, product/UX ergonomics certification, and production release sign-off.
+2. **Independent Adversarial Test Authoring Mandate**:
+   - Lead 1 (Alpha) is strictly prohibited from writing or tampering with `tests/adversarial/`. Only Lead 2 authors adversarial tests.
+   - Lead 2 must probe edge cases, race conditions, memory bounds, and fault injections that Lead 1's unit tests never contemplated.
+3. **Lead 2 Hardening Authority**:
+   - Lead 2 is NOT a passive spectator. Upon receiving a phase handoff, Lead 2 holds the **Hardening & Verification Lease** and is fully authorized to directly author hardening patches, input sanitizers, race-condition mutexes, and performance optimizations directly in `src/`.
+4. **Distributed Lease Locking & Multi-Domain Concurrency**:
+   - Developers acquire exclusive domain leases via `npm run lock:acquire --domain <name>`.
+   - Independent domains (e.g. `core` and `adversarial`) can be developed concurrently without collisions.
+   - Phase handoffs (`npm run role:handoff`) atomically transfer domain leases, enforce zero-secret scans, and invert roles on phase advancement ($N \rightarrow N+1$).
 
 ---
 

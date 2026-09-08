@@ -8,6 +8,7 @@ import { saveMemory } from "./memory-vault.ts";
 export interface ActiveRoleProfile {
   operator: string;
   role: "Alpha" | "Beta";
+  roleTitle: string;
   phase: number;
   activeLeaseDomain: string;
   updatedAt: string;
@@ -15,6 +16,12 @@ export interface ActiveRoleProfile {
 
 const STATE_DIR = join(process.cwd(), ".agents/state");
 const ROLE_FILE = join(STATE_DIR, "active-role.json");
+
+function getRoleTitle(role: "Alpha" | "Beta"): string {
+  return role === "Alpha"
+    ? "Feature Architect & Core Domain Lead"
+    : "Adversarial Systems, SDET & Product Lead";
+}
 
 function execGit(cmd: string): string {
   try {
@@ -32,15 +39,20 @@ export function getActiveProfile(): ActiveRoleProfile {
   if (existsSync(ROLE_FILE)) {
     try {
       const parsed: ActiveRoleProfile = JSON.parse(readFileSync(ROLE_FILE, "utf-8"));
+      if (!parsed.roleTitle) {
+        parsed.roleTitle = getRoleTitle(parsed.role);
+      }
       return parsed;
     } catch {
       // Fall through to default
     }
   }
 
+  const role: "Alpha" | "Beta" = (process.env.ROLE as "Alpha" | "Beta") || "Alpha";
   const defaultProfile: ActiveRoleProfile = {
     operator: resolveOperator(),
-    role: (process.env.ROLE as "Alpha" | "Beta") || "Alpha",
+    role,
+    roleTitle: getRoleTitle(role),
     phase: parseInt(process.env.PHASE || "1", 10),
     activeLeaseDomain: "core",
     updatedAt: new Date().toISOString(),
@@ -54,8 +66,41 @@ export function saveProfile(profile: ActiveRoleProfile): void {
   if (!existsSync(STATE_DIR)) {
     mkdirSync(STATE_DIR, { recursive: true });
   }
+  profile.roleTitle = getRoleTitle(profile.role);
   profile.updatedAt = new Date().toISOString();
   writeFileSync(ROLE_FILE, JSON.stringify(profile, null, 2), "utf-8");
+}
+
+export function printRoleMatrix(): void {
+  console.log(`
+================================================================================
+     ENTERPRISE 2-PERSON DUAL-LEAD DIVISION OF LABOR (50/50 WORKLOAD)
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ LEAD 1: FEATURE ARCHITECT & CORE DOMAIN LEAD (Alpha) - 50% Workload          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 1. Schema & Contract Definitions  : Zod schemas, TypeScript domain models    │
+│ 2. Core Business Engine           : Domain logic, transaction pipelines      │
+│ 3. White-Box Unit Contracts       : Happy-path & expected exceptions TDD     │
+│ 4. Mental Model & Visual Trace    : Entry point diagrams, data lifecycle     │
+│ 5. Primary Domain Write Lease     : Exclusive lease on 'core' domain         │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ LEAD 2: ADVERSARIAL SYSTEMS, SDET & PRODUCT LEAD (Beta) - 50% Workload       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 1. Independent Black-Box SDET     : Writes 'tests/adversarial/*.test.ts'     │
+│ 2. Concurrency & Race Fuzzing     : 10+ parallel worker contention probes    │
+│ 3. Boundary & Malicious Injection : Path traversal, SQLi, XSS, fuzzing       │
+│ 4. AppSec & Privilege Escalation  : Strix dynamic DAST, constant-time crypto │
+│ 5. Product & UX Acceptance        : End-to-end user journeys, error handling │
+│ 6. Hardening Commits & Patching   : Authorized to directly fix & harden src/ │
+│ 7. Production Release SRE         : CleanProduction sync, rollback readiness │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+* Both leads hold equal weight. Roles invert automatically each feature phase.
+================================================================================`);
 }
 
 export function printRoleStatus(): void {
@@ -68,7 +113,7 @@ export function printRoleStatus(): void {
 ================================================================================
   Current Workstation   : ${currentHost}
   Active Profile Leader : ${profile.operator}
-  Assigned Role         : ${profile.role} (${profile.role === "Alpha" ? "Builder / Implementer" : "Adversarial Auditor"})
+  Assigned Role         : ${profile.role} (${profile.roleTitle})
   Current Phase         : Phase ${profile.phase}
   Active Domain Lease   : ${profile.activeLeaseDomain}
   Last Synchronized     : ${profile.updatedAt}
@@ -82,15 +127,16 @@ export function printRoleStatus(): void {
 export function switchToAlpha(domain = "core", operator?: string): boolean {
   const profile = getActiveProfile();
   const currentOp = resolveOperator(operator);
-  console.log(`\n⚙️ [Role Switch] Switching ${currentOp} to ALPHA (Builder) for domain '${domain}'...`);
+  console.log(`\n⚙️ [Role Switch] Switching ${currentOp} to ALPHA (Feature Architect & Core Domain Lead) for '${domain}'...`);
 
   const ok = acquireLock(domain, currentOp, "Alpha", 7200);
   if (ok) {
     profile.operator = currentOp;
     profile.role = "Alpha";
+    profile.roleTitle = getRoleTitle("Alpha");
     profile.activeLeaseDomain = domain;
     saveProfile(profile);
-    console.log(`✅ [Role Confirmed] ${currentOp} is now ALPHA (Builder) for Phase ${profile.phase}.\n`);
+    console.log(`✅ [Role Confirmed] ${currentOp} is now ALPHA (Core Domain Lead) for Phase ${profile.phase}.\n`);
   }
   return ok;
 }
@@ -98,15 +144,16 @@ export function switchToAlpha(domain = "core", operator?: string): boolean {
 export function switchToBeta(domain = "core", operator?: string): boolean {
   const profile = getActiveProfile();
   const currentOp = resolveOperator(operator);
-  console.log(`\n⚙️ [Role Switch] Configuring ${currentOp} as BETA (Auditor) for Phase ${profile.phase}...`);
+  console.log(`\n⚙️ [Role Switch] Configuring ${currentOp} as BETA (Adversarial Systems, SDET & Product Lead) for Phase ${profile.phase}...`);
 
   const ok = acquireLock(domain, currentOp, "Beta", 7200);
   if (ok) {
     profile.operator = currentOp;
     profile.role = "Beta";
+    profile.roleTitle = getRoleTitle("Beta");
     profile.activeLeaseDomain = domain;
     saveProfile(profile);
-    console.log(`✅ [Role Confirmed] ${currentOp} is now BETA (Auditor) for Phase ${profile.phase}.\n`);
+    console.log(`✅ [Role Confirmed] ${currentOp} is now BETA (Adversarial Systems Lead) for Phase ${profile.phase}.\n`);
   }
   return ok;
 }
@@ -116,9 +163,18 @@ export function executeRoleHandoff(toOperator?: string, customNotes?: string): b
   const currentOp = profile.operator;
   const targetOp = resolveOperator(toOperator || (currentOp === "Computer1" ? "Computer2" : "Computer1"));
 
-  console.log(`\n🔄 [Phase Handoff] Initiating atomic role inversion from ${currentOp} (${profile.role}) to ${targetOp}...`);
+  console.log(`\n🔄 [Enterprise Handoff] Initiating atomic role handoff from ${currentOp} (${profile.role}) to ${targetOp}...`);
 
-  // Step 1: Check git status
+  // Step 1: Pre-Commit Secret Scanner Check
+  console.log("🔒 [Zero-Secret Gate] Verifying clean workspace before handoff...");
+  try {
+    execSync("node --experimental-strip-types scripts/secret-scanner.ts", { stdio: "inherit" });
+  } catch {
+    console.error("🛑 [HANDOFF ABORTED] Secret detected in workspace! Purge secrets before handoff.");
+    return false;
+  }
+
+  // Step 2: Check git status
   const status = execGit("git status -s");
   if (status) {
     console.log("📦 Staging and committing modified workspace state for handoff...");
@@ -130,12 +186,13 @@ export function executeRoleHandoff(toOperator?: string, customNotes?: string): b
     }
   }
 
-  // Step 2: Transfer lease lock
+  // Step 3: Transfer lease lock
   if (profile.role === "Alpha") {
-    // Alpha completed phase development -> handoff to Beta for audit
+    // Alpha completed domain development -> handoff to Beta for Adversarial SDET, Chaos, and 6-Pillar Audit
     const ok = transferLock(profile.activeLeaseDomain, currentOp, targetOp, "Beta");
     if (ok) {
       profile.role = "Beta";
+      profile.roleTitle = getRoleTitle("Beta");
       saveProfile(profile);
 
       // Record in memory vault
@@ -145,7 +202,7 @@ export function executeRoleHandoff(toOperator?: string, customNotes?: string): b
         scope: "team",
         phase: profile.phase,
         operator: currentOp,
-        body: customNotes || `Phase ${profile.phase} implementation complete for domain '${profile.activeLeaseDomain}'. Transferred to ${targetOp} for 5-layer adversarial verification.`,
+        body: customNotes || `Phase ${profile.phase} core implementation complete for domain '${profile.activeLeaseDomain}'. Transferred to ${targetOp} for independent adversarial testing, fuzzing, AppSec, and 6-pillar enterprise certification.`,
       });
 
       // Push state
@@ -157,19 +214,21 @@ export function executeRoleHandoff(toOperator?: string, customNotes?: string): b
       }
 
       console.log(`\n================================================================================`);
-      console.log(`✅ [HANDOFF COMPLETE] Domain '${profile.activeLeaseDomain}' transferred to ${targetOp} (Beta).`);
-      console.log(`👉 Partner Command for ${targetOp}:`);
-      console.log(`   git pull && npm run audit:beta`);
+      console.log(`✅ [HANDOFF COMPLETE] Domain '${profile.activeLeaseDomain}' transferred to ${targetOp} (Lead 2 / Beta).`);
+      console.log(`👉 Partner Actions for ${targetOp} (Adversarial Systems & Product Lead):`);
+      console.log(`   1. git pull`);
+      console.log(`   2. npm run test:adversarial`);
+      console.log(`   3. npm run audit:beta`);
       console.log(`================================================================================\n`);
       return true;
     }
     return false;
   } else {
-    // Beta completed audit & approved -> advance phase and invert roles!
+    // Beta completed 6-pillar audit & approved -> advance phase and invert roles!
     releaseLock(profile.activeLeaseDomain, currentOp);
     profile.phase += 1;
     profile.role = "Alpha";
-    // Odd phases: Computer1 Alpha | Even phases: Computer2 Alpha
+    profile.roleTitle = getRoleTitle("Alpha");
     profile.operator = targetOp;
     saveProfile(profile);
 
@@ -179,7 +238,7 @@ export function executeRoleHandoff(toOperator?: string, customNotes?: string): b
       scope: "team",
       phase: profile.phase - 1,
       operator: currentOp,
-      body: `Phase ${profile.phase - 1} passed 5-layer verification. Roles inverted for Phase ${profile.phase}. ${profile.operator} is now Alpha Builder.`,
+      body: `Phase ${profile.phase - 1} passed 6-pillar enterprise verification. Roles inverted for Phase ${profile.phase}. ${profile.operator} is now Alpha (Feature Architect & Core Domain Lead).`,
     });
 
     console.log("🚀 Synchronizing phase inversion state to origin...");
@@ -194,7 +253,7 @@ export function executeRoleHandoff(toOperator?: string, customNotes?: string): b
     console.log(`\n================================================================================`);
     console.log(`🎉 [PHASE ADVANCED] Phase ${profile.phase - 1} certified and merged!`);
     console.log(`🚀 [ROLE INVERSION] ${profile.operator} is now ALPHA for Phase ${profile.phase}.`);
-    console.log(`👉 Partner Command for ${profile.operator}:`);
+    console.log(`👉 Partner Command for ${profile.operator} (Core Domain Lead):`);
     console.log(`   git pull && npm run build:alpha`);
     console.log(`================================================================================\n`);
     return true;
@@ -232,6 +291,8 @@ if (isMain) {
 
   if (command === "status") {
     printRoleStatus();
+  } else if (command === "matrix") {
+    printRoleMatrix();
   } else if (command === "alpha") {
     const domain = flags["domain"] || positional[0] || "core";
     const op = flags["operator"] || flags["op"] || positional[1];
@@ -249,9 +310,10 @@ if (isMain) {
 Usage: node --experimental-strip-types scripts/role-switch.ts <command> [options]
 
 Commands:
-  status               Display active operator, role, phase, and domain lease
-  alpha [domain] [op]  Acquire domain lease and set workstation as Alpha (Builder)
-  beta [domain] [op]   Configure workstation as Beta (Auditor)
+  status               Display active operator, role title, phase, and domain lease
+  matrix               Display the enterprise 50/50 division of labor matrix
+  alpha [domain] [op]  Acquire domain lease and set workstation as Lead 1 (Alpha)
+  beta [domain] [op]   Configure workstation as Lead 2 (Beta) with Hardening Authority
   handoff [toOp] [msg] Execute atomic git-synchronized role handoff to partner
 `);
   }

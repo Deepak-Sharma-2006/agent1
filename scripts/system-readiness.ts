@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 import { hostname } from "os";
 import { execSync } from "child_process";
@@ -101,7 +101,13 @@ Operator    : ${resolveOperator()}
   // 3. Multi-Operator Distributed Lock Engine
   console.log("\n▶ [Probe 3/7] 2-Operator Distributed Lock Engine...");
   const locks = listLocks();
-  console.log(`  ✅ Lock Engine Operational: ${locks.length} active domain lease(s) tracked.`);
+  let roleInfo = "Unknown";
+  try {
+    const roleData = JSON.parse(readFileSync(join(process.cwd(), ".agents/state/active-role.json"), "utf-8"));
+    roleInfo = `${roleData.operator} (${roleData.role}: ${roleData.roleTitle || roleData.role})`;
+  } catch {}
+  console.log(`  ✅ Active Operator Role       : ${roleInfo}`);
+  console.log(`  ✅ Lock Engine Operational     : ${locks.length} active domain lease(s) tracked.`);
 
   // 4. Memory Vault Health
   console.log("\n▶ [Probe 4/7] Native SQLite + Markdown Memory Vault...");
@@ -164,6 +170,9 @@ Operator    : ${resolveOperator()}
   const testCheck = execCmd("npm test");
   console.log(`  ${testCheck.ok ? "✅" : "❌"} Unit & Behavioral Contracts    : ${testCheck.ok ? "All suites passed" : "FAILED"}`);
 
+  const advCheck = execCmd("node --experimental-strip-types scripts/adversarial-suite-runner.ts");
+  console.log(`  ${advCheck.ok ? "✅" : "❌"} Adversarial SDET & Chaos Fuzzer: ${advCheck.ok ? "All 12 attacks resisted" : "FAILED"}`);
+
   const dossierDir = join(process.cwd(), "docs/dossiers");
   let dossiersCount = 0;
   if (existsSync(dossierDir)) {
@@ -171,7 +180,7 @@ Operator    : ${resolveOperator()}
   }
   console.log(`  ${dossiersCount >= 1 ? "✅" : "⚠️"} Cognitive Comprehension Dossiers: ${dossiersCount} dossier(s) ready`);
 
-  if (!secretCheck.ok || !antiHallucination.ok || !tsCheck.ok || !testCheck.ok) {
+  if (!secretCheck.ok || !antiHallucination.ok || !tsCheck.ok || !testCheck.ok || !advCheck.ok) {
     allPassed = false;
   }
 

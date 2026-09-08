@@ -108,8 +108,18 @@ export function runAlphaSuite(): boolean {
 
   let allPassed = true;
 
-  // 1. Ghost Package Scanner
-  console.log(`▶ [1/5] Checking Ghost Dependencies (Anti-Hallucination Shield)...`);
+  // 1. Zero-Secret Shield
+  console.log(`▶ [1/6] Scanning for Hardcoded Secrets (Zero-Secret Shield)...`);
+  try {
+    execSync("node --experimental-strip-types scripts/secret-scanner.ts", { stdio: "inherit" });
+    console.log(`✅ Zero-Secret Shield: PASSED`);
+  } catch {
+    console.error(`❌ Zero-Secret Shield: FAILED`);
+    allPassed = false;
+  }
+
+  // 2. Ghost Package Scanner
+  console.log(`\n▶ [2/6] Checking Ghost Dependencies (Anti-Hallucination Shield)...`);
   try {
     execSync("node --experimental-strip-types scripts/anti-hallucination-checker.ts scripts src tests", { stdio: "inherit" });
     console.log(`✅ Anti-Hallucination Shield: PASSED`);
@@ -118,8 +128,8 @@ export function runAlphaSuite(): boolean {
     allPassed = false;
   }
 
-  // 2. Strict TypeScript Compilation
-  console.log(`\n▶ [2/5] Compiling TypeScript (Strict Mode)...`);
+  // 3. Strict TypeScript Compilation
+  console.log(`\n▶ [3/6] Compiling TypeScript (Strict Mode)...`);
   try {
     execSync("npx tsc --noEmit", { stdio: "inherit" });
     console.log(`✅ TypeScript Compilation: PASSED (0 Errors)`);
@@ -128,8 +138,8 @@ export function runAlphaSuite(): boolean {
     allPassed = false;
   }
 
-  // 3. Unit Test & Behavioral Contract Execution
-  console.log(`\n▶ [3/5] Running Unit Tests & Behavioral Harness...`);
+  // 4. Unit Test & Behavioral Contract Execution
+  console.log(`\n▶ [4/6] Running Unit Tests & Behavioral Harness...`);
   try {
     execSync("npm test", { stdio: "inherit" });
     console.log(`✅ Test & Behavioral Harness: PASSED`);
@@ -138,12 +148,12 @@ export function runAlphaSuite(): boolean {
     allPassed = false;
   }
 
-  // 4. Scaffold / Verify Phase Cognitive Dossier
-  console.log(`\n▶ [4/5] Verifying / Scaffolding Phase Comprehension Dossier...`);
+  // 5. Scaffold / Verify Phase Cognitive Dossier
+  console.log(`\n▶ [5/6] Verifying / Scaffolding Phase Comprehension Dossier...`);
   scaffoldPhaseDossier(role.phase, role.activeLeaseDomain);
 
-  // 5. Token Economy Check
-  console.log(`\n▶ [5/5] Checking Token Economy & Budget Ceilings...`);
+  // 6. Token Economy Check
+  console.log(`\n▶ [6/6] Checking Token Economy & Budget Ceilings...`);
   try {
     execSync("node --experimental-strip-types scripts/token-budget-guard.ts", { stdio: "inherit" });
     console.log(`✅ Token Budget: WITHIN LIMITS`);
@@ -153,8 +163,8 @@ export function runAlphaSuite(): boolean {
 
   console.log(`\n================================================================================`);
   if (allPassed) {
-    console.log(`🎉 [ALPHA BUILD SUITE COMPLETE] Codebase is ready for Phase Handoff to Beta!`);
-    console.log(`Next Action: Run 'npm run role:handoff' to transfer lease to Operator Beta.`);
+    console.log(`🎉 [ALPHA BUILD SUITE COMPLETE] Domain implementation & contracts ready!`);
+    console.log(`Next Action: Run 'npm run role:handoff' to transfer lease to Lead 2 (Adversarial Systems & Product Lead).`);
     return true;
   } else {
     console.error(`🚨 [ALPHA BUILD FAILED] Resolve compilation or test errors before handoff.`);

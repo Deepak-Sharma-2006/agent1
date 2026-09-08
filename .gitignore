@@ -15,10 +15,8 @@ prisma/*.db
 prisma/*.db-wal
 prisma/*.db-shm
 
-# Ephemeral runtime logs (keep directory structure)
-.agents/state/metrics/*.json
+# Ephemeral runtime logs
 .agents/state/active-role.local.json
-.agents/security/pentest-report.json
 *.log
 
 # Operator working notes & scratchpads

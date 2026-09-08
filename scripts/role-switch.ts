@@ -1,6 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { acquireLock, listLocks, releaseLock, transferLock } from "./lock-manager.ts";
+import { execSync } from "child_process";
+import { fileURLToPath } from "node:url";
+import { acquireLock, listLocks, releaseLock, resolveOperator, transferLock } from "./lock-manager.ts";
+import { saveMemory } from "./memory-vault.ts";
 
 export interface ActiveRoleProfile {
   operator: string;
@@ -12,29 +15,23 @@ export interface ActiveRoleProfile {
 
 const STATE_DIR = join(process.cwd(), ".agents/state");
 const ROLE_FILE = join(STATE_DIR, "active-role.json");
-const LOCAL_ROLE_FILE = join(STATE_DIR, "active-role.local.json");
+
+function execGit(cmd: string): string {
+  try {
+    return execSync(cmd, { encoding: "utf-8" }).trim();
+  } catch (err: any) {
+    return "";
+  }
+}
 
 export function getActiveProfile(): ActiveRoleProfile {
   if (!existsSync(STATE_DIR)) {
     mkdirSync(STATE_DIR, { recursive: true });
   }
 
-  // 1. Check local machine profile first (isolated per workstation)
-  if (existsSync(LOCAL_ROLE_FILE)) {
-    try {
-      return JSON.parse(readFileSync(LOCAL_ROLE_FILE, "utf-8"));
-    } catch {
-      // Fall through
-    }
-  }
-
-  // 2. Check repo-tracked profile
   if (existsSync(ROLE_FILE)) {
     try {
-      const parsed = JSON.parse(readFileSync(ROLE_FILE, "utf-8"));
-      if (process.env.OPERATOR_NAME) {
-        parsed.operator = process.env.OPERATOR_NAME;
-      }
+      const parsed: ActiveRoleProfile = JSON.parse(readFileSync(ROLE_FILE, "utf-8"));
       return parsed;
     } catch {
       // Fall through to default
@@ -42,7 +39,7 @@ export function getActiveProfile(): ActiveRoleProfile {
   }
 
   const defaultProfile: ActiveRoleProfile = {
-    operator: process.env.OPERATOR_NAME || "Computer1",
+    operator: resolveOperator(),
     role: (process.env.ROLE as "Alpha" | "Beta") || "Alpha",
     phase: parseInt(process.env.PHASE || "1", 10),
     activeLeaseDomain: "core",
@@ -53,38 +50,38 @@ export function getActiveProfile(): ActiveRoleProfile {
   return defaultProfile;
 }
 
-export function saveProfile(profile: ActiveRoleProfile, isLocal = false): void {
+export function saveProfile(profile: ActiveRoleProfile): void {
   if (!existsSync(STATE_DIR)) {
     mkdirSync(STATE_DIR, { recursive: true });
   }
   profile.updatedAt = new Date().toISOString();
-  if (isLocal) {
-    writeFileSync(LOCAL_ROLE_FILE, JSON.stringify(profile, null, 2), "utf-8");
-  } else {
-    writeFileSync(ROLE_FILE, JSON.stringify(profile, null, 2), "utf-8");
-  }
+  writeFileSync(ROLE_FILE, JSON.stringify(profile, null, 2), "utf-8");
 }
 
 export function printRoleStatus(): void {
   const profile = getActiveProfile();
+  const currentHost = resolveOperator();
+
   console.log(`
 ================================================================================
                ACTIVE WORKSPACE ROLE & LEASE PROFILE
 ================================================================================
-  Operator Workstation : ${profile.operator}
-  Assigned Role        : ${profile.role} (${profile.role === "Alpha" ? "Builder / Implementer" : "Adversarial Auditor"})
-  Current Phase        : Phase ${profile.phase}
-  Active Domain Lease  : ${profile.activeLeaseDomain}
-  Last Synchronized    : ${profile.updatedAt}
+  Current Workstation   : ${currentHost}
+  Active Profile Leader : ${profile.operator}
+  Assigned Role         : ${profile.role} (${profile.role === "Alpha" ? "Builder / Implementer" : "Adversarial Auditor"})
+  Current Phase         : Phase ${profile.phase}
+  Active Domain Lease   : ${profile.activeLeaseDomain}
+  Last Synchronized     : ${profile.updatedAt}
 ================================================================================`);
 
   console.log("\nActive Domain Locks in Repository:");
   listLocks();
+  console.log("");
 }
 
 export function switchToAlpha(domain = "core", operator?: string): boolean {
   const profile = getActiveProfile();
-  const currentOp = operator || profile.operator;
+  const currentOp = resolveOperator(operator);
   console.log(`\n⚙️ [Role Switch] Switching ${currentOp} to ALPHA (Builder) for domain '${domain}'...`);
 
   const ok = acquireLock(domain, currentOp, "Alpha", 7200);
@@ -98,41 +95,10 @@ export function switchToAlpha(domain = "core", operator?: string): boolean {
   return ok;
 }
 
-export function switchToBeta(domain = "inventory", operator?: string): boolean {
+export function switchToBeta(domain = "core", operator?: string): boolean {
   const profile = getActiveProfile();
-  const currentOp = operator || (profile.operator === "Computer1" ? "Computer2" : profile.operator);
+  const currentOp = resolveOperator(operator);
   console.log(`\n⚙️ [Role Switch] Configuring ${currentOp} as BETA (Auditor) for Phase ${profile.phase}...`);
-
-  // Check if domain lock is currently leased to partner operator (Alpha)
-  const lockFile = join(STATE_DIR, "locks", `${domain}.lock.json`);
-  let isAlphaLeasedByPartner = false;
-  if (existsSync(lockFile)) {
-    try {
-      const lease = JSON.parse(readFileSync(lockFile, "utf-8"));
-      const now = new Date();
-      if (now < new Date(lease.expiresAt) && lease.operator !== currentOp) {
-        isAlphaLeasedByPartner = true;
-        console.log(`ℹ️ Domain '${domain}' is actively leased to '${lease.operator}' (${lease.role}).`);
-        console.log(`ℹ️ Operating ${currentOp} as Standby Adversarial Auditor for Phase ${profile.phase}.`);
-      }
-    } catch {
-      // Malformed lock
-    }
-  }
-
-  if (isAlphaLeasedByPartner) {
-    // Standby Beta Auditor mode: saves to local profile so repo lease remains held by Alpha
-    const localProfile: ActiveRoleProfile = {
-      operator: currentOp,
-      role: "Beta",
-      phase: profile.phase,
-      activeLeaseDomain: `standby (reviewing ${domain})`,
-      updatedAt: new Date().toISOString(),
-    };
-    saveProfile(localProfile, true);
-    console.log(`✅ [Role Confirmed] ${currentOp} is configured as BETA (Auditor) for Phase ${profile.phase} (Standby Mode).\n`);
-    return true;
-  }
 
   const ok = acquireLock(domain, currentOp, "Beta", 7200);
   if (ok) {
@@ -145,40 +111,112 @@ export function switchToBeta(domain = "inventory", operator?: string): boolean {
   return ok;
 }
 
-export function executeRoleHandoff(toOperator?: string): boolean {
+export function executeRoleHandoff(toOperator?: string, customNotes?: string): boolean {
   const profile = getActiveProfile();
   const currentOp = profile.operator;
-  const targetOp = toOperator || (currentOp === "Computer1" ? "Computer2" : "Computer1");
+  const targetOp = resolveOperator(toOperator || (currentOp === "Computer1" ? "Computer2" : "Computer1"));
 
   console.log(`\n🔄 [Phase Handoff] Initiating atomic role inversion from ${currentOp} (${profile.role}) to ${targetOp}...`);
 
+  // Step 1: Check git status
+  const status = execGit("git status -s");
+  if (status) {
+    console.log("📦 Staging and committing modified workspace state for handoff...");
+    try {
+      execSync("git add -A", { stdio: "inherit" });
+      execSync(`git commit -m "chore(handoff): Phase ${profile.phase} handoff from ${currentOp} to ${targetOp}"`, { stdio: "inherit" });
+    } catch {
+      console.warn("⚠️ Git commit encountered no changes or skipped.");
+    }
+  }
+
+  // Step 2: Transfer lease lock
   if (profile.role === "Alpha") {
     // Alpha completed phase development -> handoff to Beta for audit
     const ok = transferLock(profile.activeLeaseDomain, currentOp, targetOp, "Beta");
     if (ok) {
       profile.role = "Beta";
       saveProfile(profile);
-      console.log(`✅ [Handoff Complete] Domain '${profile.activeLeaseDomain}' transferred to ${targetOp} (Beta Auditor).`);
-      console.log(`👉 Next Action for ${targetOp}: Run 'npm run audit:beta' to perform 5-layer adversarial verification.\n`);
+
+      // Record in memory vault
+      saveMemory({
+        title: `Phase ${profile.phase} Handoff: Alpha -> Beta`,
+        kind: "handoff",
+        scope: "team",
+        phase: profile.phase,
+        operator: currentOp,
+        body: customNotes || `Phase ${profile.phase} implementation complete for domain '${profile.activeLeaseDomain}'. Transferred to ${targetOp} for 5-layer adversarial verification.`,
+      });
+
+      // Push state
+      console.log("🚀 Synchronizing handoff state to origin...");
+      try {
+        execSync("git push origin main", { stdio: "inherit" });
+      } catch {
+        console.warn("⚠️ Git push failed or remote unreachable. Push manually before partner continues.");
+      }
+
+      console.log(`\n================================================================================`);
+      console.log(`✅ [HANDOFF COMPLETE] Domain '${profile.activeLeaseDomain}' transferred to ${targetOp} (Beta).`);
+      console.log(`👉 Partner Command for ${targetOp}:`);
+      console.log(`   git pull && npm run audit:beta`);
+      console.log(`================================================================================\n`);
+      return true;
     }
-    return ok;
+    return false;
   } else {
-    // Beta completed audit & merged -> invert roles and start next phase!
+    // Beta completed audit & approved -> advance phase and invert roles!
     releaseLock(profile.activeLeaseDomain, currentOp);
     profile.phase += 1;
     profile.role = "Alpha";
-    // Odd phases: Computer1 is Alpha | Even phases: Computer2 is Alpha
-    const expectedAlpha = profile.phase % 2 === 1 ? "Computer1" : "Computer2";
-    profile.operator = toOperator || expectedAlpha;
+    // Odd phases: Computer1 Alpha | Even phases: Computer2 Alpha
+    profile.operator = targetOp;
     saveProfile(profile);
-    console.log(`🎉 [Phase Advanced] Phase ${profile.phase - 1} verified & closed!`);
-    console.log(`🚀 [Phase Inversion] ${profile.operator} is now ALPHA for Phase ${profile.phase}.`);
-    console.log(`👉 Next Action for ${profile.operator}: Run 'npm run role:alpha' and begin implementation.\n`);
+
+    saveMemory({
+      title: `Phase ${profile.phase - 1} Certified & Phase ${profile.phase} Inversion`,
+      kind: "decision",
+      scope: "team",
+      phase: profile.phase - 1,
+      operator: currentOp,
+      body: `Phase ${profile.phase - 1} passed 5-layer verification. Roles inverted for Phase ${profile.phase}. ${profile.operator} is now Alpha Builder.`,
+    });
+
+    console.log("🚀 Synchronizing phase inversion state to origin...");
+    try {
+      execSync("git add .agents/state/active-role.json .agents/state/locks/", { stdio: "inherit" });
+      execSync(`git commit -m "chore(role): Phase ${profile.phase} start - ${profile.operator} assumed Alpha"`, { stdio: "inherit" });
+      execSync("git push origin main", { stdio: "inherit" });
+    } catch {
+      // Ignored if clean
+    }
+
+    console.log(`\n================================================================================`);
+    console.log(`🎉 [PHASE ADVANCED] Phase ${profile.phase - 1} certified and merged!`);
+    console.log(`🚀 [ROLE INVERSION] ${profile.operator} is now ALPHA for Phase ${profile.phase}.`);
+    console.log(`👉 Partner Command for ${profile.operator}:`);
+    console.log(`   git pull && npm run build:alpha`);
+    console.log(`================================================================================\n`);
     return true;
   }
 }
 
-import { fileURLToPath } from "node:url";
+function parseCliFlags(args: string[]): Record<string, string> {
+  const flags: Record<string, string> = {};
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith("--")) {
+      const key = arg.slice(2);
+      if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+        flags[key] = args[i + 1];
+        i++;
+      } else {
+        flags[key] = "true";
+      }
+    }
+  }
+  return flags;
+}
 
 const isMain = process.argv[1] && (
   fileURLToPath(import.meta.url) === process.argv[1] ||
@@ -187,56 +225,34 @@ const isMain = process.argv[1] && (
 );
 
 if (isMain) {
-  const args = process.argv.slice(2);
-  const command = (args[0] || "status").toLowerCase();
-
-  const getArg = (flag: string): string | undefined => {
-    const idx = args.indexOf(flag);
-    return idx !== -1 && idx + 1 < args.length ? args[idx + 1] : undefined;
-  };
-
-  const domain = getArg("--domain") || (args[1] && !args[1].startsWith("-") ? args[1] : "core");
-  const operator = getArg("--operator");
-  const to = getArg("--to") || (args[1] && !args[1].startsWith("-") ? args[1] : undefined);
+  const rawArgs = process.argv.slice(2);
+  const command = (rawArgs[0] && !rawArgs[0].startsWith("--") ? rawArgs[0] : "status").toLowerCase();
+  const flags = parseCliFlags(rawArgs);
+  const positional = rawArgs.filter((a) => !a.startsWith("--") && a !== command);
 
   if (command === "status") {
     printRoleStatus();
-    process.exit(0);
   } else if (command === "alpha") {
-    const ok = switchToAlpha(domain, operator);
-    process.exit(ok ? 0 : 1);
+    const domain = flags["domain"] || positional[0] || "core";
+    const op = flags["operator"] || flags["op"] || positional[1];
+    switchToAlpha(domain, op);
   } else if (command === "beta") {
-    const ok = switchToBeta(domain, operator);
-    process.exit(ok ? 0 : 1);
-  } else if (command === "local" || command === "set-local") {
-    const op = operator || args[1] || "Computer2";
-    const role = ((args[2] && !args[2].startsWith("-") ? args[2] : undefined) || "Beta") as "Alpha" | "Beta";
-    const phase = parseInt(args[3] || String(getActiveProfile().phase), 10);
-    const targetDomain = domain || args[4] || "inventory";
-    const localProfile: ActiveRoleProfile = {
-      operator: op,
-      role,
-      phase,
-      activeLeaseDomain: role === "Alpha" ? targetDomain : `standby (reviewing ${targetDomain})`,
-      updatedAt: new Date().toISOString(),
-    };
-    saveProfile(localProfile, true);
-    console.log(`✅ [Local Profile Set] Workstation configured as ${op} (${role}) for Phase ${phase}.`);
-    process.exit(0);
+    const domain = flags["domain"] || positional[0] || "core";
+    const op = flags["operator"] || flags["op"] || positional[1];
+    switchToBeta(domain, op);
   } else if (command === "handoff") {
-    const ok = executeRoleHandoff(to);
-    process.exit(ok ? 0 : 1);
+    const toOp = flags["to"] || flags["target"] || positional[0];
+    const notes = flags["notes"] || flags["msg"] || positional.slice(1).join(" ");
+    executeRoleHandoff(toOp, notes);
   } else {
     console.log(`
 Usage: node --experimental-strip-types scripts/role-switch.ts <command> [options]
 
 Commands:
-  status                               Display active workspace profile and domain leases
-  alpha [domain]                       Switch profile to Alpha (Builder) and acquire lease
-  beta [domain]                        Switch profile to Beta (Auditor - Standby or Lease)
-  local <operator> <role> [phase]      Set isolated local workstation profile (gitignored)
-  handoff [toOperator]                 Perform atomic role handoff to partner workstation
+  status               Display active operator, role, phase, and domain lease
+  alpha [domain] [op]  Acquire domain lease and set workstation as Alpha (Builder)
+  beta [domain] [op]   Configure workstation as Beta (Auditor)
+  handoff [toOp] [msg] Execute atomic git-synchronized role handoff to partner
 `);
-    process.exit(0);
   }
 }

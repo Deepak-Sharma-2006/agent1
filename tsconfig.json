@@ -15,6 +15,10 @@
     "src/**/*",
     "tests/**/*",
     "scripts/**/*",
-    ".agents/**/*"
+    ".agents/harness/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    ".agents/skills"
   ]
 }

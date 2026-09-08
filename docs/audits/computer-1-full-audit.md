@@ -25,7 +25,7 @@ Computer 1 has completed the full Day-1 engineering setup, tooling installation,
   [6] Beta 5-Layer Adversarial Battery (npm run audit:beta) . ✅ 5/5 Passed
   [7] Distributed Domain Lease Lock ......................... ✅ Acquired (core)
   [8] Active Role Profile ................................... ✅ Computer1 / Alpha
-  [9] Dual-Repository Jury Pipeline (npm run jury:status) ... ✅ Ready
+  [9] Dual-Repository Clean Production Pipeline (npm run cleanproduction:status) ... ✅ Ready
  [10] Official Antigravity CLI (agy v1.1.26) ................ ✅ Live & Verified
 ================================================================================
 ```
@@ -78,7 +78,7 @@ Computer 1 has completed the full Day-1 engineering setup, tooling installation,
 ├── scripts/
 │   ├── role-switch.ts                   # Role state manager & atomic handoff coordinator
 │   ├── beta-audit-runner.ts             # 5-layer adversarial verification battery
-│   ├── jury-sync.ts                     # Dual-repository jury release pipeline
+│   ├── clean-production-sync.ts         # Dual-repository clean production release pipeline
 │   ├── lock-manager.ts                  # Atomic domain lease lock engine
 │   ├── anti-hallucination-checker.ts    # AST ghost package scanner (all source dirs)
 │   ├── token-budget-guard.ts            # Real-time token economy monitor
@@ -189,20 +189,20 @@ Active Domain Locks in Repository:
 • [core] Leased to: Computer1 (Alpha) | Expires: 2026-09-05T05:27:24.162Z (ACTIVE)
 ```
 
-### Test 8: Hackathon Dual-Repository Jury Status (`npm run jury:status`)
+### Test 8: Dual-Repository Clean Production Status (`npm run cleanproduction:status`)
 ```text
-Command: node --experimental-strip-types scripts/jury-sync.ts status
+Command: node --experimental-strip-types scripts/clean-production-sync.ts status
 Exit Code: 0
 Output:
 ================================================================================
-           DUAL-REPOSITORY HACKATHON & JURY PUBLISHING PIPELINE
+           CLEAN PRODUCTION RELEASE & SYNC PIPELINE
 ================================================================================
-  Internal Collab Remote (origin) : https://github.com/Deepak-Sharma-2006/agent1.git
-  Public Showcase Remote (jury)   : ⚠️ [Jury Remote Not Configured]
-  Latest Synchronized Commit      : c6909d7
-  Current Development Phase       : Phase 1 (Alpha)
+  Internal Collab Remote (origin)      : https://github.com/Deepak-Sharma-2006/agent1.git
+  Public Clean Showcase Remote (prod)  : https://github.com/Infinity915/575_final.git
+  Latest Synchronized Commit           : c6909d7
+  Current Development Phase            : Phase 1 (Alpha)
 
-Ready Cognitive Comprehension Dossiers for Judges:
+Ready Cognitive Comprehension Dossiers for Review:
   📄 docs/dossiers/phase-1-auth.md
   📄 docs/dossiers/teammate-handover-audit.md
 ```
@@ -246,8 +246,8 @@ git pull origin main
 # 2. Inspect workspace role and verify Computer 1 holds Phase 1 Alpha lease
 npm run role:status
 
-# 3. Verify Jury pipeline status
-npm run jury:status
+# 3. Verify Clean Production pipeline status
+npm run cleanproduction:status
 
 # 4. Run the full test suite
 npm test

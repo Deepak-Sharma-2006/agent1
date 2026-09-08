@@ -12,49 +12,58 @@ export interface AuditLayerResult {
 export function runBetaAudit(): boolean {
   console.log(`
 ================================================================================
-           BETA AUDITOR ADVERSARIAL VERIFICATION BATTERY (5 LAYERS)
+           BETA AUDITOR ADVERSARIAL VERIFICATION BATTERY (6 LAYERS)
 ================================================================================`);
 
   const results: AuditLayerResult[] = [];
 
-  // Layer 1: Anti-Hallucination & Ghost Package Check
-  console.log("\n▶ [Layer 1/5] Anti-Hallucination Shield (Ghost Package AST Scan)...");
+  // Layer 1: Zero-Secret Shield
+  console.log("\n▶ [Layer 1/6] Zero-Secret Shield (Credential & Token Leak Scan)...");
+  try {
+    execSync("node --experimental-strip-types scripts/secret-scanner.ts", { stdio: "inherit" });
+    results.push({ layer: 1, name: "Zero-Secret Shield", passed: true, details: "Zero secrets detected" });
+  } catch {
+    results.push({ layer: 1, name: "Zero-Secret Shield", passed: false, details: "Hardcoded secret or token detected" });
+  }
+
+  // Layer 2: Anti-Hallucination & Ghost Package Check
+  console.log("\n▶ [Layer 2/6] Anti-Hallucination Shield (Ghost Package AST Scan)...");
   try {
     execSync("node --experimental-strip-types scripts/anti-hallucination-checker.ts scripts src tests", { stdio: "inherit" });
-    results.push({ layer: 1, name: "Anti-Hallucination Shield", passed: true, details: "Zero ghost packages detected" });
+    results.push({ layer: 2, name: "Anti-Hallucination Shield", passed: true, details: "Zero ghost packages detected" });
   } catch {
-    results.push({ layer: 1, name: "Anti-Hallucination Shield", passed: false, details: "Undeclared dependencies found" });
+    results.push({ layer: 2, name: "Anti-Hallucination Shield", passed: false, details: "Undeclared dependencies found" });
   }
 
-  // Layer 2: Strict TypeScript Compilation
-  console.log("\n▶ [Layer 2/5] Strict TypeScript Compilation (tsc --noEmit)...");
+  // Layer 3: Strict TypeScript Compilation
+  console.log("\n▶ [Layer 3/6] Strict TypeScript Compilation (tsc --noEmit)...");
   try {
     execSync("npx tsc --noEmit", { stdio: "inherit" });
-    results.push({ layer: 2, name: "Strict TypeScript Check", passed: true, details: "0 errors, strict mode enforced" });
+    results.push({ layer: 3, name: "Strict TypeScript Check", passed: true, details: "0 errors, strict mode enforced" });
   } catch {
-    results.push({ layer: 2, name: "Strict TypeScript Check", passed: false, details: "TypeScript type-checking errors detected" });
+    results.push({ layer: 3, name: "Strict TypeScript Check", passed: false, details: "TypeScript type-checking errors detected" });
   }
 
-  // Layer 3: Behavioral Contract Harness (4/4 Golden Evals)
-  console.log("\n▶ [Layer 3/5] Behavioral Contract Harness (4/4 Golden Evals)...");
+  // Layer 4: Behavioral Contract Harness (4/4 Golden Evals)
+  console.log("\n▶ [Layer 4/6] Behavioral Contract Harness (4/4 Golden Evals)...");
   try {
     execSync("node --experimental-strip-types .agents/harness/eval-runner.ts", { stdio: "inherit" });
-    results.push({ layer: 3, name: "Behavioral Harness Evals", passed: true, details: "4/4 test contracts passed" });
+    results.push({ layer: 4, name: "Behavioral Harness Evals", passed: true, details: "4/4 test contracts passed" });
   } catch {
-    results.push({ layer: 3, name: "Behavioral Harness Evals", passed: false, details: "Harness contract failure" });
+    results.push({ layer: 4, name: "Behavioral Harness Evals", passed: false, details: "Harness contract failure" });
   }
 
-  // Layer 4: Strix AI Dynamic DAST Pentest
-  console.log("\n▶ [Layer 4/5] Strix/Styx AI Dynamic DAST Pentest...");
+  // Layer 5: Strix AI Dynamic DAST Pentest
+  console.log("\n▶ [Layer 5/6] Strix/Styx AI Dynamic DAST Pentest...");
   try {
     execSync("node --experimental-strip-types scripts/pen-test-runner.ts", { stdio: "inherit" });
-    results.push({ layer: 4, name: "Strix AI DAST Pentest", passed: true, details: "Zero unverified exploits detected" });
+    results.push({ layer: 5, name: "Strix AI DAST Pentest", passed: true, details: "Zero unverified exploits detected" });
   } catch {
-    results.push({ layer: 4, name: "Strix AI DAST Pentest", passed: false, details: "Penetration test exploit detected" });
+    results.push({ layer: 5, name: "Strix AI DAST Pentest", passed: false, details: "Penetration test exploit detected" });
   }
 
-  // Layer 5: Cognitive Comprehension Dossier Validation (6 Techniques)
-  console.log("\n▶ [Layer 5/5] Cognitive Comprehension Dossier Validation (6 Techniques)...");
+  // Layer 6: Cognitive Comprehension Dossier Validation (6 Techniques)
+  console.log("\n▶ [Layer 6/6] Cognitive Comprehension Dossier Validation (6 Techniques)...");
   const dossierDir = join(process.cwd(), "docs/dossiers");
   let dossierOk = false;
   let dossierDetails = "No dossier found";
@@ -92,7 +101,7 @@ export function runBetaAudit(): boolean {
     }
   }
 
-  results.push({ layer: 5, name: "Cognitive Dossier Verification", passed: dossierOk, details: dossierDetails });
+  results.push({ layer: 6, name: "Cognitive Dossier Verification", passed: dossierOk, details: dossierDetails });
 
   // Summary Scorecard
   console.log(`
@@ -110,7 +119,7 @@ export function runBetaAudit(): boolean {
   console.log("================================================================================");
 
   if (allPassed) {
-    console.log(`\n🎉 [Beta Audit Complete] 5/5 Verification Layers Passed! Codebase is certified for release.\n`);
+    console.log(`\n🎉 [Beta Audit Complete] 6/6 Verification Layers Passed! Codebase is certified for release.\n`);
   } else {
     console.error(`\n🚨 [Beta Audit Failed] One or more verification layers failed. Resolve before merging.\n`);
   }

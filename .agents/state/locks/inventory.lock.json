@@ -1,8 +1,0 @@
-{
-  "domain": "inventory",
-  "operator": "Computer2",
-  "role": "Beta",
-  "acquiredAt": "2026-09-05T20:40:11.267Z",
-  "expiresAt": "2026-09-05T22:40:11.267Z",
-  "ttlSeconds": 7200
-}

@@ -1,8 +1,0 @@
-{
-  "domain": "sync",
-  "operator": "Computer1",
-  "role": "Alpha",
-  "acquiredAt": "2026-09-05T20:41:54.900Z",
-  "expiresAt": "2026-09-05T21:41:54.900Z",
-  "ttlSeconds": 3600
-}

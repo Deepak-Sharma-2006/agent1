@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, writeFileSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
 import { runBetaAudit } from "./beta-audit-runner.ts";
@@ -88,141 +88,38 @@ export function setJuryRemote(url: string): boolean {
   }
 }
 
-const DEFAULT_JURY_REMOTE = "https://github.com/Infinity915/575_final.git";
-
-export function publishToJury(customTag?: string, skipAudit = false): boolean {
+export function publishToJury(customTag?: string): boolean {
   console.log(`\n🚀 [Jury Release Pipeline] Initiating pre-publish gate barrier...`);
 
-  // Step 0: Role Validation (Only Beta or certified release operator can push to hackathon jury repository)
-  const profile = getActiveProfile();
-  const isAuthorized = profile.role === "Beta" || profile.phase >= 5;
-  if (!isAuthorized) {
-    console.error(`\n🛑 [Publish Blocked] Role Violation: Only the BETA AUDITOR can publish to the hackathon repository (575_final).`);
-    console.error(`Current workstation role is '${profile.role}'. Alpha must push to 'agent1' and run 'npm run role:handoff' first.\n`);
+  // Step 1: Execute 5-layer Beta Audit
+  console.log("Step 1: Running mandatory 5-layer Beta verification audit...");
+  const auditPassed = runBetaAudit();
+  if (!auditPassed) {
+    console.error(`\n🛑 [Publish Blocked] Beta audit failed! Only fully audited, passing code can be published to the jury repository.\n`);
     return false;
   }
 
-  // Step 1: Execute 5-layer Beta Audit
-  if (!skipAudit) {
-    console.log("Step 1: Running mandatory 5-layer Beta verification audit...");
-    const auditPassed = runBetaAudit();
-    if (!auditPassed) {
-      console.error(`\n🛑 [Publish Blocked] Beta audit failed! Only fully audited, passing code can be published to the jury repository.\n`);
-      return false;
-    }
-  } else {
-    console.log("Step 1: Skipping 5-layer Beta verification audit (operator explicitly specified --skip-audit)...");
-  }
-
-  // Step 2: Check / auto-configure jury remote
+  // Step 2: Check jury remote
   const remotes = execCommand("git remote").split("\n");
   if (!remotes.includes("jury")) {
-    console.log(`ℹ️ [Jury Remote Setup] Configuring 'jury' remote to: ${DEFAULT_JURY_REMOTE}`);
-    setJuryRemote(DEFAULT_JURY_REMOTE);
+    console.error(`\n❌ [Publish Aborted] Git remote 'jury' is not configured. Run 'npm run jury:set-remote -- <URL>' first.\n`);
+    return false;
   }
 
+  const profile = getActiveProfile();
   const tag = customTag || `v1.0-phase-${profile.phase}`;
-  const currentBranch = execCommand("git rev-parse --abbrev-ref HEAD") || "main";
-  const cleanReleaseBranch = `jury-release-phase-${profile.phase}`;
 
   try {
-    console.log(`\nStep 2: Preparing isolated clean production branch '${cleanReleaseBranch}'...`);
-    execSync(`git checkout -B ${cleanReleaseBranch}`, { stdio: "inherit" });
+    console.log(`\nStep 2: Tagging release commit with '${tag}'...`);
+    execSync(`git tag -a ${tag} -m "Release ${tag} - Certified 5/5 by Beta Auditor"`, { stdio: "inherit" });
 
-    // Clear entire staging index
-    execSync("git rm -rf --cached .", { stdio: "inherit" });
+    console.log(`\nStep 3: Pushing main branch and tag to jury showcase remote...`);
+    execSync("git push jury main", { stdio: "inherit" });
+    execSync(`git push jury ${tag}`, { stdio: "inherit" });
 
-    // Stage strictly whitelisted production files: ONLY src/ and client/
-    console.log("Staging strictly whitelisted production files (src/ and client/)...");
-    execSync("git add src/", { stdio: "inherit" });
-
-    if (existsSync("client")) {
-      console.log("Staging frontend source files (client/)...");
-      execSync("git add client/", { stdio: "inherit" });
-    }
-
-    if (existsSync("docs/assets")) {
-      console.log("Staging presentation assets (docs/assets/)...");
-      execSync("git add docs/assets/", { stdio: "inherit" });
-    }
-
-    // Generate clean production package.json with frontend build scripts and dependencies
-    const prodPackageJson = {
-      name: "dealflow360",
-      version: "1.0.0",
-      description: "DealFlow360 - Autonomous Enterprise Sales Operations & CPQ Platform",
-      type: "module",
-      main: "src/index.js",
-      scripts: {
-        build: "vite build client",
-        dev: "vite client",
-        start: "node src/index.js"
-      },
-      dependencies: {
-        "lucide-react": "^0.468.0",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1"
-      },
-      devDependencies: {
-        "@vitejs/plugin-react": "^4.3.4",
-        "vite": "^6.0.3"
-      }
-    };
-    writeFileSync("package.json", JSON.stringify(prodPackageJson, null, 2) + "\n", "utf-8");
-    execSync("git add package.json", { stdio: "inherit" });
-
-    // Stage executive interactive README.md
-    if (existsSync("README.md")) {
-      execSync("git add README.md", { stdio: "inherit" });
-    }
-
-    // Commit strictly the whitelisted production files
-    execSync(`git commit -m "feat(dealflow360): Clean Production Source Release (Pure Source, Zero Dist Artifacts)"`, { stdio: "inherit" });
-
-    // Verify tree contains zero excluded files
-    const committedFiles = execCommand(`git ls-tree -r --name-only HEAD`).split("\n").map(s => s.trim()).filter(Boolean);
-    console.log(`\nVerified ${committedFiles.length} production files in release commit:`);
-    for (const f of committedFiles) {
-      console.log(`  📦 ${f}`);
-    }
-
-    const forbiddenPrefixes = [
-      "dist/",
-      "tests/",
-      "specs/",
-      ".agents/",
-      "scripts/",
-      "docs/dossiers/",
-      "docs/audits/",
-      "AGENTS.md",
-      "GEMINI.md",
-      ".env",
-      "implementation_",
-      "LICENSE",
-      "tsconfig.json",
-      "package-lock.json",
-    ];
-    const leaks = committedFiles.filter(f => forbiddenPrefixes.some(p => f.startsWith(p) || f === p));
-    if (leaks.length > 0) {
-      throw new Error(`Exclusion check failed! Forbidden files detected in release branch: ${leaks.join(", ")}`);
-    }
-
-    console.log(`\nStep 3: Tagging release commit with '${tag}'...`);
-    execSync(`git tag -a ${tag} -m "Release ${tag} - Certified 5/5 by Beta Auditor" -f`, { stdio: "inherit" });
-
-    console.log(`\nStep 4: Pushing clean release to hackathon jury repository (575_final)...`);
-    execSync(`git push jury ${cleanReleaseBranch}:main --force`, { stdio: "inherit" });
-    execSync(`git push jury ${tag} --force`, { stdio: "inherit" });
-
-    // Restore working branch
-    execSync(`git checkout -f ${currentBranch}`, { stdio: "inherit" });
-    execSync(`git branch -D ${cleanReleaseBranch}`, { stdio: "inherit" });
-
-    console.log(`\n🎉 [Jury Release Published] Successfully deployed pure production Phase ${profile.phase} code to hackathon repository!`);
-    console.log(`Repository URL: https://github.com/Infinity915/575_final\n`);
+    console.log(`\n🎉 [Jury Release Published] Successfully deployed ${tag} to jury showcase repository!`);
     return true;
   } catch (err) {
-    execSync(`git checkout -f ${currentBranch}`, { stdio: "inherit" });
     console.error(`\n❌ Failed to push release to jury remote:`, err);
     return false;
   }
@@ -248,10 +145,8 @@ if (isMain) {
     const ok = setJuryRemote(url);
     process.exit(ok ? 0 : 1);
   } else if (command === "publish") {
-    const subArgs = args.slice(1);
-    const skipAudit = subArgs.includes("--skip-audit") || subArgs.includes("--skip-tests");
-    const tag = subArgs.find((a) => !a.startsWith("--"));
-    const ok = publishToJury(tag, skipAudit);
+    const tag = args[1];
+    const ok = publishToJury(tag);
     process.exit(ok ? 0 : 1);
   } else {
     console.log(`

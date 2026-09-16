@@ -97,3 +97,32 @@
    - The Zero-Secret Shield (`npm run check:secrets`) is permanently embedded as Layer 1 of the Adversarial Beta Audit (`npm run audit:beta`) and Probe 7/7 of the System Readiness Probe (`npm run readiness`).
    - Bypassing pre-commit hooks via `--no-verify` is strictly prohibited.
 
+---
+
+## 8. Universal Multi-Agent Orchestrator & Task Execution Directives
+
+1. **Individual Modular Execution (Anti-Monolithic Invariant)**:
+   - All tasks must be executed independently through [TaskDispatcher](file:///scripts/orchestrator/task_dispatcher.py) (`python -m scripts.orchestrator.task_dispatcher`):
+     - **Task 1: Solution Formulation & White-Space Moat Strategy** (`--task solution`): Deconstructs problem statements, conducts mandatory live online search for real-world facts/regulations (anti-bias policy), benchmarks competitive commercial prior-art, establishes 10x technical moats, renders native ASCII/Unicode architecture diagrams, and commits architectural decisions to the SQLite Memory Vault (`.agents/memory/vault.sqlite`).
+     - **Task 2: Code Implementation & Autonomous TDD Self-Healing** (`--task code`): Implements production business logic using an autonomous red-to-green TDD feedback loop (native Node or Python unittest). Mimics senior human experts to cover extreme edge cases (boundary limits, empty/null, malformed inputs, concurrency, unpredictable user actions). Enforces clean, idiomatic industry-standard code without unnecessary complexity, auto-patching up to 5 passes until 100% green, and emitting verifiable benchmark metrics (`specs/benchmark_metrics.json`).
+     - **Task 3: Presentation Pitch Synthesis** (`--task presentation`): Generates competition-winning presentation pitch decks using [OmniDeck](file:///scripts/engine/) with 2D Flex/Grid geometry, 7 visual primitives, vector graphics, and cognitive layout density. Supports the default 6 championship archetypes as well as arbitrary user-defined custom slide archetypes and counts.
+     - **System Audits & Readiness** (`--task audit`): Runs AppSec red-team scans and pre-commit secret scanners.
+     - **Memory Vault Search & Recall** (`--task memory`): Retrieves indexed decisions, architectural notes, and handoffs from `.agents/memory/vault.sqlite`.
+   - Never combine these 3 tasks into a single monolithic loop unless explicitly commanded by the operator.
+2. **Two-Stage Presentation Protocol (Stage 1 PPTX -> Stage 2 Gated PDF)**:
+   - OmniDeck compiles native `.pptx` first (<0.2s). Never auto-generate `.pdf` without explicit operator instruction (`--export-pdf`).
+
+---
+
+## 9. Enterprise Native Visual Documentation Standard
+
+1. **Native Markdown Diagrams, Workflows & Charts**:
+   - Human-facing documentation (`implementation_plan.md`, `walkthrough.md`, phase dossiers) must use clear, universally-rendering native Markdown diagrams (ASCII/Unicode box-drawing, workflow pipelines), structured data tables, and benchmark matrices.
+2. **Zero Resource Waste & Zero Broken Image Icons**:
+   - Do NOT waste system resources generating external image files for markdown documents.
+   - Never embed fragile local image paths (`![Caption](...)`) that risk failing to render or displaying broken image icons in markdown viewers.
+3. **Executive Visual Design Hierarchy**:
+   - Documentation must be styled as C-level Enterprise Engineering Deliverables: sleek typography, executive summary cards, comparative capability matrix tables, verified empirical benchmarks, and clear operational commands.
+
+
+

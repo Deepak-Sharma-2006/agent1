@@ -2536,6 +2536,215 @@ npx ts-node scripts/lock-manager.ts acquire --domain database --operator "Comput
 ---
 *Enterprise 2-Person / 2-Computer Shared Context Architecture established. Symmetrical 50/50 development weight, strict anti-hallucination shields, token budgeting, Phase 7 cognitive dossiers, and dynamic Styx red-teaming verified.*
 
+---
+
+## Part 11: The Universal Multi-Agent Orchestrator & Autonomous Task Subsystems (2026 Hackathon & Production Engine)
+
+The workspace features a centralized, self-aware **Universal Task Dispatcher** (`scripts/orchestrator/task_dispatcher.py`) that unifies all multi-agent capabilities across the three core phases of software innovation without locking the user into a rigid monolithic loop.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               UNIVERSAL TASK DISPATCHER TOPOLOGY                                 │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                  CLI / AGENTIC PROMPT ENTRY                                      │
+│                                              │                                                   │
+│           ┌──────────────────────────────────┼──────────────────────────────────┐                │
+│           ▼                                  ▼                                  ▼                │
+│   [--task solution]                  [--task code]                    [--task presentation]      │
+│   Task 1: Solution Council           Task 2: Coding Engine            Task 3: OmniDeck Engine    │
+│   - Live Online Fact Search          - Senior Human-Expert Tests      - Dynamic Slide Archetypes │
+│   - Prior-Art Benchmarking           - Extreme Boundary & Fuzzing     - 2D Flex/Grid Solver      │
+│   - 10x White-Space Moat             - Idiomatic Industry Code        - Stage 1 Native PPTX      │
+│   - Native Visual Diagrams           - 5-Pass Autonomous TDD Loop     - Gated Stage 2 PDF        │
+│   - SQLite Vault ADR Commit          - specs/benchmark_metrics.json   - specs/presentations/     │
+│           │                                  │                                  │                │
+│           └──────────────────────────────────┼──────────────────────────────────┘                │
+│                                              ▼                                                   │
+│                        ENTERPRISE PERSISTENCE, COMPLIANCE & SECURITY                             │
+│       • SQLite Memory Vault (.agents/memory/vault.sqlite)  • Pre-Commit Zero-Secret Shield       │
+│       • Strix AI DAST Red-Team Pentest Suite              • Anti-Hallucination Package Guard     │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 11.1 Task 1: Solution Formulation & White-Space Moat Strategy
+
+The starting point of any hackathon problem statement or enterprise feature is grounded in **live real-world facts** rather than stale training data or hallucinated assumptions.
+
+1. **Search-First Grounding (Anti-Bias Policy)**:
+   - When given a problem statement, the system initiates live web retrieval (`search_web` / Exa / government portals) to ingest:
+     - Real-world government problem statements, ministry guidelines, and regulatory frameworks (e.g. India's Bharatiya Sakshya Adhiniyam / IT Act / GDPR).
+     - Live competitive baselines (commercial products, open-source repositories on GitHub, recent IEEE/ACM publications).
+2. **Prior-Art Benchmarking & 10x Moat Formulation**:
+   - Compares the solution against commercial and open-source prior art across 4 dimensions: Latency, Scalability, Cross-Modal Intelligence, and Legal Admissibility.
+   - Formulates the **10x White-Space Moat Thesis** (the core architectural breakthrough that makes the solution defensible to judges and technical evaluators).
+3. **Enterprise Native Visual Documentation**:
+   - Replaces fragile external image files with clean, universally-rendering native Markdown diagrams (ASCII/Unicode box-drawing, workflow pipelines), structured data tables, and benchmark matrices.
+4. **Memory Vault Persistence**:
+   - Commits the architectural decision record (ADR) directly into `.agents/memory/vault.sqlite`.
+
+**CLI Invocation**:
+```bash
+python -m scripts.orchestrator.task_dispatcher --task solution --title "PRAVAH Flood Intelligence" --prompt "Synthetic Aperture Radar flash flood forecasting" --domain "Hydrology & Disaster AI"
+```
+
+---
+
+### 11.2 Task 2: Code Implementation & Autonomous TDD Self-Healing
+
+The coding engine executes production business logic through an autonomous red-to-green TDD feedback loop designed to mimic senior Staff and Principal engineers.
+
+1. **Senior Human-Expert Edge-Case Coverage**:
+   - Tests are authored **FIRST** before business logic (`tests/test_<module>.py`).
+   - Probes extreme ends of real-world user behavior and system edge cases:
+     - **Boundary Limits**: Zero, negative values, extreme floats, integer overflows, empty collections, single-item collections, massive 10MB+ payloads.
+     - **Hostile & Malformed Payloads**: SQL injection patterns, XSS script tags, invalid Unicode/RTL, null bytes (`\0`), circular object references.
+     - **Unpredictable Human Behaviors**: Rapid double-submissions, out-of-order API requests, aborted connections, network timeout simulation.
+     - **Idempotency**: Verifying that calling an operation multiple times leaves system state intact.
+2. **Clean, Idiomatic Industry Standards**:
+   - Avoids unnecessary over-abstraction, deep inheritance trees, or convoluted wrappers.
+   - Concise, single-responsibility functions (<40 lines).
+   - Clear, descriptive human naming conventions (`fetch_latest_telemetry`, `is_circuit_active` instead of `dataObj`, `process1`).
+   - Standard directory structures: `src/` (production code), `tests/` (unit and adversarial suites), `specs/` (contracts and benchmarks).
+3. **Autonomous Self-Healing TDD Feedback Loop**:
+   - Executes the test runner (`python -m unittest` or `node --test`).
+   - On test failure or runtime traceback, the engine catches stderr, analyzes failure lines, auto-patches implementation code up to 5 passes, and verifies until 100% green exit code 0.
+   - Emits verified metrics in `specs/benchmark_metrics.json`.
+
+**CLI Invocation**:
+```bash
+python -m scripts.orchestrator.task_dispatcher --task code --module "catchment_hydraulics"
+```
+
+---
+
+### 11.3 Task 3: Presentation Pitch Synthesis (OmniDeck Engine)
+
+Translates technical solutions and benchmark metrics into championship-winning presentation pitch decks.
+
+1. **2D Flex/Grid Constraint-Based Solver**:
+   - Computes coordinate geometry, dynamic typography scaling, and box packing to guarantee 0% text overflow.
+   - Renders 7 visual primitives: Stat Hero Cards, Bento Feature Grids, Swimlane Architectures, Radial Ecosystems, Tension Split Cards, Milestone Roadmaps, and Tables.
+2. **Dynamic Slide Archetypes (Beyond the Default 6)**:
+   - While the engine provides 6 championship default archetypes (Title, Problem/Shift, Architecture, Bento Approach, KPI Benchmarks, Roadmap), it supports:
+     - **Extended Archetypes**: Radial Ecosystem (Slide 7), Commercial Viability (Slide 8).
+     - **Custom Slide Archetypes**: Accepts arbitrary custom slide specifications (custom slide count, custom archetype sequences, custom card contents) via `custom_slide_specs`.
+3. **Two-Stage PPTX-First Protocol**:
+   - **Stage 1 (Rapid Drafting)**: Compiles native PowerPoint `.pptx` in `<0.20s`! Zero PDF clutter during drafting.
+   - **Stage 2 (Gated PDF Export)**: ONLY invoked upon explicit user command (`--export-pdf`) via PowerPoint COM or PyMuPDF.
+
+**CLI Invocation**:
+```bash
+# Stage 1: Fast PPTX Compile (<0.2s)
+python -m scripts.orchestrator.task_dispatcher --task presentation --prompt "Sovereign Defense AI" --theme "cyber_dark_terminal" --slides 6
+
+# Stage 2: Gated PDF Export (Only upon explicit user order)
+python -m scripts.orchestrator.task_dispatcher --task presentation --prompt "Sovereign Defense AI" --theme "cyber_dark_terminal" --export-pdf
+```
+
+---
+
+### 11.4 Real Enterprise Testing & Benchmarking: Tools, Runners & Extensions
+
+#### Are IDE Extensions Needed?
+**No. IDE extensions are NOT needed for automated testing and benchmarking.**
+
+- **Why?** IDE extensions (like the Flutter VS Code extension or Python Test Explorer) are simply graphical human interfaces that render play buttons inside an editor. Behind the scenes, they execute the exact same command-line tools.
+- **Agentic Native Execution**: In an autonomous AI system and enterprise CI/CD pipelines, all verification is driven by native CLI runtime toolchains directly in the shell (`flutter test`, `pytest`, `node:test`, `tsc`, `k6`, `artillery`, `cProfile`). The agent directly captures exit codes, stdout/stderr streams, and parses stack traces for autonomous self-healing.
+
+#### The 6-Level Enterprise Testing & Benchmarking Matrix
+
+| Level | Purpose | Flutter Enterprise Toolchain | Backend / Node / Python Toolchain | Target Metrics |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Static Analysis** | Linting, dead code, type safety | `flutter analyze` | `tsc --noEmit`, `ruff check`, `mypy` | 0 errors, 0 warnings |
+| **2. Unit Testing** | Isolated logic, state machines | `flutter test test/unit/` | `node:test`, `python -m unittest` | 100% pass, edge cases covered |
+| **3. Component / Widget** | Headless UI & user interactions | `flutter test test/widget/` | `@testing-library/react`, Vitest | Taps, scrolls, state transitions |
+| **4. Integration & E2E** | End-to-end full system flow | `flutter test integration_test/` | Playwright, Cypress, Supertest | Full user journey verification |
+| **5. Performance & Profiling** | Jank detection, FPS, load stress | `flutter run --profile --trace-startup`, `leak_tracker` | `k6`, `artillery`, `cProfile`, `py-spy` | 60/120 FPS, <16.6ms frame time, p99 latency <50ms |
+| **6. Security & Supply Chain** | Zero secrets, DAST red-team | `dart pub outdated`, `check:secrets` | `npm run check:secrets`, `scripts/pen-test-runner.ts` (Strix) | 0 secrets, 0 exploitable CVEs |
+
+---
+
+### 11.5 Complete Master Command Cheat Sheet
+
+| Domain | Action | Command Line |
+| :--- | :--- | :--- |
+| **Task 1: Solution** | Formulate Moat & Architecture | `python -m scripts.orchestrator.task_dispatcher --task solution --title "<TITLE>" --prompt "<STATEMENT>" --domain "<DOMAIN>"` |
+| **Task 2: Code** | Autonomous TDD Self-Healing | `python -m scripts.orchestrator.task_dispatcher --task code --module "<MODULE_NAME>"` |
+| **Task 3: Presentation** | Stage 1 PPTX Deck (<0.2s) | `python -m scripts.orchestrator.task_dispatcher --task presentation --prompt "<TITLE>" --theme "cyber_dark_terminal" --slides 6` |
+| **Task 3: Presentation** | Stage 2 Gated PDF Export | `python -m scripts.orchestrator.task_dispatcher --task presentation --prompt "<TITLE>" --theme "cyber_dark_terminal" --export-pdf` |
+| **System Persistence** | Search SQLite Memory Vault | `python -m scripts.orchestrator.task_dispatcher --task memory --query "<KEYWORD>"` |
+| **System Security** | Zero-Secret Staged Scan | `npm run check:secrets:staged` |
+| **System Security** | Strix AI Red-Team Pentest | `npm run pentest` |
+| **System Health** | Full Enterprise Test Suite | `python -m unittest discover -s tests -p "test_*.py"` |
+| **Distributed Locks** | Inspect Active Domain Leases | `node --experimental-strip-types scripts/lock-manager.ts status` |
+| **Distributed Locks** | Acquire Exclusive Domain Lock | `node --experimental-strip-types scripts/lock-manager.ts acquire --domain <NAME> --operator "Lead1" --role Alpha` |
+| **Distributed Locks** | Cloud Mode Lock Status | `node --experimental-strip-types scripts/lock-manager.ts status --cloud` |
+
+---
+
+### 11.6 Process Sandbox Isolation: Option A (Active) & Option B (Docker Setup)
+
+#### Option A: Host Process Jail (Active by Default)
+- Enforced inside `scripts/orchestrator/sandbox_bridge.py`.
+- Enforces 30-second execution ceilings, strips API secrets (`AWS_`, `GITHUB_`, `OPENAI_`, `GEMINI_`), and kills child processes via tree signals.
+
+#### Option B: Containerized Docker Sandbox (Setup Steps)
+To run untrusted code inside an ephemeral Docker container:
+1. Ensure Docker Desktop is running (`docker info`).
+2. Build the lightweight runner container:
+   ```bash
+   docker build -t antigravity-sandbox:latest -f Dockerfile.sandbox .
+   ```
+3. Set environment variable or pass flag:
+   ```bash
+   export SANDBOX_MODE=docker
+   ```
+   `SandboxBridge.is_docker_available()` will automatically detect the daemon and execute the test runner inside an isolated container with `--network none` and 512MB RAM caps.
+
+---
+
+### 11.7 Dual-Mode Multi-Developer Lock Arbiter Specification
+
+The distributed lock manager (`scripts/lock-manager.ts`) supports two decoupled drivers:
+
+#### 1. LocalGitDriver (Offline / Hackathon Mode)
+- **Zero Configuration**: Reads and writes `.agents/state/locks/<domain>.lock.json`.
+- **Usage**: `npm run lock:acquire --domain core --operator "Computer1"`
+
+#### 2. CloudHttpDriver (Remote REST / Supabase Mode)
+- **Eliminates Git Merge Conflicts**: Multiple operators on separate branches coordinate locks via atomic remote HTTP row updates.
+- **Supabase / PostgreSQL Table Schema**:
+  ```sql
+  CREATE TABLE domain_locks (
+    domain TEXT PRIMARY KEY,
+    operator TEXT NOT NULL,
+    role TEXT NOT NULL,
+    host TEXT NOT NULL,
+    acquired_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    ttl_seconds INT NOT NULL
+  );
+  ```
+- **Configuration**:
+  ```bash
+  export LOCK_DRIVER=cloud
+  export LOCK_WEBHOOK_URL="https://<YOUR_SUPABASE_PROJECT>.supabase.co/rest/v1/domain_locks"
+  export LOCK_AUTH_TOKEN="<YOUR_SUPABASE_SERVICE_ROLE_KEY>"
+  ```
+- **Fail-Safe Fallback**: If network is disconnected or webhook is unreachable, `CloudHttpDriver` outputs a warning and automatically falls back to `LocalGitDriver`.
+
+---
+
+### 11.8 High-Fidelity UI Mockup Primitives
+
+Pitch presentations compiled via OmniDeck support native vector UI mockups:
+- `browser_mockup`: Desktop browser chrome with traffic light controls, SSL URL bar, navigation sidebar, and live data telemetry grid.
+- `mobile_mockup`: Smartphone frame with dynamic island notch, title bar, and prioritized alert cards.
+- `quadrant_matrix`: 2x2 Gartner-style competitive positioning matrix with highlighted 10x White-Space Moat leader badge.
+
+
 
 
 

@@ -17,6 +17,10 @@ prisma/*.db-shm
 
 # Ephemeral runtime logs
 .agents/state/active-role.local.json
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
 *.log
 
 # Operator working notes & scratchpads

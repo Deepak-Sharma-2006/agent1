@@ -14,5 +14,6 @@
 4. **Preserve Integrity**: Retain all established architectural comments, types, and documentation.
 5. **Universal Task Dispatcher Grounding**: Always route problem formulation, coding TDD loops, and presentation synthesis through [TaskDispatcher](file:///scripts/orchestrator/task_dispatcher.py) (`python -m scripts.orchestrator.task_dispatcher`) to ensure full multi-agent backing, self-healing, and SQLite Memory Vault persistence.
 6. **Native Visual Documentation Standard**: Present system architecture, workflows, and benchmarks using clean, native Markdown diagrams (box-drawing, pipeline flows, tables) that render universally across all markdown viewers without broken image dependencies.
+7. **Mandatory Council Hardening (claude-council)**: Every implementation plan, architectural decision, and solution blueprint must be hardened through the 5-Advisor Claude Council (`claude-council`) with explicit verdicts, 4-moat defensibility (Data, Algorithmic, Sovereign, Economic), and cryptographic anti-tamper invariants (Merkle chain attestation, constant-time checks, fail-closed state machines).
 
 

@@ -17,6 +17,7 @@ from typing import Dict, Any, Optional
 
 from scripts.orchestrator.solution_council import SolutionCouncil
 from scripts.orchestrator.coding_engine import CodingEngine
+from scripts.orchestrator.project_auditor import ProjectAuditor
 from scripts.engine.planner import OmniDeckPlanner
 from scripts.engine.deck_orchestrator import DeckOrchestrator
 
@@ -38,12 +39,14 @@ class TaskDispatcher:
             return cls._handle_coding(**kwargs)
         elif task_clean in ("presentation", "pitch", "deck", "ppt", "3"):
             return cls._handle_presentation(**kwargs)
-        elif task_clean in ("audit", "security", "pentest"):
+        elif task_clean in ("audit", "security", "pentest", "case_b"):
             return cls._handle_audit(**kwargs)
+        elif task_clean in ("continue", "onboard", "case_c"):
+            return cls._handle_continue(**kwargs)
         elif task_clean in ("memory", "vault", "search"):
             return cls._handle_memory(**kwargs)
         else:
-            raise ValueError(f"Unknown task type '{task}'. Supported: solution, code, presentation, audit, memory")
+            raise ValueError(f"Unknown task type '{task}'. Supported: solution, code, presentation, audit, continue, memory")
 
     @classmethod
     def _handle_solution(cls, **kwargs) -> Dict[str, Any]:
@@ -122,12 +125,44 @@ class TaskDispatcher:
 
     @classmethod
     def _handle_audit(cls, **kwargs) -> Dict[str, Any]:
-        """Runs security and system audits."""
+        """Runs security and system audits or audits/remediates existing projects (Case B)."""
+        target = kwargs.get("target")
+        auto_heal = kwargs.get("auto_heal", False) or kwargs.get("remediate", False)
+        output_report = kwargs.get("output_report", "docs/audits/remediation_audit.md")
+
+        if target:
+            print(f"\n[TaskDispatcher] Routing to ProjectAuditor for Target: {target}...")
+            if auto_heal:
+                return ProjectAuditor.remediate_project(
+                    target_dir=target,
+                    max_healing_passes=kwargs.get("max_passes", 5)
+                )
+            else:
+                return ProjectAuditor.audit_project(
+                    target_dir=target,
+                    output_report_path=output_report
+                )
+
         import subprocess
         print("\n[TaskDispatcher] Running Enterprise Security & Secret Audits...")
         sec_res = subprocess.run(["node", "--experimental-strip-types", "scripts/secret-scanner.ts"], capture_output=True, text=True)
         print(sec_res.stdout)
         return {"secret_scanner_exit_code": sec_res.returncode}
+
+    @classmethod
+    def _handle_continue(cls, **kwargs) -> Dict[str, Any]:
+        """Task: Case C Hybrid Onboarding & Implementation."""
+        target = kwargs.get("target")
+        if not target:
+            raise ValueError("Task 'continue' requires a '--target' directory or project path.")
+
+        new_specs = kwargs.get("new_specs") or kwargs.get("specs") or None
+
+        print(f"\n[TaskDispatcher] Routing to ProjectAuditor.onboard_and_continue for Target: {target}...")
+        return ProjectAuditor.onboard_and_continue(
+            target_dir=target,
+            new_features_spec=new_specs
+        )
 
     @classmethod
     def _handle_memory(cls, **kwargs) -> Dict[str, Any]:
@@ -154,7 +189,10 @@ class TaskDispatcher:
 
 def main():
     parser = argparse.ArgumentParser(description="Universal Task Dispatcher for Enterprise Agentic System")
-    parser.add_argument("--task", required=True, choices=["solution", "code", "presentation", "audit", "memory"], help="Task to execute")
+    parser.add_argument("--task", required=True, choices=["solution", "code", "presentation", "audit", "continue", "memory"], help="Task to execute")
+    parser.add_argument("--target", help="Target project directory or blueprint file for audit/remediation or continuation")
+    parser.add_argument("--auto-heal", action="store_true", help="Automatically trigger red-to-green remediation on detected flaws")
+    parser.add_argument("--output-report", default="docs/audits/remediation_audit.md", help="Path to write audit/remediation report")
     parser.add_argument("--prompt", help="Natural language prompt or problem statement")
     parser.add_argument("--title", help="Problem statement title")
     parser.add_argument("--domain", default="AI / High-Tech Defense", help="Domain area")
@@ -167,6 +205,9 @@ def main():
 
     res = TaskDispatcher.dispatch(
         task=args.task,
+        target=args.target,
+        auto_heal=args.auto_heal,
+        output_report=args.output_report,
         prompt=args.prompt,
         title=args.title,
         domain=args.domain,

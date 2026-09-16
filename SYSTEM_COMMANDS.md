@@ -1,7 +1,7 @@
 # Antigravity Universal Multi-Agent System — Master Command Cheat Sheet
 
 > **Quick Navigation**: Use this guide to assign tasks directly to the Antigravity agent or execute CLI commands in PowerShell / terminal.  
-> **System Status**: Fully Operational & 100% Green (42 / 42 Tests Passing Across 11 Suites)  
+> **System Status**: Fully Operational & 100% Green (69 / 69 Tests Passing Across 13 Suites)  
 
 ---
 
@@ -72,12 +72,36 @@ npm run check:secrets
 npm run pentest
 ```
 
+### Case B: Audit & Remediate an Existing Project
+Ingests a completed or existing project directory, runs the 5-pillar enterprise diagnostic (Architecture/Types, Edge-Case Tests, AppSec/Secrets, Financial Economics, Anti-Tamper), and optionally auto-heals P0 critical flaws.
+
+```bash
+# Audit-only (diagnostic report, no changes)
+python -m scripts.orchestrator.task_dispatcher --task audit --target ./my_existing_project/
+
+# Audit + Auto-Heal (remediate P0 critical stubs and broken tests)
+python -m scripts.orchestrator.task_dispatcher --task audit --target ./my_existing_project/ --auto-heal
+
+# Audit a standalone solution blueprint markdown file
+python -m scripts.orchestrator.task_dispatcher --task audit --target docs/sih_solutions/solution_blueprint.md
+```
+*Outputs: Diagnostic dossier at `docs/audits/remediation_audit.md` with health score, flaw matrix, and prioritized remediation plan.*
+
+### Case C: Onboard & Continue an In-Progress Project
+Hybrid workflow: first runs Case B (audit + heal existing baseline), then continues building unimplemented modules via TDD.
+
+```bash
+# Onboard a cloned/unzipped in-progress repo and continue building
+python -m scripts.orchestrator.task_dispatcher --task continue --target ./cloned_repo/
+```
+*Outputs: Stabilized baseline + newly implemented modules with 100% green TDD verification.*
+
 ---
 
 ## 3. Test Suites & System Health Verification
 
 ```bash
-# Run all unit, adversarial, and orchestrator test suites (42/42 passing across 11 suites)
+# Run all unit, adversarial, and orchestrator test suites (69/69 passing across 13 suites)
 python -m unittest discover -s tests -p "test_*.py"
 
 # Run individual specialized test suites
@@ -85,6 +109,8 @@ python -m unittest tests/test_sandbox_bridge.py          # Process Jail & Multi-
 python -m unittest tests/test_cost_estimator.py          # Cloud Unit Economics (COGS)
 python -m unittest tests/test_ui_mockup_primitives.py    # OmniDeck High-Fidelity UI Mockups
 python -m unittest tests/test_orchestrator.py            # Universal Task Dispatcher
+python -m unittest tests/test_project_auditor.py         # Case B/C Audit & Remediation
+python -m unittest tests/test_contrarian_moats.py        # 4-Moat Matrix & Council Hardening
 
 # Run Node.js enterprise test suites
 npm run test:unit

@@ -124,5 +124,21 @@
 3. **Executive Visual Design Hierarchy**:
    - Documentation must be styled as C-level Enterprise Engineering Deliverables: sleek typography, executive summary cards, comparative capability matrix tables, verified empirical benchmarks, and clear operational commands.
 
+---
+
+## 10. Mandatory Adversarial Council Hardening Invariant (claude-council)
+
+1. **Mandatory Council Hardening on All Plans & Solutions**:
+   - Every implementation plan, architectural decision record (ADR), and solution blueprint MUST be hardened through the 5-Advisor Claude Council (`claude-council`) before execution or merge.
+   - The 5 unaligned perspectives must be explicitly documented in the deliverable:
+     - **The Contrarian (`01-contrarian`)**: Attacks foundational assumptions, seeks single points of failure, and demands failure-mode mitigations.
+     - **The First-Principles Engineer (`02-first-principles`)**: Strips jargon, auditing raw algorithmic complexity, latency physics, and deterministic type safety.
+     - **The Expansionist (`03-expansionist`)**: Identifies 10x defensible moats, asymmetrical leverage, and future-proof extensibility.
+     - **The Naive Outsider (`04-outsider`)**: Audits cognitive ergonomics, eliminating over-engineering and obscure naming.
+     - **The Pragmatic Executor (`05-executor`)**: Demands concrete migration runbooks, rollback mechanics, and verified empirical benchmarks.
+2. **Unanimous Council Verdict & Non-Negotiable Moats**:
+   - Every solution must achieve an explicit Council Verdict (`APPROVED WITH HARDENING`) and pass the **Contrarian 4-Moat Test** (Data Ingestion, Algorithmic, Sovereign/Statutory, and Financial Unit Economics).
+   - Solutions must incorporate **Cryptographic Anti-Tamper & Enclave Isolation Specifications** (SHA-256 Merkle chain-of-custody, constant-time `timingSafeEqual` security, and fail-closed state transitions) to ensure solutions are non-reproducible by generic AI prompts and resilient against reverse-engineering.
+
 
 

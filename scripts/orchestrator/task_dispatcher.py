@@ -217,7 +217,14 @@ def main():
         query=args.query
     )
     print("\n[TaskDispatcher] Task Result:")
-    print(json.dumps({k: v for k, v in res.items() if not k.startswith('_')}, indent=2))
+    import dataclasses
+    if dataclasses.is_dataclass(res):
+        out_dict = dataclasses.asdict(res)
+    elif isinstance(res, dict):
+        out_dict = {k: v for k, v in res.items() if not k.startswith('_')}
+    else:
+        out_dict = str(res)
+    print(json.dumps(out_dict, indent=2, default=str))
 
 
 if __name__ == "__main__":

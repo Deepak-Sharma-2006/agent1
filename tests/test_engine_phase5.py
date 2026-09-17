@@ -5,6 +5,7 @@ Computer-Vision QA Gate, Closed-Loop Auto-Corrector, and Unstructured Research C
 
 import unittest
 import os
+import shutil
 from scripts.engine.themes import THEMES, get_theme
 from scripts.engine.vision_qa_gate import VisionQAGate, VisionAuditReport
 from scripts.engine.auto_corrector import AutoCorrector
@@ -97,3 +98,10 @@ class TestEnginePhase5(unittest.TestCase):
         self.assertTrue(vision_audit.passed, f"Vision QA failed: {vision_audit.summary_text}")
         self.assertEqual(vision_audit.total_collisions, 0)
         self.assertEqual(vision_audit.total_margin_violations, 0)
+
+        # Cleanup transient test presentation & render directory
+        for p in [out_pptx, out_pdf]:
+            if os.path.exists(p):
+                os.remove(p)
+        if os.path.exists(render_dir):
+            shutil.rmtree(render_dir, ignore_errors=True)

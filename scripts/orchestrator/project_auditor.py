@@ -136,12 +136,17 @@ class ProjectAuditor:
         return report
 
     @classmethod
-    def remediate_project(cls, target_dir: str, max_healing_passes: int = 5) -> Dict[str, Any]:
+    def remediate_project(cls, target_dir: str, max_healing_passes: int = 5, output_report_path: Optional[str] = None) -> Dict[str, Any]:
         """
         Case B Remediation: Automatically patches broken stubs and failing test suites
         in an existing project using CodingEngine multi-file self-healing.
         """
-        report = cls.audit_project(target_dir)
+        report_path = output_report_path or (
+            os.path.join(target_dir, "remediation_audit.md")
+            if os.path.isdir(target_dir) and os.path.abspath(target_dir) != os.path.abspath(".")
+            else "docs/audits/remediation_audit.md"
+        )
+        report = cls.audit_project(target_dir, output_report_path=report_path)
         p0_findings = [f for f in report.findings if f.severity == "P0_CRITICAL"]
 
         healed_modules = []
@@ -185,7 +190,7 @@ class ProjectAuditor:
         }
 
     @classmethod
-    def onboard_and_continue(cls, target_dir: str, new_features_spec: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def onboard_and_continue(cls, target_dir: str, new_features_spec: Optional[Dict[str, Any]] = None, output_report_path: Optional[str] = None) -> Dict[str, Any]:
         """
         Case C: Ingests an in-progress project (cloned/unzipped repo):
           1. Runs Case B audit and repairs existing baseline flaws.
@@ -193,7 +198,7 @@ class ProjectAuditor:
           3. Synthesizes new feature implementations via TDD red-to-green loop.
         """
         print(f"\n[ProjectAuditor] Stage 1 (Case C): Auditing & Stabilizing Existing Baseline...")
-        audit_res = cls.remediate_project(target_dir)
+        audit_res = cls.remediate_project(target_dir, output_report_path=output_report_path)
 
         print(f"\n[ProjectAuditor] Stage 2 (Case C): Continuing Feature Build on Verified Foundation...")
         features_added = []

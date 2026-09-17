@@ -138,6 +138,13 @@ class TestEngineMultiTheme(unittest.TestCase):
         self.assertEqual(len(images), 6)
         self.assertTrue(audit.passed)
 
+        # Cleanup transient test presentation & render directory
+        for p in [out_pptx, out_pdf]:
+            if os.path.exists(p):
+                os.remove(p)
+        if os.path.exists(render_dir):
+            shutil.rmtree(render_dir, ignore_errors=True)
+
     def test_agent_creator_end_to_end_cyber_dark(self):
         """
         Synthesizes, audits, and renders a complete 6-slide deck in Cyber Dark Terminal theme.
@@ -203,6 +210,13 @@ class TestEngineMultiTheme(unittest.TestCase):
         self.assertTrue(os.path.exists(out_pdf))
         self.assertEqual(len(images), 6)
         self.assertTrue(audit.passed)
+
+        # Cleanup transient test presentation & render directory
+        for p in [out_pptx, out_pdf]:
+            if os.path.exists(p):
+                os.remove(p)
+        if os.path.exists(render_dir):
+            shutil.rmtree(render_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

@@ -27,3 +27,16 @@ __pycache__/
 scripts_transcripts*
 How to Read Code*
 
+# Specs generated presentation decks, rendered slide images, and scratch test artifacts
+specs/presentations/deck_*
+specs/presentations/test_*
+specs/presentations/rendered/
+specs/presentations/extracted/
+specs/scratch_tests/
+specs/test_assets/
+specs/*.pptx
+specs/*.pdf
+!specs/presentations/BHEDAK_SIH2026.pptx
+!specs/presentations/CHAKRA_SIH2026.pptx
+
+

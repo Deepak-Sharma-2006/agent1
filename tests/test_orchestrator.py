@@ -8,6 +8,7 @@ Verifies:
 """
 
 import os
+import shutil
 import unittest
 from PIL import Image
 
@@ -53,10 +54,12 @@ class TestEnterpriseOrchestrator(unittest.TestCase):
         ], kpi_path, title="TEST METRICS")
         self.assertTrue(os.path.exists(kpi_path))
 
-        # Cleanup test images
+        # Cleanup test images and directory
         for p in [flow_path, topo_path, kpi_path]:
             if os.path.exists(p):
                 os.remove(p)
+        if os.path.exists(out_dir):
+            shutil.rmtree(out_dir, ignore_errors=True)
 
     def test_solution_council_dossier_and_memory(self):
         """Verifies SolutionCouncil formulates solution, renders visuals, and records to Memory Vault."""

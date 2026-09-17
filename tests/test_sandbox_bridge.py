@@ -10,6 +10,7 @@ Verifies:
 import os
 import sys
 import time
+import shutil
 import unittest
 from scripts.orchestrator.sandbox_bridge import SandboxBridge, SandboxResult
 from scripts.orchestrator.coding_engine import CodingEngine
@@ -111,10 +112,12 @@ if __name__ == '__main__':
         self.assertEqual(res["healing_iterations_needed"], 2)
         self.assertEqual(res["sandbox_mode"], "process_jail")
 
-        # Cleanup scratch test files
+        # Cleanup scratch test files and directory
         for f in [test_file, calc_file, formatter_file]:
             if os.path.exists(f):
                 os.remove(f)
+        if os.path.exists("specs/scratch_tests"):
+            shutil.rmtree("specs/scratch_tests", ignore_errors=True)
 
 
 if __name__ == "__main__":

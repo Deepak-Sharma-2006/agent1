@@ -224,7 +224,10 @@ class TestProjectAuditorCaseC(unittest.TestCase):
 
     def test_onboard_returns_correct_structure(self) -> None:
         """onboard_and_continue should return lifecycle metadata dict."""
-        result = ProjectAuditor.onboard_and_continue(target_dir=self.tmpdir)
+        result = ProjectAuditor.onboard_and_continue(
+            target_dir=self.tmpdir,
+            output_report_path=os.path.join(self.tmpdir, "remediation_audit.md")
+        )
         self.assertIn("onboarded_repo", result)
         self.assertIn("baseline_stabilized", result)
         self.assertTrue(result["baseline_stabilized"])
@@ -246,13 +249,19 @@ class TestProjectAuditorRemediation(unittest.TestCase):
 
     def test_remediation_returns_status(self) -> None:
         """Remediation result should include status key."""
-        result = ProjectAuditor.remediate_project(target_dir=self.tmpdir)
+        result = ProjectAuditor.remediate_project(
+            target_dir=self.tmpdir,
+            output_report_path=os.path.join(self.tmpdir, "remediation_audit.md")
+        )
         self.assertIn("status", result)
         self.assertEqual(result["status"], "REMEDIATION_COMPLETE")
 
     def test_remediation_reports_initial_score(self) -> None:
         """Remediation result should report the initial audit score."""
-        result = ProjectAuditor.remediate_project(target_dir=self.tmpdir)
+        result = ProjectAuditor.remediate_project(
+            target_dir=self.tmpdir,
+            output_report_path=os.path.join(self.tmpdir, "remediation_audit.md")
+        )
         self.assertIn("initial_score", result)
         self.assertIsInstance(result["initial_score"], int)
 

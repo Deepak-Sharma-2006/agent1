@@ -169,10 +169,58 @@ export function scanDirectory(dir: string, baseDir = dir): SecretFinding[] {
   return findings;
 }
 
+export function isForbiddenSpecsArtifact(filePath: string): boolean {
+  const norm = filePath.replace(/\\/g, "/");
+  if (norm.startsWith("specs/presentations/")) {
+    if (
+      norm === "specs/presentations/BHEDAK_SIH2026.pptx" ||
+      norm === "specs/presentations/CHAKRA_SIH2026.pptx" ||
+      norm.startsWith("specs/presentations/assets/")
+    ) {
+      return false;
+    }
+    if (norm.endsWith(".pptx") || norm.endsWith(".pdf") || norm.includes("/rendered/")) {
+      return true;
+    }
+  }
+  if (
+    norm.startsWith("specs/scratch_tests/") ||
+    norm.startsWith("specs/test_assets/") ||
+    (norm.startsWith("specs/") && (norm.endsWith(".pptx") || norm.endsWith(".pdf")))
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function scanStagedGitFiles(): SecretFinding[] {
   try {
-    const diff = execSync("git diff --cached --unified=0", { encoding: "utf-8" });
     const findings: SecretFinding[] = [];
+
+    // Check staged filenames against forbidden transient specs artifacts
+    try {
+      const stagedNames = execSync("git diff --cached --diff-filter=ACMR --name-only", { encoding: "utf-8" })
+        .split(/\r?\n/)
+        .map((f) => f.trim())
+        .filter(Boolean);
+
+      for (const name of stagedNames) {
+        if (isForbiddenSpecsArtifact(name)) {
+          findings.push({
+            ruleId: "forbidden-specs-artifact",
+            ruleName: "Forbidden Transient Specs Artifact",
+            severity: "CRITICAL",
+            file: name,
+            line: 1,
+            snippet: "Generated test deck or render artifact staged for commit. Must not be committed to Git.",
+          });
+        }
+      }
+    } catch {
+      // Ignore git errors
+    }
+
+    const diff = execSync("git diff --cached --unified=0", { encoding: "utf-8" });
     const lines = diff.split(/\r?\n/);
     let currentFile = "unknown";
 

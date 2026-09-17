@@ -8,6 +8,7 @@ Validates:
 
 import os
 import sys
+import shutil
 import unittest
 
 # Ensure root directory is in sys.path
@@ -333,6 +334,13 @@ class TestEndToEndPresentationCompilation(unittest.TestCase):
             self.assertTrue(os.path.exists(img))
             self.assertGreater(os.path.getsize(img), 50000)
             print(f"Verified test slide image: {img} ({os.path.getsize(img)} bytes)")
+
+        # Cleanup transient test presentation & render directory
+        for p in [pptx_path, pdf_path]:
+            if os.path.exists(p):
+                os.remove(p)
+        if os.path.exists(render_dir):
+            shutil.rmtree(render_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

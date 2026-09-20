@@ -29,7 +29,7 @@ An enterprise-grade, production-hardened development platform and operational ha
    - Simulates a full enterprise product team: Product Manager, System Architect, Adversarial SDET, Core Engineer, Mutation Auditor, and Technical Writer.
    - Enforces the **Red-to-Green Test Invariant**: SDET tests must be written first and verified RED before implementation begins.
    - **Fail-Closed Frontend Gate**: If frontend files exist, headless Playwright verification is strictly required (rejects builds with exit code `1` if tests are missing or broken).
-4. **Deterministic AST Mutation Testing ($\ge 80\%$ Kill Rate)**:
+4. **Deterministic AST Mutation Testing (≥ 80% Kill Rate)**:
    - Dual-engine AST fault injection: Python native AST (`python_mutation_tester.py`) and TypeScript (`mutation-tester.ts`).
    - Injects boundary inversions, boolean flips, arithmetic mutations, and return overrides with atomic `.bak` rollback on process interrupts.
 5. **Universal Task Dispatcher Subsystems**:

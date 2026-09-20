@@ -8,7 +8,7 @@
 ## 1. Core Task Execution Commands
 
 ### Task 1: Solution Formulation, White-Space Moat & Cloud Unit Economics
-Deconstructs a problem statement, conducts multi-hop live research triangulation (statutory regulations, live competitors, CVE failure paths), benchmarks commercial prior-art, designs a 10x technical moat, generates native visual architecture diagrams, models real cloud COGS (AWS/GCP/tokens at $\ge 75\%$ gross margin), and records decisions to SQLite Memory Vault and git-mergeable records.
+Deconstructs a problem statement, conducts multi-hop live research triangulation (statutory regulations, live competitors, CVE failure paths), benchmarks commercial prior-art, designs a 10x technical moat, generates native visual architecture diagrams, models real cloud COGS (AWS/GCP/tokens at ≥ 75% gross margin), and records decisions to SQLite Memory Vault and git-mergeable records.
 
 ```bash
 # Basic Problem Prompt (Dynamic first-principles synthesis)
@@ -89,7 +89,7 @@ python -c "from scripts.orchestrator.spec_sync import SpecSync; print(SpecSync.g
 
 ## 3. Mutation Testing & Fail-Closed Frontend Verification
 
-### Deterministic AST Mutation Testing ($\ge 80\%$ Kill Rate Gate)
+### Deterministic AST Mutation Testing (≥ 80% Kill Rate Gate)
 Injects 4 fault classes (Boundary Inversions, Boolean/Logical flips, Arithmetic mutations, and Return Overrides) with atomic `.bak` rollback on abort or signal interrupts.
 
 ```bash

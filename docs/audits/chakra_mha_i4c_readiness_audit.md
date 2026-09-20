@@ -12,7 +12,7 @@
 The audit confirms that **Project CHAKRA (चक्र) v2.0** is **factually sound, legally aligned with July 2024 criminal law reforms, and operationally frictionless for MHA / I4C deployment**. 
 
 Unlike generic academic solutions or foreign commercial tools (Chainalysis/TRM Labs), CHAKRA is specifically tailored to the Indian investigative reality:
-1. **Solves the #1 Blind Notice Bottleneck**: Eliminates the 14–21 day delay of indiscriminate Section 94 BNSS summons by pinpointing the exact nearest deposit-accepting VASP in $<15\text{ minutes}$.
+1. **Solves the #1 Blind Notice Bottleneck**: Eliminates the 14–21 day delay of indiscriminate Section 94 BNSS summons by pinpointing the exact nearest deposit-accepting VASP in <15 minutes.
 2. **Prioritizes the Real-World Crime Vector (Tron TRC-20)**: Directly attacks the stablecoin layer where 85%+ of Indian cyber fraud proceeds travel.
 3. **100% Statutory Admissibility**: Native integration of **Bharatiya Sakshya Adhiniyam (BSA) 2023 Section 63** dual-signature certificates and **BNSS 2023 Section 94/106** notice generation.
 
@@ -24,9 +24,9 @@ Unlike generic academic solutions or foreign commercial tools (Chainalysis/TRM L
 |:---|:---|:---|:---:|
 | **Tron TRC-20 Mechanics** | Verified exact method signature `a9059cbb`, 21-byte hex prefix (`41`), Base58Check encoding, and energy-rental sweeper patterns. | Tron represents >85% of Indian cyber fraud (USDT `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`). Decodes `TriggerSmartContract` protobuf correctly. | **PASSED (100% Accurate)** |
 | **Bitcoin UTXO Clustering (MICH)** | Verified Multi-Input Co-Spending rule with mandatory CoinJoin / PayJoin exception suppression. | Prevents false clustering on Wasabi/Samourai equal-output transactions. Correctly tracks change outputs via 4-pass heuristic. | **PASSED (100% Accurate)** |
-| **Deposit-to-Sweep Detection** | Verified 4-condition consolidation rule: VASP hot wallet destination, $\Delta t \le 24\text{h}$, $\ge 98\%$ sweep ratio, and gas/energy sponsorship. | Matches real-world custodial exchange architecture (Binance, CoinDCX, WazirX sweep bot mechanics). | **PASSED (100% Accurate)** |
+| **Deposit-to-Sweep Detection** | Verified 4-condition consolidation rule: VASP hot wallet destination, Δt ≤ 24h,≥ 98\%$ sweep ratio, and gas/energy sponsorship. | Matches real-world custodial exchange architecture (Binance, CoinDCX, WazirX sweep bot mechanics). | **PASSED (100% Accurate)** |
 | **Mixer / Privacy Limits** | Zero claims of reversing zk-SNARK mathematics on-chain; establishes honest "Taint Boundaries". | Proves technical maturity. Avoids false promises to judges regarding Tornado Cash destination unmasking. | **PASSED (Honest & Grounded)** |
-| **Cross-Chain Bridge Correlator** | Verified value and temporal correlation matching window ($\Delta t \le 1800\text{s}$, value delta $\le 2.5\%$). | Captures bridge hops (Thorchain, Stargate, FixedFloat) without inventing non-existent deterministic links. | **PASSED (100% Accurate)** |
+| **Cross-Chain Bridge Correlator** | Verified value and temporal correlation matching window (Δt ≤ 1800s, value delta≤ 2.5\%$). | Captures bridge hops (Thorchain, Stargate, FixedFloat) without inventing non-existent deterministic links. | **PASSED (100% Accurate)** |
 
 ---
 
@@ -89,14 +89,14 @@ I4C operates a unified digital grid consisting of:
 ### 4.1 Deployment on Government Infrastructure (NIC MeghRaj / On-Prem)
 * **Sovereign Security & Air-Gapping**: Graph databases and case repositories run in private subnets with zero external telemetry.
 * **Foreign Cloud Immunity**: Eliminates the catastrophic national security risk of foreign SaaS tools (Chainalysis / TRM Labs / Elliptic), where sensitive Indian criminal suspect addresses and LEA search queries are stored on commercial US/EU cloud servers.
-* **Public Exchequer Savings**: Eliminates \$150,000 – \$250,000 USD/year recurring foreign software subscriptions per law enforcement agency, while delivering superior Tron and domestic VASP coverage.
+* **Public Exchequer Savings**: Eliminates \150,000 –250,000 USD/year recurring foreign software subscriptions per law enforcement agency, while delivering superior Tron and domestic VASP coverage.
 
 ### 4.2 Scalability & SLA Guarantees
 * **Throughput Capacity**: Designed to process up to 10,000 address attribution requests daily with horizontal Celery worker scaling.
 * **Latency SLA**:
-  * 1-Hop Direct VASP Hits: $< 45\text{ seconds}$.
-  * 3-Hop Deposit-Sweep Consolidation: $< 4.5\text{ minutes}$.
-  * 5-Hop Complex Multi-Hop Traversal: $< 12.0\text{ minutes}$ (Well within the $< 15$-minute golden window for asset freezing).
+  * 1-Hop Direct VASP Hits: < 45 seconds.
+  * 3-Hop Deposit-Sweep Consolidation: < 4.5 minutes.
+  * 5-Hop Complex Multi-Hop Traversal: < 12.0 minutes (Well within the < 15-minute golden window for asset freezing).
 
 ---
 

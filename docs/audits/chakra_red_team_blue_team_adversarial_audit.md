@@ -64,7 +64,7 @@ RED TEAM ATTACK:
 2. **Deposit-to-Sweep Consolidation**: Within 18 minutes, Binance's internal sweeper bot executes automated sweeps consolidating the $1,000 deposits into **Binance Hot Wallet 14** (`TND5...`).
 3. **The Trap Closes**: CHAKRA detects:
    * Target destination = Known VASP Hot Wallet (`TND5...`) in CHAKRA Registry.
-   * Sweep ratio = $99.8\%$ balance zeroing.
+   * Sweep ratio = 99.8% balance zeroing.
    * Energy sponsored by Binance Sweeper Fueler.
 4. **Statutory Action**: CHAKRA computes **96.8% Attribution Confidence**. Generates automated **Section 106 BNSS 2023 Freezing Order** auto-populated with the 10 deposit addresses and dispatches it via the SAHYOG API to Binance Compliance within 11 minutes.
 
@@ -108,7 +108,7 @@ RED TEAM ATTACK:
   1. Red Team sleeps on stolen funds for 48 months to let investigative trails go cold.
   2. Red Team breaks the funds into micro-batches of 0.1 to 0.5 BTC, hopping through 15 unhosted intermediary wallets over a 2-year period.
   3. Red Team uses multiple small darknet merchant accounts and off-ramp platforms to buy prepaid cards and physical gold delivered via dead-drops.
-  4. Red Team believes the vast temporal delay and high hop count ($N > 15$) will blow past any automated graph BFS query budget or memory limit.
+  4. Red Team believes the vast temporal delay and high hop count (N > 15) will blow past any automated graph BFS query budget or memory limit.
 
 ```
 RED TEAM ATTACK:
@@ -117,12 +117,12 @@ RED TEAM ATTACK:
 ```
 
 ### 3.2 Team Blue Counter-Strategy (Project CHAKRA)
-1. **Temporal Decay & Volume Thresholding**: CHAKRA’s graph engine applies a volume-weighted temporal decay heuristic. While micro-hops ($0.1\text{ BTC}$) are pruned if below economic significance, any branch preserving $\ge 5\%$ of the initial cluster value is prioritized in the Neo4j BFS queue.
-2. **Cold Wallet Wake-Up Watchers**: CHAKRA registers persistent Redis pub/sub watchers on flagged high-severity seed addresses. The moment an address dormant for $> 365$ days broadcasts a transaction, an automated high-priority alert is generated in the I4C dashboard.
+1. **Temporal Decay & Volume Thresholding**: CHAKRA’s graph engine applies a volume-weighted temporal decay heuristic. While micro-hops (0.1 BTC) are pruned if below economic significance, any branch preserving ≥ 5% of the initial cluster value is prioritized in the Neo4j BFS queue.
+2. **Cold Wallet Wake-Up Watchers**: CHAKRA registers persistent Redis pub/sub watchers on flagged high-severity seed addresses. The moment an address dormant for > 365 days broadcasts a transaction, an automated high-priority alert is generated in the I4C dashboard.
 3. **Change Output & Peel Chain Disambiguation**:
    * CHAKRA’s Engine 2 evaluates the round-number payment vs non-round change output heuristic.
-   * In a transaction where $10.0\text{ BTC}$ produces $0.35\text{ BTC}$ (payment) and $9.6498\text{ BTC}$ (change), CHAKRA automatically binds the change output to the adversary's peel head.
-4. **Attribution Terminal**: Despite 16 intermediate unhosted hops, the cumulative peel head eventually deposits $12.4\text{ BTC}$ into an FIU-registered Indian VASP (CoinSwitch) and a global partner (Kraken).
+   * In a transaction where 10.0 BTC produces 0.35 BTC (payment) and 9.6498 BTC (change), CHAKRA automatically binds the change output to the adversary's peel head.
+4. **Attribution Terminal**: Despite 16 intermediate unhosted hops, the cumulative peel head eventually deposits 12.4 BTC into an FIU-registered Indian VASP (CoinSwitch) and a global partner (Kraken).
 5. **Statutory Action**: CHAKRA produces a complete historical graph trace, calculates **91.5% Attribution Confidence**, and outputs a dual-signature **BSA 2023 Section 63 Certificate** detailing the chronological chain of custody across the 6-year window.
 
 > **Round 3 Verdict**: **BLUE TEAM WINS**. Temporal dormancy and deep peel chains cannot break change-output heuristics and persistent transaction watchers.
@@ -140,10 +140,10 @@ RED TEAM ATTACK:
 
 ### 4.2 Team Blue Counter-Strategy (Project CHAKRA)
 1. **Dust & Taint Rejection Filter**: CHAKRA’s ingestion layer enforces an unalterable threshold:
-   $$\text{DustFilter} = \text{Drop}(\text{Input}) \quad \text{if} \quad \text{Value}_{\text{USD}}(\text{Input}) < \$10.00$$
+   > `DustFilter = Drop(Input) if Value_USD(Input) < $10.00`
 2. **Sybil Co-Spend Exception Rule**:
-   * For an address to be clustered via MICH, its contribution must exceed $\ge 1.0\%$ of the total transaction input value.
-   * 546 satoshis ($\approx \$0.35$) represents $0.000007\%$ of a 5 BTC transaction ($\approx \$300,000$).
+   * For an address to be clustered via MICH, its contribution must exceed ≥ 1.0% of the total transaction input value.
+   * 546 satoshis (approx0.35) represents0.000007\%of a 5 BTC transaction (\approx \300,000).
 3. **Automated Anomaly Alert**: CHAKRA tags the 20 dust inputs as an **Adversarial Poisoning Attempt (Poisoning Confidence: 99.9%)**. The Delhi Police and PM Relief Fund addresses are automatically excluded from the cluster.
 4. **True Recipient Traced**: CHAKRA follows the remaining 4.99 BTC to a CoinSwitch Kuber deposit forwarder.
 
@@ -155,14 +155,14 @@ RED TEAM ATTACK:
 
 ### 5.1 Team Red Attack Profile (Absurd / Unpredictable Modern DeFi Evasion)
 * **The Evasion Tactic**:
-  1. Red Team extorts $500,000$ USDC from an Indian IT firm.
+  1. Red Team extorts 500,000 USDC from an Indian IT firm.
   2. Instead of using a traditional mixer, Red Team uses **Polymarket (Polygon CTF Exchange)** or an on-chain binary prediction market.
   3. Red Team locates a low-liquidity, high-spread market (e.g., "Will XYZ obscure micro-cap token reach $10 by Friday?").
   4. **The Wash-Loss Execution**:
-     * Red Team's tainted Wallet A buys 500,000 "NO" shares at $0.99 ($495,000).
-     * Red Team's fresh, clean Wallet B (funded with only $5,000) buys "YES" shares at $0.01.
+     * Red Team's tainted Wallet A buys 500,000 "NO" shares at 0.99 (495,000).
+     * Red Team's fresh, clean Wallet B (funded with only 5,000) buys "YES" shares at0.01.
      * At resolution (or by intentionally triggering the contract condition), the "YES" outcome wins!
-     * Wallet A loses $495,000$ completely. Wallet B claims the entire $500,000$ pool payout as "legitimate trading profits".
+     * Wallet A loses 495,000 completely. Wallet B claims the entire 500,000 pool payout as "legitimate trading profits".
   5. Wallet B deposits the funds into an Indian FIU-registered exchange (CoinDCX), claiming capital gains from prediction market speculation!
 
 ```
@@ -181,7 +181,7 @@ RED TEAM ATTACK:
    * CHAKRA detects an immediate bilateral trade: Wallet B took the exact opposing order minted by Wallet A within 12 seconds of order placement.
 3. **Synthetic Direct Hop Stitching**:
    * CHAKRA applies the **Bilateral Synthetic Match Rule**:
-     $$\text{If } \frac{\text{Volume}(\text{Wallet A} \leftrightarrow \text{Market} \leftrightarrow \text{Wallet B})}{\text{Total Market Volume}} > 0.90 \implies \text{Taint Path Assigned Directly}$$
+     > If  \frac{Volume(Wallet A ≤ftrightarrow Market ≤ftrightarrow Wallet B)}{Total Market Volume} > 0.90 \implies Taint Path Assigned Directly
    * The synthetic prediction market barrier is bypassed; Wallet B is assigned **Direct Taint Egress** from Wallet A.
 4. **VASP Freezing Order**: CoinDCX receives an automated **Section 106 BNSS Freezing Notice** detailing the wash-trading collusive transaction hashes, freezing Wallet B’s account before the user can withdraw INR.
 
@@ -193,20 +193,20 @@ RED TEAM ATTACK:
 
 ### 6.1 Team Red Attack Profile (Bizarre On-Chain Bot Collusion)
 * **The Evasion Tactic**:
-  1. Red Team controls $2,000,000$ in stolen DAI.
+  1. Red Team controls 2,000,000 in stolen DAI.
   2. Red Team operates a private Ethereum MEV Searcher bot and establishes a direct agreement with a private Flashbots / MEV-Boost block builder.
   3. Red Team broadcasts an intentionally misconfigured Uniswap transaction with **100% allowed slippage** to sell the stolen DAI for WETH.
   4. Red Team’s private MEV Searcher bot executes a "sandwich attack" on this trade:
      * Front-runs the trade, draining the liquidity pool.
      * Tainted trade executes at an absurd loss of 90%.
-     * Back-runs the trade, capturing $1,800,000$ in pure MEV arbitrage profit.
+     * Back-runs the trade, capturing 1,800,000 in pure MEV arbitrage profit.
   5. The MEV Searcher pays the profit to an innocent-looking block validator address as a "priority gas tip" or block reward.
   6. Red Team claims the funds are "clean staking rewards" and deposits them into a compliant institutional custodian.
 
 ### 6.2 Team Blue Counter-Strategy (Project CHAKRA)
 1. **Mev-Inspect EVM Trace Decoding**: CHAKRA’s Engine 1 incorporates specialized MEV heuristic extraction (`is_mev_arbitrage`).
 2. **Intentional Negative Value Flow Metric**:
-   * CHAKRA measures the trade slippage: the transaction suffered **90.2% slippage** on a deep pool ($>\$50\text{M}$ liquidity). In standard trading, slippage $> 2\%$ triggers automated reverting.
+   * CHAKRA measures the trade slippage: the transaction suffered **90.2% slippage** on a deep pool (>50Mliquidity). In standard trading, slippage> 2\%$ triggers automated reverting.
    * CHAKRA correlates the front-running address and back-running address in the same block bundle.
 3. **Atomic Bundle Reconstruction**:
    * Flashbots bundle execution guarantees atomic inclusion. The profit did not disperse into the global validator set; it was forwarded via an internal call to a designated fee-recipient address controlled by the cartel.
@@ -298,7 +298,7 @@ RED TEAM ATTACK:
 
 ### 9.2 Team Blue Counter-Strategy (Project CHAKRA)
 1. **CoinJoin Suppression Filter**: CHAKRA’s Engine 2 checks the entropy and output distribution of the transaction:
-   $$\text{EqualOutputCount} = \sum_{i} [\text{Output}_i == 0.10000000\text{ BTC}] = 95 \ge 2$$
+   > EqualOutputCount = \sum_{i} [Output_i == 0.10000000 BTC] = 95 ≥ 2
    * Because equal outputs are detected, **MICH clustering is instantly deactivated** for this transaction.
    * CHAKRA refuses to merge the 85 input addresses, preventing false leads.
 2. **Unmixed Remainder (Peel Head) Tracking**:
@@ -320,8 +320,8 @@ RED TEAM ATTACK:
 
 ### 10.2 Team Blue Counter-Strategy (Project CHAKRA)
 1. **Full-Entropy Hash Validation**: CHAKRA’s Universal Transaction Data Model stores the **full 40-character hexadecimal / 32-byte cryptographic public key hash**, not truncated UI vanity strings.
-2. **Zero-Value Dust Pruning**: The zero-value USDT transfer ($0.00$) is dropped immediately by CHAKRA’s Ingestion Filter:
-   $$\text{FilterOut}(\text{Transfer}) \quad \text{if} \quad \text{Value} \le 0$$
+2. **Zero-Value Dust Pruning**: The zero-value USDT transfer ($0.00) is dropped immediately by CHAKRA’s Ingestion Filter:
+   > FilterOut(Transfer)   if   Value ≤ 0
 3. **Cryptographic Validation**: The vanity address has zero sweep history into a VASP hot wallet. CHAKRA’s Deposit-to-Sweep analyzer rejects the fake address with **0% Confidence**, and correctly identifies the genuine Binance deposit address with **95.2% Confidence**.
 
 > **Round 10 Verdict**: **BLUE TEAM WINS**. Automated full-hash matching and zero-value transfer pruning completely dismantled the address poisoning attack.
@@ -364,7 +364,7 @@ RED TEAM ATTACK:
 ### 12.2 Team Blue Counter-Strategy (Project CHAKRA)
 1. **Internal Trace Opcode Extraction**: CHAKRA’s Erigon archive node runs `debug_traceTransaction`, capturing internal smart contract `CALL` and `DELEGATECALL` operations.
 2. **NFT Position Lifecycle Tracking**: CHAKRA maps the minting of Uniswap v3 Position NFT #419208 to the burning transaction. The engine calculates the net asset delta:
-   $$\Delta \text{Balance} = \text{Assets}_{\text{burn}} - \text{Assets}_{\text{flash\_loan\_repay}} = +1,492,000\text{ USDT}$$
+   > \Delta Balance = Assets_{burn} - Assets_{flash\_loan\_repay} = +1,492,000 USDT
 3. **Graph Stitching**: The 4 fresh wallets are traced 1 hop forward to a Bybit Deposit Forwarder. CHAKRA attributes Bybit as the nearest VASP in 4 hops with **88.6% confidence**.
 
 > **Round 12 Verdict**: **BLUE TEAM WINS**. Internal transaction tracing and liquidity NFT accounting prevented the DeFi flash loan from masking the capital origin.
@@ -379,8 +379,8 @@ RED TEAM ATTACK:
 | **DEX & Cross-Chain Bridges** | **HIGH (Hack/Ransomware)** | Smart Contract Memo Parsing + Value Reconciliation | **Minimal**: Requires updated bridge vault list for new minor bridges. |
 | **Bitfinex Latent Multi-Year Smurfing**| **MEDIUM (Large Cartels)** | Volume-Weighted BFS Decay + Dormancy Watchers | **Minimal**: Deep peel chains tracked via change-output heuristics. |
 | **Sybil MICH Dust Poisoning** | **MEDIUM (Sabotage)** | Strict \$10.00 Dust Threshold + 1% Value Contribution | **0%**: Low-value inputs dropped from co-spending cluster. |
-| **Polymarket Prediction Wash-Losing**| **LOW-MEDIUM (Novel DeFi)** | Bilateral Counterparty Skew & Volume Ratio $> 90\%$ | **Minimal**: Low-liquidity markets monitored for synthetic matched trades. |
-| **MEV Sandwich / Flashbots Laundering**| **LOW (Ultra-Elite APTs)** | Severe Slippage Anomaly ($>90\%$) + Atomic Bundle Trace| **Minimal**: Private mempool builder logs requisitioned under CERT-In. |
+| **Polymarket Prediction Wash-Losing**| **LOW-MEDIUM (Novel DeFi)** | Bilateral Counterparty Skew & Volume Ratio > 90% | **Minimal**: Low-liquidity markets monitored for synthetic matched trades. |
+| **MEV Sandwich / Flashbots Laundering**| **LOW (Ultra-Elite APTs)** | Severe Slippage Anomaly (>90%) + Atomic Bundle Trace| **Minimal**: Private mempool builder logs requisitioned under CERT-In. |
 | **ERC-4337 Account Abstraction** | **MEDIUM (Next-Gen Wallets)**| EntryPoint UserOp Calldata Disassembly | **0%**: Inner `sender` extracted; Bundler whitelisted as infra. |
 | **Off-Chain Internal VASP Transfers**| **VERY HIGH (P2P Laundering)**| Legal Custody Terminal Node + Section 94 BNSS Notice | **0%**: On-chain trail terminates at deposit; legal process takes over. |
 | **Equal-Output Wasabi CoinJoin** | **MEDIUM (Darknet)** | Taint Boundary + Unmixed Peel Head Tracking | **0%**: Never false-clusters; catches residue peel heads. |

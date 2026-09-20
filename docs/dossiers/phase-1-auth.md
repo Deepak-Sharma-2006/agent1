@@ -91,11 +91,11 @@ During cognitive Pass 1 reading, the following non-blocking concerns were intent
    - When email does NOT exist: Service executes dummy Argon2id hash computation to match execution latency, then throws `InvalidCredentialsError("Invalid email or password.")`.
    - When email DOES exist but password is WRONG: Service throws identical `InvalidCredentialsError("Invalid email or password.")`.
    - **Result**: Zero account enumeration leak. Attacker cannot distinguish between existing and non-existing accounts.
-2. **Timing Differential ($\Delta t$) Check**:
+2. **Timing Differential (Δt$) Check**:
    - Execution timing was benchmarked across 1,000 requests:
      - Non-existent email: Mean latency = 148.2ms.
      - Wrong password: Mean latency = 149.1ms.
-   - **Result**: $\Delta t < 1\text{ms}$ eliminates timing side-channel attacks.
+   - **Result**: Δt < 1ms$ eliminates timing side-channel attacks.
 
 ---
 

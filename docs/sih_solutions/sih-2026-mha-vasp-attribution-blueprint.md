@@ -269,7 +269,7 @@ Attributing an unknown wallet to an exchange requires understanding exchange inf
 
 ### 5.1 Heuristic 1: Bitcoin Multi-Input Co-Spending Heuristic (MICH)
 * **Scientific Basis**: Nakamoto (2008); Meiklejohn et al. (2013). In standard Bitcoin transactions, all inputs must be signed by private keys controlled by the same spending entity:
-  $$\forall i, j \in \text{Inputs}(Tx), \quad \text{Cluster}(A_i) \equiv \text{Cluster}(A_j)$$
+  > \forall i, j \in Inputs(Tx),   Cluster(A_i) \equiv Cluster(A_j)
 * **CoinJoin Suppression Filter**: MICH is strictly deactivated if the transaction exhibits equal-output amounts (e.g., Wasabi, Samourai, Whirlpool) to eliminate false-positive co-clustering.
 
 ### 5.2 Heuristic 2: EVM & Tron Deposit-to-Sweep Consolidation Pattern
@@ -287,8 +287,8 @@ When a user deposits crypto into an exchange (e.g., Binance, CoinDCX, WazirX), t
 
 The Deposit-to-Sweep Engine validates attribution when 4 criteria are fulfilled:
 1. **Destination Hot Wallet Identity**: Destination of Transaction T2 matches a verified hot wallet in the Curated VASP Registry.
-2. **Temporal Window**: T2 occurs within $\Delta t \le 24 \text{ hours}$ of T1.
-3. **Balance Sweep Ratio**: T2 sweeps $\ge 95\%$ of the received balance (balance zeroing).
+2. **Temporal Window**: T2 occurs within Δt ≤ 24  hours$ of T1.
+3. **Balance Sweep Ratio**: T2 sweeps ≥ 95% of the received balance (balance zeroing).
 4. **Gas/Energy Fueling**: For EVM and Tron, the deposit address frequently has 0 native gas (ETH/TRX). The VASP hot wallet or an affiliated fueler address sends native tokens to the deposit address immediately preceding the sweep.
 
 ### 5.3 Curated VASP Cluster Registry (Ground Truth Database)
@@ -308,7 +308,7 @@ CHAKRA maintains an encrypted, immutable PostgreSQL registry of over 120,000 ver
 
 ## 6. Engine 3: Laundering Typologies & Risk Scoring Engine
 
-Criminal networks execute structured obfuscation typologies to break forensic links before cashing out. CHAKRA classifies these typologies and assigns a standardized **Wallet Risk Score** ($R_{\text{wallet}} \in [0, 100]$) aligned with FATF Red Flag Indicators.
+Criminal networks execute structured obfuscation typologies to break forensic links before cashing out. CHAKRA classifies these typologies and assigns a standardized **Wallet Risk Score** (R_{wallet} in [0, 100]) aligned with FATF Red Flag Indicators.
 
 ```
 LAUNDERING TYPOLOGY TAXONOMY:
@@ -320,31 +320,31 @@ LAUNDERING TYPOLOGY TAXONOMY:
 
 ### 6.1 Typology Detection Mechanics
 
-1. **Peeling Chains**: Detects repetitive 2-output transactions where one output is small ($\le 20\%$ of input) and the second is a change address continuing the chain. CHAKRA compresses the peel chain, tracking both peeled payments and the active peel head.
+1. **Peeling Chains**: Detects repetitive 2-output transactions where one output is small (≤ 20% of input) and the second is a change address continuing the chain. CHAKRA compresses the peel chain, tracking both peeled payments and the active peel head.
 2. **Mixers & Privacy Pools**: Recognizes known mixer contracts (e.g., Tornado Cash). Marks a strict **Forensic Taint Boundary**. CHAKRA never fabricates deterministic links across zero-knowledge mixers; downstream withdrawals are flagged as *Heuristic Associations Only*.
-3. **Cross-Chain DeFi Bridges (Thorchain, Stargate, FixedFloat)**: Reconciles source-chain lock events with destination-chain mint events based on timestamp proximity ($\Delta t \le 1800\text{s}$) and value parity ($\le 2.5\%$ delta after bridge fees).
+3. **Cross-Chain DeFi Bridges (Thorchain, Stargate, FixedFloat)**: Reconciles source-chain lock events with destination-chain mint events based on timestamp proximity (Δt ≤ 1800s) and value parity (≤ 2.5\%$ delta after bridge fees).
 
 ### 6.2 Standardized Wallet Risk Scoring Formula
 
-$$R_{\text{wallet}} = \min\left(100, \; \sum_{i} W_i \cdot F_i\right)$$
+> R_{wallet} = \min≤ft(100, \; \sum_{i} W_i \cdot F_i\right)
 
-Where factors $F_i \in [0, 1]$ and weights $W_i$ represent:
-* **Mixer Exposure ($W = 40$)**: Direct interaction with sanctioned mixers or privacy protocols.
-* **High-Risk Tagging ($W = 25$)**: Known association with darknet markets, ransomware payloads, or extortion addresses.
-* **Structuring / Smurfing Pattern ($W = 20$)**: High-velocity fan-out / fan-in within short time horizons.
-* **VASP Proximity Factor ($W = 15$)**: Direct link to non-KYC / high-risk offshore OTC brokers.
+Where factors F_i in [0, 1] and weights W_i represent:
+* **Mixer Exposure (W = 40)**: Direct interaction with sanctioned mixers or privacy protocols.
+* **High-Risk Tagging (W = 25)**: Known association with darknet markets, ransomware payloads, or extortion addresses.
+* **Structuring / Smurfing Pattern (W = 20)**: High-velocity fan-out / fan-in within short time horizons.
+* **VASP Proximity Factor (W = 15)**: Direct link to non-KYC / high-risk offshore OTC brokers.
 
 ---
 
 ## 7. Engine 4: Graph Analytics & Nearest VASP Attribution Algorithm
 
 ### 7.1 Algorithmic Moat: Degree-Bounded Beam Search
-Standard Breadth-First Search (BFS) experiences exponential combinatorial explosion ($O(b^d)$) when encountering high-degree nodes (e.g., DEX routers or dusting attacks with 50,000 outputs), causing system Out-Of-Memory (OOM) crashes.
+Standard Breadth-First Search (BFS) experiences exponential combinatorial explosion (O(b^d)) when encountering high-degree nodes (e.g., DEX routers or dusting attacks with 50,000 outputs), causing system Out-Of-Memory (OOM) crashes.
 
 Project CHAKRA implements an **Algorithmic Moat** via **Degree-Bounded Beam Search with Taint-Decay Dijkstra**:
 * **Temporal Directionality**: Explores only transactions that occurred *after* the illicit funds entered the suspect wallet.
-* **Value Pruning**: Drops outputs below the configurable dust threshold ($\tau_{\text{dust}} \ge \$10.00 \text{ USD}$).
-* **Degree Clamping**: Caps maximum branching factor per node at $\kappa \le 50$, ranking candidate edges by value volume.
+* **Value Pruning**: Drops outputs below the configurable dust threshold (tau_{dust} ≥10.00  USD$).
+* **Degree Clamping**: Caps maximum branching factor per node at kappa ≤ 50, ranking candidate edges by value volume.
 * **Early Exit**: Terminates path expansion immediately upon confirming a VASP deposit-to-sweep event.
 
 ```python
@@ -418,20 +418,20 @@ class NearestVASPAttributionEngine:
 
 ### 7.2 Explainable Attribution Confidence Scoring Formula
 
-Attribution certainty is expressed through an objective, explainable score ($S_{\text{attr}} \in [0, 100]$):
+Attribution certainty is expressed through an objective, explainable score (S_{attr} in [0, 100]):
 
-$$S_{\text{attr}} = \min\left(100, \; W_{\text{match}} S_{\text{match}} + W_{\text{sweep}} S_{\text{sweep}} + W_{\text{hop}} S_{\text{hop}} + W_{\text{vol}} S_{\text{vol}} - P_{\text{risk}}\right)$$
+> S_{attr} = \min≤ft(100, \; W_{match} S_{match} + W_{sweep} S_{sweep} + W_{hop} S_{hop} + W_{vol} S_{vol} - P_{risk}\right)
 
-* **Known Infrastructure Match ($W = 40$)**: Direct curated VASP Hot Wallet: 1.0 (40 pts); verified cluster affiliate: 0.75 (30 pts).
-* **Deposit-to-Sweep Validation ($W = 25$)**: Sweep ratio $\ge 98\%$ with VASP gas sponsorship: 1.0 (25 pts); sweep within 24h: 0.70 (17.5 pts).
-* **Proximity Decay ($W = 20$)**: Linear decay across hops: $S_{\text{hop}} = 1.0 - \frac{\text{hops} - 1}{5}$.
-* **Value Continuity Ratio ($W = 15$)**: Percentage of suspect funds successfully traced to the VASP deposit.
-* **Risk Penalties ($P_{\text{risk}}$)**: Mixer on path: $-35$ points; unverified cross-chain bridge hop: $-15$ points.
+* **Known Infrastructure Match (W = 40)**: Direct curated VASP Hot Wallet: 1.0 (40 pts); verified cluster affiliate: 0.75 (30 pts).
+* **Deposit-to-Sweep Validation (W = 25)**: Sweep ratio ≥ 98% with VASP gas sponsorship: 1.0 (25 pts); sweep within 24h: 0.70 (17.5 pts).
+* **Proximity Decay (W = 20)**: Linear decay across hops: S_{hop} = 1.0 - frac{hops - 1}{5}.
+* **Value Continuity Ratio (W = 15)**: Percentage of suspect funds successfully traced to the VASP deposit.
+* **Risk Penalties (P_{risk})**: Mixer on path: -35 points; unverified cross-chain bridge hop: -15 points.
 
 #### Attribution Decision Bands:
-* **Tier 1 ($S_{\text{attr}} \ge 85$) — High Confidence**: Triggers automated preparation of Section 106/107 BNSS Freezing Order.
-* **Tier 2 ($60 \le S_{\text{attr}} < 85$) — Medium Confidence**: Triggers Section 94 BNSS Information Disclosure Summons for account verification.
-* **Tier 3 ($S_{\text{attr}} < 60$) — Complex / Indeterminate**: Flags case in LEA dashboard for forensic expert manual review.
+* **Tier 1 (S_{attr} ≥ 85) — High Confidence**: Triggers automated preparation of Section 106/107 BNSS Freezing Order.
+* **Tier 2 (60 ≤ S_{attr} < 85) — Medium Confidence**: Triggers Section 94 BNSS Information Disclosure Summons for account verification.
+* **Tier 3 (S_{attr} < 60) — Complex / Indeterminate**: Flags case in LEA dashboard for forensic expert manual review.
 
 ---
 
@@ -679,7 +679,7 @@ Project CHAKRA enforces strict multi-tier, statutory-aligned Role-Based Access C
 | **Indian Legal Admissibility** | ❌ Foreign proprietary formats regularly challenged in court. | **Automated BSA 2023 Section 63(4) Dual-Signed Court Dossiers.** |
 | **Statutory Notice Generation** | ❌ None. Officers draft legal notices manually. | **1-Click Auto-Drafting of Section 94 & 106/107 BNSS 2023 Notices.** |
 | **Data Residency** | ❌ Sensitive police queries stored in foreign commercial clouds. | **100% On-Premises / NIC MeghRaj Sovereign Hosting.** |
-| **Annual Licensing Cost** | ❌ \$150,000 to \$250,000 USD / year per seat (Severe public exchequer drain). | **Zero Software License Drain: Open Sovereign Architecture.** |
+| **Annual Licensing Cost** | ❌ \150,000 to250,000 USD / year per seat (Severe public exchequer drain). | **Zero Software License Drain: Open Sovereign Architecture.** |
 | **Tron (TRC-20) Performance** | ⚠️ Secondary EVM focus; Tron indexers lag or require enterprise tiers. | **Native First-Class Engine optimized for Indian cyber fraud vectors.** |
 
 ### 12.2 5-Year Sovereign TCO & Public Exchequer Savings
@@ -691,18 +691,18 @@ Project CHAKRA enforces strict multi-tier, statutory-aligned Role-Based Access C
 │ COST COMPONENT                         │ FOREIGN SAAS TOOLS          │ PROJECT CHAKRA              │
 │                                        │ (Chainalysis / TRM / Ellip) │ (NIC MeghRaj Sovereign)     │
 ├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
-│ License Cost per Seat / Year           │ $25,000 to $40,000 USD      │ ₹0 (Open Sovereign Core)    │
+│ License Cost per Seat / Year           │ 25,000 to40,000 USD      │ ₹0 (Open Sovereign Core)    │
 ├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
 │ National Deployment Scope              │ 1,500 seats (750+ districts,│ Unlimited LEA seats         │
 │                                        │ 36 States, Central agencies)│ across India.               │
 ├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
-│ Annual Software Licensing Outflow      │ $37,500,000 to $60,000,000  │ ₹0 (Zero foreign currency   │
+│ Annual Software Licensing Outflow      │ 37,500,000 to60,000,000  │ ₹0 (Zero foreign currency   │
 │                                        │ (₹310 Cr - ₹500 Cr / year)  │ drain from exchequer).      │
 ├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
 │ Annual Sovereign Cloud Infrastructure  │ Included in foreign cloud   │ ₹90 Lakh to ₹1.2 Crore/year │
 │ (MeghRaj NIC Compute, Storage, Cache)  │ (Data residency risk).      │ (100% within India).        │
 ├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
-│ Fully Burdened Cost per Attribution    │ ~$2.50 USD (₹207 INR)       │ ₹4.15 INR ($0.05 USD)       │
+│ Fully Burdened Cost per Attribution    │ ~2.50 USD (₹207 INR)       │ ₹4.15 INR (0.05 USD)       │
 ├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
 │ **5-Year National Exchequer Outlay**   │ **₹1,550 Cr – ₹2,500 Cr**   │ **₹6.5 Cr – ₹8.5 Cr**       │
 │                                        │ *(Drained to foreign corps)*│ *(Sovereign capital spent)* │
@@ -794,7 +794,7 @@ Operating costs are calculated based on enterprise cloud baselines to ensure sus
 | Adversarial Attack / Edge Scenario | Impact on Tracing | CHAKRA Sovereign Countermeasure |
 |:---|:---|:---|
 | **Equal-Output CoinJoin (Wasabi/Samourai)** | Co-clusters unrelated innocent addresses. | **CoinJoin Taint Filter**: Deactivates MICH heuristic; flags node as a privacy cluster. |
-| **High-Volume Dust Attacks (< $1.00)** | Graph pollution to slow graph traversals. | **Degree-Bounded Beam Search**: Drops transactions below $\tau_{\text{dust}} = \$10.00$. |
+| **High-Volume Dust Attacks (< 1.00)** | Graph pollution to slow graph traversals. | **Degree-Bounded Beam Search**: Drops transactions below\tau_{dust} = \$10.00. |
 | **Time-Delay Sweeper Evasion (> 24h)** | Escapes standard 24h temporal window. | **Sliding Window Search**: Allows investigator to expand search horizon to 72 hours. |
 | **Cross-Chain DEX / Bridge Hops** | Breaks single-chain tracing. | **Bridge Event Correlator**: Pairs lock/unlock events across EVM, Tron, and Solana. |
 
@@ -837,7 +837,7 @@ Judges evaluate live demonstrations on technical reality, UI responsiveness, and
 | **Multi-Chain Mapping (BTC, ETH, Tron, BSC, SOL, POL)**| Universal Transaction Data Model (UTDM) Canonical Schema | ✅ 100% Verified |
 | **Identification of Clusters, Hot/Deposit Wallets** | Curated VASP Registry (120,000+ entries) & Sweep Bot Heuristic | ✅ 100% Verified |
 | **Mixer, Bridge & Cross-Chain Swap Detection** | Engine 3 Taint Boundary Detector & Cross-Chain Correlator | ✅ 100% Verified |
-| **Automated Tagging & Confidence Scoring** | Explainable 4-Pillar Scoring Formula ($S_{\text{attr}} \in [0, 100]$) | ✅ 100% Verified |
+| **Automated Tagging & Confidence Scoring** | Explainable 4-Pillar Scoring Formula (S_{attr} in [0, 100]) | ✅ 100% Verified |
 | **Investigation-Ready Reports for LEAs** | BSA 2023 Section 63(4) Dual-Signature Forensic Certification | ✅ 100% Verified |
 | **Automated Routing of Lawful Freezing / Disclosure**| Section 94 & Section 106/107 BNSS 2023 Automated Notice Generator | ✅ 100% Verified |
 

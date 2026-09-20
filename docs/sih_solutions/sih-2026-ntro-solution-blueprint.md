@@ -834,7 +834,7 @@ class AsymmetricConfidenceScorer:
 │ METRIC PARAMETER                        │ ESTIMATED VALUE      │ STRATEGIC FINANCIAL ADVANTAGE                   │
 ├─────────────────────────────────────────┼──────────────────────┼─────────────────────────────────────────────────┤
 │ Monthly Sovereign Compute & Storage COGS│ $2,850 / month       │ Hosted on National Informatics Centre (MeghRaj) │
-│ Cost per 1,000 De-Anonymization Queries │ $0.80 ($0.0008 / qry)│ 150x cheaper than commercial API seats ($0.12)  │
+│ Cost per 1,000 De-Anonymization Queries │ 0.80 (0.0008 / qry)│ 150x cheaper than commercial API seats ($0.12)  │
 │ Commercial Foreign License Displacement │ $420,000 / year saved│ Eliminates dependency on Chainalysis & Maltego  │
 │ Gross Operating Margin                  │ 97.2% Efficiency     │ Sustainable sovereign operational model         │
 └─────────────────────────────────────────┴──────────────────────┴─────────────────────────────────────────────────┘

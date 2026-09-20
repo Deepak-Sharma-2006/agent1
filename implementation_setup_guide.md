@@ -2744,7 +2744,129 @@ Pitch presentations compiled via OmniDeck support native vector UI mockups:
 - `mobile_mockup`: Smartphone frame with dynamic island notch, title bar, and prioritized alert cards.
 - `quadrant_matrix`: 2x2 Gartner-style competitive positioning matrix with highlighted 10x White-Space Moat leader badge.
 
+---
 
+### 11.9 Universal In-Repo Living Documentation Architecture (The 6 Classes)
 
+A primary failure mode in modern agentic engineering is the **Orphaned Context Trap**: critical architectural trade-offs, research findings, and audit discoveries are emitted exclusively into ephemeral chat windows, vanishing as soon as the session closes or context compacts.
 
+To eliminate this vulnerability, the platform mandates the **6 In-Repo Version-Controlled Document Classes**. Every generated technical artifact is written directly to disk under `docs/` and tracked in living, human-navigable `INDEX.md` catalogs maintained by the `SpecSync` engine (`scripts/orchestrator/spec_sync.py`).
 
+```
+                              ┌─────────────────────────────┐
+                              │    SPECSYNC UNIFIED ENGINE  │
+                              └──────────────┬──────────────┘
+                                             │
+      ┌─────────────────┬────────────────────┼───────────────────┬─────────────────┐
+      ▼                 ▼                    ▼                   ▼                 ▼
+┌───────────┐     ┌───────────┐        ┌───────────┐       ┌───────────┐     ┌───────────┐
+│docs/plans/│     │docs/walk- │        │docs/      │       │docs/adrs/ │     │docs/      │
+│           │     │throughs/  │        │audits/    │       │           │     │research/  │
+│Living PRDs│     │Execution  │        │Readiness  │       │Arch Trade-│     │Statutory  │
+│& Roadmaps │     │Test Proofs│        │& Pentests │       │offs & Moat│     │& Compet.  │
+└─────┬─────┘     └─────┬─────┘        └─────┬─────┘       └─────┬─────┘     └─────┬─────┘
+      │                 │                    │                   │                 │
+      └─────────────────┴────────────────────┼───────────────────┴─────────────────┘
+                                             ▼
+                              ┌─────────────────────────────┐
+                              │  DUAL-PERSISTENCE VAULT     │
+                              │  • SQLite FTS5 Database     │
+                              │  • Plain-Text JSONL Log     │
+                              └─────────────────────────────┘
+```
+
+#### The 6 In-Repo Document Classes
+1. **Implementation Plans (`docs/plans/` -> `docs/plans/INDEX.md`)**:
+   - Stores feature PRDs, architecture specifications, user-approved milestones, and verification plans.
+   - Automatically generated at the start of complex tasks or via `--task solution`.
+2. **Execution Walkthroughs (`docs/walkthroughs/` -> `docs/walkthroughs/INDEX.md`)**:
+   - Stores end-of-turn execution dossiers, code diffs, and empirical test proofs.
+   - Replaces conversational "I did this" summaries with permanent git-versioned proof.
+3. **System Audits (`docs/audits/` -> `docs/audits/INDEX.md`)**:
+   - Stores 6-pillar system readiness reports, adversarial penetration tests (Strix/DAST), and legacy remediation dossiers.
+4. **Architecture Decision Records (`docs/adrs/` -> `docs/adrs/INDEX.md`)**:
+   - Preserves non-negotiable architectural trade-offs, tech stack selections, cryptographic invariants, and the 10x White-Space Moat.
+5. **Deep Research Dossiers (`docs/research/` -> `docs/research/INDEX.md`)**:
+   - Stores multi-hop triangulation findings: statutory compliance mandates (e.g. BSA Section 63, HIPAA, GDPR), live competitor benchmarks, and CVE failure paths.
+6. **Formal RFCs & Contract Schemas (`docs/rfcs/` -> `docs/rfcs/INDEX.md`)**:
+   - Tracks inter-service API schemas, event contracts, state machine transitions, and database models across project phases.
+
+---
+
+### 11.10 Deterministic AST Mutation Testing (Python & TypeScript)
+
+Unit test suites that pass 100% can still be completely tautological (asserting `true === true` or testing empty functions). To guarantee that tests actively detect and fail on real bugs, the platform enforces the **Mutation Testing Engine** across both Python and TypeScript with a strict $\ge 80\%$ mutant kill rate acceptance gate.
+
+```
+       SOURCE CODE                                                    TEST SUITE
+┌───────────────────────┐                                      ┌───────────────────────┐
+│ def calculate_fee(x): │                                      │ def test_fee():       │
+│     if x > 100:       │                                      │     assert fee(150)>0 │
+│         return x * 0.1│                                      └───────────┬───────────┘
+└──────────┬────────────┘                                                  │
+           │                                                               │
+           ▼                                                               │
+┌────────────────────────────────────────────────────────┐                 │
+│                 AST MUTATION INJECTOR                  │                 │
+│ 1. Boundary Inversion: `x > 100`  ──> `x <= 100`       │                 │
+│ 2. Boolean Flip:       `True`     ──> `False`          │                 │
+│ 3. Arithmetic Flip:    `x * 0.1`  ──> `x / 0.1`        │                 │
+│ 4. Return Override:    `return x` ──> `return None`    │                 │
+└──────────────────────────┬─────────────────────────────┘                 │
+                           │                                               │
+                           ▼                                               │
+            [ RUN TESTS AGAINST EACH MUTANT ] <────────────────────────────┘
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+        [ MUTANT KILLED ]           [ MUTANT SURVIVED ]
+        (Test failed = GOOD)        (Test passed = DEFECT!)
+             │                           │
+             └─────────────┬─────────────┘
+                           ▼
+          KILL RATE = Killed / Total Mutants
+          Acceptance Gate: Kill Rate >= 80.0%
+```
+
+#### Safety & Transactional Rollback
+- **Atomic `.bak` Backup**: Before any AST mutation is applied to a file, an exact `.bak` snapshot is written to disk.
+- **Signal Handlers (`SIGINT`, `SIGTERM`, `atexit`)**: If the test runner is aborted, interrupted, or crashes, signal handlers unconditionally restore the original source file from `.bak`, preventing uncommitted mutations from poisoning the working tree.
+- **CLI Execution**:
+  ```bash
+  # Python AST Mutation Testing
+  python -m scripts.orchestrator.python_mutation_tester src/hydraulics.py "python -m unittest tests/test_hydraulics.py"
+
+  # TypeScript AST Mutation Testing
+  npm run test:mutation
+  ```
+
+---
+
+### 11.11 Fail-Closed Headless Playwright Verification & Component Shell Standard
+
+In web applications, visual drift and broken UI layouts often slip past unit tests. The platform enforces automated headless browser verification via Playwright whenever frontend files are detected.
+
+#### 1. Fail-Closed Verification Gate
+- If frontend files (`.html`, `.tsx`, `.jsx`, `.vue`) exist in the feature directory, the Adversarial SDET **mandates** active browser test execution.
+- If Playwright tests do not exist or fail, the squad run is immediately rejected (`FAILED_PLAYWRIGHT_MISSING`) with exit code `1`.
+- **Scoped Directory Detection**: Prevents pure backend features from being falsely blocked by unrelated frontend templates in the repository root.
+
+#### 2. The Enterprise Frontend Component Shell Standard (Directive 14)
+All user interfaces must strictly adhere to the 3-tier component shell:
+1. `<header class="app-header">`: Global navigation, breadcrumbs, search, and environment status.
+2. `<main class="app-viewport">`: Dynamic responsive content area, dashboard grids, or data visualization stages.
+3. `<footer class="app-action-dock">`: **Fixed bottom-right anchor** for all workflow triggers, evidence exports, and approval buttons. Workflow buttons must never be nested inside scrollable table cards or random corners.
+
+---
+
+### 11.12 Dual-Persistence Memory Vault Architecture
+
+In a distributed 2-person / 2-computer setup, committing binary SQLite files (`.agents/memory/vault.sqlite`) directly to Git creates irreconcilable binary merge conflicts.
+
+The platform resolves this by implementing **Dual-Persistence Synchronization**:
+1. **Plain-Text Append-Only JSONL (`.agents/memory/vault/records.jsonl`)**:
+   - Human-readable and fully mergeable via standard Git pull/rebase across workstations.
+   - Contains immutable records of all ADRs, research dossiers, and phase handoffs.
+2. **Local SQLite FTS5 Database (`.agents/memory/vault.sqlite`)**:
+   - Automatically regenerated and indexed from the JSONL log on startup.
+   - Provides sub-millisecond BM25 full-text search across all historical architectural decisions.

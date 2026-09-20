@@ -1,8 +1,8 @@
 # Enterprise Project Diagnostic & Remediation Dossier
 
-> **Target Assessed**: `C:\Users\Deepak Sharma\OneDrive\Desktop\scripts\docs\sih_solutions\sih-2026-mha-vasp-attribution-blueprint.md`  
+> **Target Assessed**: `demo/chakra_mvp`  
 > **Enterprise Health Score**: **100 / 100**  
-> **Economic Sustainability**: **VERIFIED**  
+> **Economic Sustainability**: **SUSTAINABLE (>=75% Margin)**  
 > **Anti-Tamper Cryptographic Compliance**: **COMPLIANT**  
 
 ---
@@ -13,8 +13,8 @@
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                               ENTERPRISE HEALTH SCORECARD                              │
 ├────────────────────────────────┬───────────────────────────┬───────────────────────────┤
-│ Overall Health Score: 100 / 100 │ Modules Detected: 1        │ Test Suites: 0              │
-│ Economic Status: VERIFIED      │ Anti-Tamper State: ACTIVE   │ Critical Flaws (P0): 0     │
+│ Overall Health Score: 100 / 100 │ Modules Detected: 19       │ Test Suites: 4              │
+│ Economic Status: SUSTAINABLE (>=75% Margin) │ Anti-Tamper State: ACTIVE   │ Critical Flaws (P0): 0     │
 └────────────────────────────────┴───────────────────────────┴───────────────────────────┘
 ```
 

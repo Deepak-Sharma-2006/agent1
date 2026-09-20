@@ -604,6 +604,49 @@ CHAKRA is engineered around the operational workflow of a Cyber Crime Police Sta
 +-----------------------------------------------------------------------------------------------------+
 ```
 
+### 10.2 MHA & I4C 5-Tier Role-Based Access Control (RBAC) Architecture
+
+Project CHAKRA enforces strict multi-tier, statutory-aligned Role-Based Access Control (RBAC) reflecting the official administrative and command hierarchy of the **Cyber and Information Security (C&IS) Division, Ministry of Home Affairs (MHA)**, the **Indian Cyber Crime Coordination Centre (I4C)** attached office, and State/UT Police Cyber Cells:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CHAKRA OPERATIONAL ROLES & ACCESS CONTROL MATRIX                             │
+├─────────┬───────────────────────────────┬──────────────────────────────────────────────────────────┤
+│ TIER    │ OPERATIONAL PLATFORM USER     │ HANDS-ON PLATFORM CAPABILITIES & STATUTORY POWERS        │
+├─────────┼───────────────────────────────┼──────────────────────────────────────────────────────────┤
+│ Tier 1  │ Investigating Officer (IO)    │ • Daily hands-on case investigator.                      │
+│         │ Sub-Inspector / Inspector     │ • Inputs suspect wallets, sets hop depth & dust limits.  │
+│         │ (Cyber Crime Police Station)  │ • Explores Cytoscape graph, inspects transactions.       │
+│         │                               │ • Drafts Section 94 BNSS summons for KYC/records.        │
+│         │                               │ • Submits asset-freezing requests for supervisory review.│
+├─────────┼───────────────────────────────┼──────────────────────────────────────────────────────────┤
+│ Tier 2  │ Supervisory Sanction Officer  │ • Statutory approval authority under Sec 78 IT Act 2000. │
+│         │ DySP / ACP / SP Cyber Crime   │ • Reviews attribution confidence & sweep proof.          │
+│         │                               │ • Digitally signs (Class-3 DSC) Section 106 & 107 BNSS   │
+│         │                               │   Freezing Orders for automated dispatch to VASP.        │
+├─────────┼───────────────────────────────┼──────────────────────────────────────────────────────────┤
+│ Tier 3  │ Digital Forensic Examiner     │ • Forensic integrity certifier.                          │
+│         │ NCFL / State FSL Scientist    │ • Verifies raw RPC transaction payloads & Merkle roots.  │
+│         │                               │ • Digitally signs Part B of BSA 2023 Sec 63(4) Forensic  │
+│         │                               │   Admissibility Certificate for court charge-sheets.     │
+├─────────┼───────────────────────────────┼──────────────────────────────────────────────────────────┤
+│ Tier 4  │ Cyber Threat Analyst          │ • Cross-case intelligence analyst.                       │
+│         │ I4C TAU / State Cyber Command │ • Runs multi-case cross-FIR syndicate correlation.       │
+│         │                               │ • Identifies shared mule wallets across multiple States. │
+│         │                               │ • Exports national cybercrime intelligence dossiers.     │
+├─────────┼───────────────────────────────┼──────────────────────────────────────────────────────────┤
+│ Tier 5  │ VASP Compliance Nodal Officer │ • External intermediary compliance desk on SAHYOG.       │
+│         │ Registered Exchange Officer   │ • Receives Section 94 summons & Sec 106/107 freeze orders│
+│         │ (CoinDCX, WazirX, Binance)    │ • Submits debit-freeze compliance ack within 2-hour SLA. │
+│         │                               │ • Uploads beneficial owner KYC dossiers & IP logs.       │
+└─────────┴───────────────────────────────┴──────────────────────────────────────────────────────────┘
+```
+
+#### Authentication, Auditability & Data Protection Invariants:
+1. **National Identity Federation**: Officers authenticate through Government of India **Jan Parichay (MeriPehchaan)** Single Sign-On (SSO) integrated with official `@gov.in` / `@nic.in` domains.
+2. **Cryptographic e-Sign Gating**: Freezing notices under Section 106 & 107 BNSS cannot be dispatched without Class-3 Digital Signature Certificate (DSC) or Aadhaar e-Sign authorization by an officer of rank Deputy Superintendent of Police (DySP) / Assistant Commissioner of Police (ACP) or above, complying with Section 78 of the Information Technology Act, 2000.
+3. **Immutable Audit Ledger**: Every search, wallet input, and case export is permanently logged with the officer's IP address, timestamp, NCRP FIR ID, and digital signature in an append-only PostgreSQL hash ledger, preventing unauthorized profiling under the **Digital Personal Data Protection (DPDP) Act 2023**.
+
 ---
 
 ## 11. Real-World Incident Walkthrough: Case Studies
@@ -638,6 +681,64 @@ CHAKRA is engineered around the operational workflow of a Cyber Crime Police Sta
 | **Data Residency** | ❌ Sensitive police queries stored in foreign commercial clouds. | **100% On-Premises / NIC MeghRaj Sovereign Hosting.** |
 | **Annual Licensing Cost** | ❌ \$150,000 to \$250,000 USD / year per seat (Severe public exchequer drain). | **Zero Software License Drain: Open Sovereign Architecture.** |
 | **Tron (TRC-20) Performance** | ⚠️ Secondary EVM focus; Tron indexers lag or require enterprise tiers. | **Native First-Class Engine optimized for Indian cyber fraud vectors.** |
+
+### 12.2 5-Year Sovereign TCO & Public Exchequer Savings
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                      5-YEAR SOVEREIGN TCO & EXCHEQUER COST COMPARISON                              │
+├────────────────────────────────────────┬─────────────────────────────┬─────────────────────────────┤
+│ COST COMPONENT                         │ FOREIGN SAAS TOOLS          │ PROJECT CHAKRA              │
+│                                        │ (Chainalysis / TRM / Ellip) │ (NIC MeghRaj Sovereign)     │
+├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ License Cost per Seat / Year           │ $25,000 to $40,000 USD      │ ₹0 (Open Sovereign Core)    │
+├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ National Deployment Scope              │ 1,500 seats (750+ districts,│ Unlimited LEA seats         │
+│                                        │ 36 States, Central agencies)│ across India.               │
+├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Annual Software Licensing Outflow      │ $37,500,000 to $60,000,000  │ ₹0 (Zero foreign currency   │
+│                                        │ (₹310 Cr - ₹500 Cr / year)  │ drain from exchequer).      │
+├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Annual Sovereign Cloud Infrastructure  │ Included in foreign cloud   │ ₹90 Lakh to ₹1.2 Crore/year │
+│ (MeghRaj NIC Compute, Storage, Cache)  │ (Data residency risk).      │ (100% within India).        │
+├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Fully Burdened Cost per Attribution    │ ~$2.50 USD (₹207 INR)       │ ₹4.15 INR ($0.05 USD)       │
+├────────────────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ **5-Year National Exchequer Outlay**   │ **₹1,550 Cr – ₹2,500 Cr**   │ **₹6.5 Cr – ₹8.5 Cr**       │
+│                                        │ *(Drained to foreign corps)*│ *(Sovereign capital spent)* │
+└────────────────────────────────────────┴─────────────────────────────┴─────────────────────────────┘
+```
+
+### 12.3 Integration into the 7 Operational Verticals of I4C
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CHAKRA INTEGRATION INTO THE 7 VERTICALS OF I4C                              │
+├────────────────────────────────────────┬───────────────────────────────────────────────────────────┤
+│ I4C VERTICAL                           │ OPERATIONAL SYNERGY WITH PROJECT CHAKRA                   │
+├────────────────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ 1. National Cybercrime Reporting       │ Direct automated intake of victim-reported suspect wallet │
+│    Portal (NCRP)                       │ addresses from FIRs and complaints across 28 States & 8 UT│
+├────────────────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ 2. SAHYOG Platform (Intermediary Web)  │ Real-time API routing of Section 94 summons & Sec 106/107 │
+│                                        │ freezing orders to registered VASP compliance nodal desks.│
+├────────────────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ 3. Citizen Financial Cyber Fraud       │ Cross-referencing VASP P2P counterparty banking details   │
+│    System (CFCFRMS / 1930 Helpline)    │ with domestic bank accounts for simultaneous lien marking.│
+├────────────────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ 4. National Cybercrime Forensic        │ NCFL experts act as System Custodians, verifying SHA-256  │
+│    Laboratory (NCFL Ecosystem)         │ Merkle audit trees for Section 63(4) BSA certification.   │
+├────────────────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ 5. National Cybercrime Training        │ Standardized CyTrain module curriculum to train state police│
+│    Centre (CyTrain / NCTC)             │ Sub-Inspectors in 1-click CHAKRA case triage.             │
+├────────────────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ 6. Threat Analytics Unit (TAU)         │ Ingests CHAKRA cross-state mule wallet clusters to identify│
+│                                        │ organized transnational cyber syndicates operating in bulk│
+├────────────────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ 7. National Cyber Crime Research       │ Continuous development of emerging typologies (DeFi swaps,│
+│    and Innovation Centre (NRIC)        │ new bridge protocols, EVM smart contract obfuscations).   │
+└────────────────────────────────────────┴───────────────────────────────────────────────────────────┘
+```
 
 ---
 

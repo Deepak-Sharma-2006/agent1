@@ -296,8 +296,15 @@ class ProjectAuditor:
 
         all_test_content = ""
         for tf in test_files:
-            full_p = tf if os.path.isabs(tf) else os.path.join(os.getcwd(), tf)
-            if os.path.exists(full_p):
+            full_p = tf if os.path.isabs(tf) else None
+            if not full_p:
+                for f in files:
+                    if f.endswith(tf) or tf.replace("\\", "/") in f.replace("\\", "/"):
+                        full_p = f
+                        break
+            if not full_p:
+                full_p = os.path.join(os.getcwd(), tf)
+            if full_p and os.path.exists(full_p):
                 with open(full_p, "r", encoding="utf-8", errors="ignore") as f:
                     all_test_content += f.read() + "\n"
 

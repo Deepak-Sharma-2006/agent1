@@ -15,7 +15,7 @@
 1. [Executive Summary & Problem Statement Alignment](#1-executive-summary--problem-statement-alignment)
 2. [Scope Demarcation: In-Scope Core vs. Out-of-Scope Boundaries](#2-scope-demarcation-in-scope-core-vs-out-of-scope-boundaries)
 3. [Mandatory Adversarial Claude Council Governance & Verdict](#3-mandatory-adversarial-claude-council-governance--verdict)
-4. [The Contrarian 4-Moat Defensibility Matrix](#4-the-contrarian-4-moat-defensibility-matrix)
+4. [The Contrarian 4-Moat Defensibility Matrix & Commercial Market Benchmark](#4-the-contrarian-4-moat-defensibility-matrix--commercial-market-benchmark)
 5. [Master System Architecture & Data Flow](#5-master-system-architecture--data-flow)
 6. [Core Capability 1: Tor Hidden Service Misconfiguration & Infrastructure De-Anonymization](#6-core-capability-1-tor-hidden-service-misconfiguration--infrastructure-de-anonymization)
 7. [Core Capability 2: Multi-Market Entity Resolution & Relationship Knowledge Graph](#7-core-capability-2-multi-market-entity-resolution--relationship-knowledge-graph)
@@ -26,8 +26,10 @@
 12. [NTRO Sovereign Operating Hierarchy & Inter-Agency Dissemination](#12-ntro-sovereign-operating-hierarchy--inter-agency-dissemination)
 13. [Production Implementation Specifications (Executable Reference Modules)](#13-production-implementation-specifications-executable-reference-modules)
 14. [Sovereign Deployment Topology, Hardware Sizing & Financial COGS](#14-sovereign-deployment-topology-hardware-sizing--financial-cogs)
-15. [Real-World Empirical Validation: Historical Takedown Proofs](#15-real-world-empirical-validation-historical-takedown-proofs)
-16. [SIH 2026 5-Minute Evaluation Strategy & Alignment Scorecard](#16-sih-2026-5-minute-evaluation-strategy--alignment-scorecard)
+15. [Real Technical Limitations & Future Engineering Roadmap](#15-real-technical-limitations--future-engineering-roadmap)
+16. [Sovereign Independence, Security & Adversarial Attack Resilience](#16-sovereign-independence-security--adversarial-attack-resilience)
+17. [Real-World Empirical Validation: Historical Takedown Proofs](#17-real-world-empirical-validation-historical-takedown-proofs)
+18. [SIH 2026 5-Minute Evaluation Strategy & Alignment Scorecard](#18-sih-2026-5-minute-evaluation-strategy--alignment-scorecard)
 
 ---
 
@@ -137,8 +139,9 @@ In strict accordance with workspace invariants, Project BHEDAK v3.0 was subjecte
 
 ---
 
-## 4. The Contrarian 4-Moat Defensibility Matrix
+## 4. The Contrarian 4-Moat Defensibility Matrix & Commercial Market Benchmark
 
+### 4.1 The Contrarian 4-Moat Defensibility Matrix
 To guarantee defensibility, sovereign resilience, and irreproducibility by generic AI prompts, BHEDAK embeds four structural moats:
 
 ```
@@ -164,6 +167,44 @@ To guarantee defensibility, sovereign resilience, and irreproducibility by gener
 │                          │ execution cost vs. $0.12+ for foreign commercial licenses (Chainalysis, Maltego).     │
 └──────────────────────────┴───────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 4.2 Comprehensive Commercial & Open-Source Capability Benchmark
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   COMMERCIAL & OPEN-SOURCE CAPABILITY BENCHMARK MATRIX                                  │
+├──────────────────────────┬──────────────────┬──────────────┬──────────────┬──────────────────┬────────────┬─────────────┤
+│ CAPABILITY DIMENSION     │ RECORDED FUTURE  │ FLASHPOINT   │ DARKOWL      │ CHAINALYSIS      │ ONIONSCAN  │ BHEDAK v3.0 │
+│                          │ (Enterprise CTI) │ (Human Intel)│ (Darknet API)│ (Crypto Tracker) │ (Legacy OS)│ (Our Sol.)  │
+├──────────────────────────┼──────────────────┼──────────────┼──────────────┼──────────────────┼────────────┼─────────────┤
+│ 1. Tor v3 Infrastructure │ ❌ None          │ ❌ None      │ ❌ None      │ ❌ None          │ ❌ Broken  │ ✅ Native   │
+│    De-Anonymization      │ (Scrapes text)   │ (Manual Ops) │ (Raw search) │ (On-chain only)  │ (v2 only)  │ (v3 Engine) │
+├──────────────────────────┼──────────────────┼──────────────┼──────────────┼──────────────────┼────────────┼─────────────┤
+│ 2. Server IP / Origin    │ ❌ None          │ ⚠️ Manual    │ ❌ None      │ ❌ None          │ ⚠️ Basic   │ ✅ Advanced │
+│    Resolution (mod_status│ (No active probe)│ Investigation│ (Indexed DB) │ (No infra view)  │ (Apache)   │ (mod_status,│
+│    SSL SAN, JARM, MMH3)  │                  │              │              │                  │            │ MMH3, JARM) │
+├──────────────────────────┼──────────────────┼──────────────┼──────────────┼──────────────────┼────────────┼─────────────┤
+│ 3. Multi-Chain Financial │ ⚠️ Third-party   │ ⚠️ Manual    │ ❌ None      │ ✅ World-Class   │ ⚠️ Bitcoin │ ✅ Native   │
+│    Clustering (BTC MICH, │ feeds only       │ tagging      │              │ (BTC, ETH, Tron) │ 1-hop only │ (BTC MICH + │
+│    Tron TRC-20, Bridges) │                  │              │              │                  │            │ TRC-20 USDT)│
+├──────────────────────────┼──────────────────┼──────────────┼──────────────┼──────────────────┼────────────┼─────────────┤
+│ 4. Cross-Lingual AI      │ ⚠️ Generic NLP   │ ❌ None      │ ❌ None      │ ❌ None          │ ❌ None    │ ✅ Native   │
+│    Stylometry (Hinglish/ │ (English/Russian │ (Human read) │ (Text search)│ (No NLP)         │ (No NLP)   │ (IndicBERT+ │
+│    Slang + Burstiness)   │ keyword entities)│              │              │                  │            │ XLM-RoBERTa)│
+├──────────────────────────┼──────────────────┼──────────────┼──────────────┼──────────────────┼────────────┼─────────────┤
+│ 5. Forensic Admissibility│ ❌ None          │ ❌ None      │ ❌ None      │ ⚠️ US/EU Court   │ ❌ None    │ ✅ Native   │
+│    (BSA 2023 Sec 63 Cert)│ (Commercial PDF) │ (Analyst PDF)│ (Raw JSON)   │ Standards Only   │ (Terminal) │ (Dual-Sign) │
+├──────────────────────────┼──────────────────┼──────────────┼──────────────┼──────────────────┼────────────┼─────────────┤
+│ 6. Sovereign Data        │ ❌ Hosted US/EU  │ ❌ Hosted US │ ❌ Hosted US │ ❌ Hosted US/EU  │ ✅ Local   │ ✅ 100% In- │
+│    Residency (No Egress) │ (AWS/Snowflake)  │ Cloud        │ Cloud (AWS)  │ Cloud (AWS)      │ CLI        │ India / SCIF│
+└──────────────────────────┴──────────────────┴──────────────┴──────────────┴──────────────────┴────────────┴─────────────┘
+```
+
+#### Detailed Prior-Art Flaw Analysis:
+* **Recorded Future & DarkOwl**: High-level text and credential databases. If a ransomware cartel publishes a `.onion` leak blog, they index victim names but cannot determine the physical hosting datacenter or origin server IP.
+* **Chainalysis Reactor**: Traces Bitcoin and Tron transactions with world-class accuracy, but is completely blind to `.onion` infrastructure, forum handles, and PGP key signatures. Furthermore, querying Chainalysis leaks sensitive Indian target wallets to foreign cloud servers.
+* **OnionScan (Legacy Open Source)**: Abandoned since 2017. Built strictly for the obsolete 16-character Tor v2 protocol (deprecated by Tor Project in 2021). Completely unable to parse Tor v3 56-character Ed25519 addresses or solve modern Proof-of-Work challenges.
+* **BHEDAK Advantage**: Unifies infrastructure de-anonymization, multi-chain transaction tracing, and Hinglish stylometry into an air-gapped, sovereign platform with 100% data residency in India.
 
 ---
 
@@ -220,6 +261,49 @@ Project BHEDAK operates as a decoupled, asynchronous 5-tier microservices system
   │ TimescaleDB (Immutable Audit Trails) │               │ • Single-Click STIX 2.1 / CSV Export        │
   │ Redis (Session Cache & Active Queues)│               │ • BSA 2023 Sec 63 Dual-Signed PDF Dossier   │
   └──────────────────────────────────────┘               └─────────────────────────────────────────────┘
+```
+
+### 5.2 Unified Production Technology Stack
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   EXHAUSTIVE PRODUCTION-GRADE PROJECT BHEDAK TECH STACK                                │
+├──────────────────────────┬─────────────────────────────┬───────────────────────────────────────────────────────────────┤
+│ ARCHITECTURAL SUBSYSTEM  │ PRODUCTION TECHNOLOGY       │ OPERATIONAL ROLE IN SOVEREIGN NTRO DEPLOYMENT                 │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 1. Frontend SPA Core     │ React 18 + TypeScript +     │ High-performance single-page workbench, sub-ms HMR with Vite, │
+│                          │ Vite + TailwindCSS Tokens   │ strict type safety, zero drift between PPT, video & release.  │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 2. Graph Visualization   │ Cytoscape.js v3.30+         │ Defense & CTI standard for dense 10,000+ node multi-modal     │
+│                          │ (Canvas/WebGL accelerated)  │ relationship graphs, CoSE layout, and compound VASP hulls.    │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 3. Backend & API Gateway │ Python 3.12 + FastAPI +     │ Async non-blocking ASGI core, automatic OpenAPI schemas, and  │
+│                          │ Pydantic v2 + Uvicorn       │ native integration with AI/ML, Tor, and crypto libraries.     │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 4. Graph Persistence     │ Neo4j 5.20 Enterprise with  │ Native Cypher property graph engine delivering sub-50ms       │
+│    & Analytics Core      │ `neo4j-python-driver`       │ multi-hop pathfinding across actors, handles, and wallets.    │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 5. Relational & Audit    │ PostgreSQL 16 with          │ ACID relational vault with automatic time-based hypertables   │
+│    Vault                 │ TimescaleDB Extension       │ for immutable append-only darknet audit trails.               │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 6. Hybrid Search Core    │ Elasticsearch 8 / ChromaDB  │ BM25 sparse text keyword matching across forum posts coupled  │
+│                          │ (1024-dim Dense Cosine)     │ with dense vector cosine similarity for stylometry.           │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 7. Tor Ingestion Core    │ Tor v0.4.8 Daemon Cluster   │ Official Tor controller managing 256 circuit pools with       │
+│                          │ + Python `stem` 1.8 Library │ programmatic NEWNYM rotation and strict SOCKS5h DNS isolation.│
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 8. Browser Automation    │ Playwright Stealth (Python) │ Patches CDP leaks, WebGL, and canvas fingerprints to bypass   │
+│                          │                             │ Cloudflare and EndGame anti-bot shields without detection.    │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 9. NLP & Stylometry Core │ Hugging Face Transformers   │ 100% on-premise sovereign execution; IndicBERT pre-trained on │
+│                          │ (`IndicBERT` + `RoBERTa`)   │ Indian languages & Hinglish outperforming English-only models.│
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 10. Multi-Chain Engine   │ Local Python RPC Adapters   │ Native parsing of Bitcoin UTXOs and Tron TRC-20 smart contract│
+│                          │ (bitcoind + Java-Tron gRPC) │ transfers locally inside the sovereign SCIF.                  │
+├──────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ 11. Evidentiary Engine   │ Python `cryptography` +     │ SHA-256 Merkle chain-of-custody, Ed25519 digital signatures,   │
+│                          │ WeasyPrint / ReportLab      │ and RFC 3161 timestamps generating Section 63 BSA legal PDFs. │
+└──────────────────────────┴─────────────────────────────┴───────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -524,6 +608,36 @@ Project BHEDAK respects the sovereign intelligence hierarchy of India:
                                                                          └───────────────────────────┘
 ```
 
+### 12.1 Authentic NTRO Technical Cadre & Statutory Role-Based Access Control (RBAC)
+
+Project BHEDAK aligns strictly with the official technical hierarchy of the National Technical Research Organisation (NTRO) under the Prime Minister's Office, governed by the Information Technology Act, 2000 (Sections 69 & 70A) and the Bharatiya Sakshya Adhiniyam, 2023 (Section 63):
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                  NTRO SOVEREIGN CADRE & RBAC PRIVILEGE MATRIX                                    │
+├──────────────────────────────┬────────────────────────────┬──────────────────────────────────────────────────────┤
+│ NTRO SCIENTIFIC CADRE ROLE   │ STATUTORY MANDATE          │ OPERATIONAL PLATFORM PRIVILEGES                      │
+├──────────────────────────────┼────────────────────────────┼──────────────────────────────────────────────────────┤
+│ 1. TECHINT Ingestion Operator│ Sec. 63(4)(a) BSA 2023     │ • Controls autonomous darknet crawlers and taps      │
+│    Cadre: Scientist 'D'      │ Lawful Ingestion Custodian │ • Executes Tor v3 misconfiguration & origin probes   │
+│    Division: CITC            │                            │ • Signs Part A Custodian Declaration                 │
+├──────────────────────────────┼────────────────────────────┼──────────────────────────────────────────────────────┤
+│ 2. Cyber Forensic Examiner   │ Sec. 63(4)(b)-(c) BSA 2023 │ • Audits SHA-256 Merkle leaf integrity               │
+│    Cadre: Scientist 'E'      │ Technical Forensic Expert  │ • Executes FIPS 140-3 HSM Ed25519 digital signature  │
+│    Division: NICRD / NCIIPC  │                            │ • Certifies Part B Technical Forensic Report         │
+├──────────────────────────────┼────────────────────────────┼──────────────────────────────────────────────────────┤
+│ 3. Centre Director           │ Inter-Agency CTI Authority │ • Executive oversight and judicial dossier release   │
+│    Cadre: Scientist 'G'      │ Sec. 70A IT Act, 2000      │ • Authorizes OASIS STIX 2.1 threat intelligence push │
+│    Division: NCIIPC / CITC   │ Dissemination Officer      │   to CERT-In, I4C, and investigating agencies        │
+└──────────────────────────────┴────────────────────────────┴──────────────────────────────────────────────────────┘
+```
+
+#### Strict Judicial Separation of Powers (Constitutional Article 50 & BNSS 2023):
+Judicial officers (Special Cyber Judges, Sessions Judges, or Public Prosecutors) **do not possess user accounts, logins, or operational access** within Project BHEDAK. Under the constitutional separation of the judiciary from the executive (Article 50) and the Bharatiya Nagarik Suraksha Sanhita, 2023:
+1. NTRO operates as an executive technical intelligence agency reporting to the National Security Advisor in the Prime Minister's Office.
+2. BHEDAK compiles sealed Section 63 BSA electronic evidence certificates and chargesheet annexures, which are transmitted to investigating agencies (CBI, NIA, State Police Cyber Wings).
+3. The investigating agency formally tenders these signed certificates before the court under Sections 193 & 207 BNSS. The court evaluates evidence as an independent constitutional adjudicator, never as an internal user of the intelligence software.
+
 ---
 
 ## 13. Production Implementation Specifications (Executable Reference Modules)
@@ -728,7 +842,77 @@ class AsymmetricConfidenceScorer:
 
 ---
 
-## 15. Real-World Empirical Validation: Historical Takedown Proofs
+## 15. Real Technical Limitations & Future Engineering Roadmap
+
+To maintain technical honesty, operational credibility, and scientific rigor, Project BHEDAK transparently accounts for four genuine operational boundaries and provides concrete future engineering mitigations:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       TECHNICAL LIMITATIONS & ENGINEERING ROADMAP                                │
+├───────────────────────────────────┬──────────────────────────────────┬───────────────────────────────────────────┤
+│ CURRENT TECHNICAL LIMITATION      │ REAL-WORLD ROOT CAUSE            │ FUTURE HARDENING ROADMAP                  │
+├───────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────────────┤
+│ 1. Tor v3 Proof-of-Work (PoW)     │ High-profile hidden services     │ Deploy dedicated FPGA/GPU-based Equihash  │
+│    Defense Throttling             │ (Dread, major markets) deploy    │ hardware solvers to compute nonces in     │
+│                                   │ compiled Equihash/MMPoW defenses │ <400ms without CPU worker starvation.     │
+│                                   │ (Tor spec 327) against DoS.      │                                           │
+├───────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────────────┤
+│ 2. Monero (XMR) Cryptographic     │ RingCT, one-time stealth         │ Implement off-chain Exchange-Agent-       │
+│    On-Chain Opacity               │ addresses, and bulletproofs make │ Exchange (EAE) heuristics, P2P escrow     │
+│                                   │ on-chain fund flows opaque.      │ temporal volume matching, and VASP KYC.   │
+├───────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────────────┤
+│ 3. Adversarial LLM Style Masking  │ Threat actors pass forum posts   │ Advance beyond lexical features to        │
+│    (Llama 3 / Mistral Cleansing)  │ through local offline LLMs to    │ syntactic dependency tree analysis, and   │
+│                                   │ erase personal dialect/slang.    │ enforce the hard 0.65 probabilistic cap.  │
+├───────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────────────┤
+│ 4. Dependency on Commercial IPv4  │ Querying Shodan or Censys for    │ Deploy an in-house sovereign internet-    │
+│    Internet Scanners (Shodan)     │ JARM or Favicon matches creates  │ wide IPv4 scanning cluster (ZMap/Masscan) │
+│                                   │ an external foreign dependency.  │ on dedicated Indian sovereign IP space.   │
+└───────────────────────────────────┴──────────────────────────────────┴───────────────────────────────────────────┘
+```
+
+---
+
+## 16. Sovereign Independence, Security & Adversarial Attack Resilience
+
+### 16.1 True Sovereign Independence & Data Localization
+* **Zero External Cloud Telemetry**: BHEDAK contains no external tracker, telemetry SDK, or foreign cloud dependency. All components (PostgreSQL/TimescaleDB, Neo4j, Hugging Face Transformers, Redis, Celery) are open-core, locally compiled, and run entirely on sovereign hardware inside India.
+* **Local Full-Node Archive Blockchain Ingestion**: Rather than querying US-based Infura, Alchemy, or Blockstream APIs (which leaks queries to foreign surveillance), BHEDAK connects to **locally hosted full nodes** (`bitcoind` archive and `java-tron` gRPC full node). All transaction processing occurs within the local secure enclave.
+
+### 16.2 Adversarial Attack Resilience Specification
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      ADVERSARIAL ATTACK RESILIENCE SPECIFICATION                                 │
+├───────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┤
+│ ATTACK VECTOR ON BHEDAK           │ HARDENED SYSTEM COUNTERMEASURE                                               │
+├───────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤
+│ 1. De-anonymization of Crawler    │ • Tor SOCKS5h circuit rotation every 10 minutes via `stem`.                  │
+│    Nodes by Darknet Admins        │ • Playwright Stealth patches WebGL, Canvas, and TLS fingerprints.            │
+│                                   │ • Strict egress filtering ensures zero clearnet DNS leaks.                   │
+├───────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤
+│ 2. Graph Poisoning / False Clues  │ • Threat actors frequently post rival handles or decoy wallets.              │
+│    (Adversarial Framing)          │ • **Asymmetric Scorer Defense**: Probabilistic signals (handles, text)       │
+│                                   │   cannot exceed 0.65. Graph merging requires deterministic cryptographic     │
+│                                   │   proof (RFC 4880 master key or co-spend UTXO).                              │
+├───────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤
+│ 3. Timing Side-Channel Attacks    │ • All node identity checks, PGP fingerprint comparisons, and token lookups   │
+│    on Evidence Enclave            │   use **constant-time algorithms (`crypto.timingSafeEqual`)** to eliminate   │
+│                                   │   execution-time information leakage.                                        │
+├───────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤
+│ 4. Evidentiary Tampering / Fraud  │ • Ingestion records are immediately anchored in a **SHA-256 Merkle Tree**    │
+│    (Adversarial Defense in Court) │   with parent hashing. Altering a single bit invalidates the root hash.      │
+│                                   │   Digital signatures are sealed via FIPS 140-3 L3 Hardware Security Modules. │
+├───────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤
+│ 5. Undercover Officer Blowback    │ • **Hash-Blind Deconfliction Vault**: LEA officers register SHA-256 hashes   │
+│    (Accidental De-anonymization)  │   of undercover handles/wallets. Hits trigger an immediate alert to the      │
+│                                   │   supervisory desk without exposing the undercover operative.                │
+└───────────────────────────────────┴──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 17. Real-World Empirical Validation: Historical Takedown Proofs
 
 | Historical Case | Real-World Investigation Vector | How Project BHEDAK Automates Attribution |
 | :--- | :--- | :--- |

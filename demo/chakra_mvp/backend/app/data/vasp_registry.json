@@ -1,0 +1,93 @@
+[
+  {
+    "name": "Binance",
+    "legal_entity": "Nest Services Limited",
+    "fiu_reg": "FIU-IND-CASP-2024-001",
+    "jurisdiction": "Offshore / Global",
+    "nodal_email": "case-inquiry@binance.com",
+    "hot_wallets": {
+      "TRON": ["TND5RzC9hZvxKqj8W8kP2qM4Y1e7uL0sK9", "TNUtR4yDk7k9L2vM8vN7aBcDeFgHiJ1k0p"],
+      "ETH": ["0x28C6c06298d514Db089934071355E5743bf21d60", "0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549"],
+      "BSC": ["0x8894E0a0c962CB723c1976a4421c95949bE2D4E3"],
+      "BTC": ["1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s", "bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h"]
+    },
+    "fuelers": {
+      "TRON": ["TFuelerBinanceTRX99281aBcDeFgHiJkLmNo"],
+      "ETH": ["0x999999BinanceFuelerGasAddress111111"]
+    }
+  },
+  {
+    "name": "CoinDCX",
+    "legal_entity": "Neblio Technologies Pvt Ltd",
+    "fiu_reg": "FIU-IND-CASP-2023-018",
+    "jurisdiction": "India",
+    "nodal_email": "compliance@coindcx.com",
+    "hot_wallets": {
+      "TRON": ["TCoinDCXHotStorage01aBcDeFgHiJkLmNoPq", "TCoinDCXHotStorage02SweepPool99281aB"],
+      "ETH": ["0x4f8a2b91c7e63d00000000000000000000000001", "0x534631Bcf33BDb069fB20A75d2791C863E115707"],
+      "POL": ["0x4f8a2b91c7e63d00000000000000000000000001"],
+      "BTC": ["bc1qcoindcxprimaryoperationalvault99281a"]
+    },
+    "fuelers": {
+      "TRON": ["TFuelerCoinDCXGasTRX11111111111111111"],
+      "ETH": ["0x111111CoinDCXFuelerGasAddress000000"]
+    }
+  },
+  {
+    "name": "WazirX",
+    "legal_entity": "Zanmai Labs Pvt Ltd",
+    "fiu_reg": "FIU-IND-CASP-2023-004",
+    "jurisdiction": "India",
+    "nodal_email": "nodal@wazirx.com",
+    "hot_wallets": {
+      "TRON": ["TWazirXOperationalHotWallet03Tron99281", "TWazirXReserveVault01TRC20USDT8821aBc"],
+      "ETH": ["0x3P3qWazirXHotStorage03Eth00000000000001"],
+      "BTC": ["3P3qWazirXHotStorage03Btc9999999999999", "bc1qwazirxoperationalstorage02btc881aB"]
+    },
+    "fuelers": {
+      "TRON": ["TWazirXFuelerGasBotTRX99281aBcDeFgHiJ"]
+    }
+  },
+  {
+    "name": "CoinSwitch",
+    "legal_entity": "Bitcipher Labs LLP",
+    "fiu_reg": "FIU-IND-CASP-2023-022",
+    "jurisdiction": "India",
+    "nodal_email": "legal@coinswitch.co",
+    "hot_wallets": {
+      "TRON": ["TCoinSwitchKuberColdVault02Tron99281a", "TCoinSwitchOperationalHot01aBcDeFgHi"],
+      "ETH": ["0x71aCoinSwitchPrimaryVaultEth00000000001"]
+    },
+    "fuelers": {
+      "TRON": ["TCoinSwitchGasFuelerTron99281aBcDeFgH"]
+    }
+  },
+  {
+    "name": "ZebPay",
+    "legal_entity": "Awlencan Innovations India Pvt Ltd",
+    "fiu_reg": "FIU-IND-CASP-2023-011",
+    "jurisdiction": "India",
+    "nodal_email": "law.enforcement@zebpay.com",
+    "hot_wallets": {
+      "TRON": ["TZebPayHotStorage01Tron99281aBcDeFgHiJ"],
+      "BTC": ["bc1qzebpayoperationalcoldvault99281aBc"]
+    },
+    "fuelers": {
+      "TRON": ["TZebPayFuelerTronBot99281aBcDeFgHiJkL"]
+    }
+  },
+  {
+    "name": "KuCoin",
+    "legal_entity": "Phemex / KuCoin India Desk",
+    "fiu_reg": "FIU-IND-CASP-2024-003",
+    "jurisdiction": "Offshore / IND Desk",
+    "nodal_email": "lawenforcement@kucoin.com",
+    "hot_wallets": {
+      "TRON": ["TKuCoinOperationalHotWallet06Tron99281"],
+      "ETH": ["0x1cKuCoinHotStorage05Eth00000000000001"]
+    },
+    "fuelers": {
+      "TRON": ["TKuCoinFuelerGasAddressTron99281aBcDe"]
+    }
+  }
+]

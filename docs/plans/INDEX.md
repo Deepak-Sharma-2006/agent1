@@ -19,4 +19,5 @@
 - **2026-09-22 13:50** | [Implementation Plan: Project CHAKRA Stage 1 Restyling, Official MHA Logo & Header Optimization](2026-09-22_chakra_stage1_header_ui_remediation_plan.md) | *Scope: CHAKRA Stage 1, MHA Logo & Navigation Overhaul*
 - **2026-09-22 14:26** | [Implementation Plan: Project CHAKRA Header Polish, Docket Deduplication, Fixed IO RBAC & Linear Stepwise Workflow](2026-09-22_chakra_linear_workflow_and_header_remediation_plan.md) | *Scope: CHAKRA Header Polish, Docket Deduplication, Fixed IO RBAC & Linear Stepwise Workflow*
 - **2026-09-22 16:40** | [Implementation Plan: Project CHAKRA Linear Workflow, Operator Stage Simulation, Bhedak Progressive Graph Synthesis & Statutory PDF Preview](2026-09-22_chakra_7_bug_remediation_and_linear_workflow_plan.md) | *Scope: CHAKRA 7-Bug Remediation, Linear Gating, Progressive Graph & Statutory PDF Previews*
+- **2026-09-22 17:10** | [Implementation Plan: Grounding CHAKRA Public Ledger Explorer with Live Mainnet Case Dockets](2026-09-22_chakra_public_ledger_explorer_live_mainnet_grounding_plan.md) | *Scope: Grounding CHAKRA Public Ledger Explorer with Live Mainnet Case Dockets*
 

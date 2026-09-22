@@ -92,8 +92,8 @@ const FALLBACK_SCENARIOS: ScenarioMetadata[] = [
     victim_loss_inr: 4500000.0,
     asset: "USDT (TRC-20)",
     network: "TRON",
-    suspect_wallet: "TXa7bK9mP3qR1sT8uV5wY0zL4e2nJ8hG6f",
-    summary: "Victim defrauded of ₹45 Lakh in a fake YouTube rating scam. Funds converted to TRC-20 USDT, hopped across 3 unhosted mule wallets, and swept into Binance Hot Wallet 14."
+    suspect_wallet: "TJQQLsfYvwK1gJyET4C7hvPdJ2YyNcAUbL",
+    summary: "Victim defrauded of ₹45 Lakh in a fake YouTube rating scam. Funds converted to TRC-20 USDT, hopped across unhosted mule wallets, and swept into Binance Hot Wallet 14."
   },
   {
     id: "CASE_2_MUM_FAKE_TRADING_APP",
@@ -105,7 +105,7 @@ const FALLBACK_SCENARIOS: ScenarioMetadata[] = [
     victim_loss_inr: 12000000.0,
     asset: "USDT (Polygon PoS)",
     network: "POL",
-    suspect_wallet: "0x71aC4e8812fB567c9d01234567890abcdef12345",
+    suspect_wallet: "0x92ab7255ace952748528678155ceae147166d8c9",
     summary: "Victim invested ₹1.2 Crore in a fraudulent VIP institutional trading app. Polygon USDT routed through peel chain and swept into CoinDCX Primary Vault."
   },
   {
@@ -118,7 +118,7 @@ const FALLBACK_SCENARIOS: ScenarioMetadata[] = [
     victim_loss_inr: 14500000.0,
     asset: "BTC",
     network: "BTC",
-    suspect_wallet: "bc1qar0s523456789abcdef0123456789abcdef01",
+    suspect_wallet: "bc1q4xurpa5v4wx5ntmznecdn6wr5cyjvtz3rvdqxg",
     summary: "Hospital database encrypted; ransom demand of 2.50 BTC. Ransomware operator peels BTC through intermediary SegWit mules before depositing into WazirX."
   }
 ];

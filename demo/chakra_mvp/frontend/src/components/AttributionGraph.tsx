@@ -15,8 +15,10 @@ import {
   Zap,
   Crosshair,
   Filter,
+  ShieldCheck,
   X
 } from "lucide-react";
+import { SovereignLedgerModal } from "./SovereignLedgerModal";
 
 interface AttributionGraphProps {
   attribution: AttributionResponse | null;
@@ -39,6 +41,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
   const isSynthesized = propIsSynthesized !== undefined ? propIsSynthesized : internalSynthesized;
   const [isSynthesizing, setIsSynthesizing] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [selectedInspectNode, setSelectedInspectNode] = useState<GraphNode | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<TransactionEdge | null>(null);
   const [isAnimatingTrace, setIsAnimatingTrace] = useState<boolean>(false);
   const [traceTelemetry, setTraceTelemetry] = useState<string | null>(null);
@@ -81,6 +84,15 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       return type === "address" ? `https://bscscan.com/address/${id}` : `https://bscscan.com/tx/${id}`;
     }
     return type === "address" ? `https://etherscan.io/address/${id}` : `https://etherscan.io/tx/${id}`;
+  };
+
+  const getExplorerName = (network?: string): string => {
+    const net = (network || attribution?.network || "TRON").toUpperCase();
+    if (net.includes("BTC")) return "Mempool.space";
+    if (net.includes("TRON")) return "Tronscan.org";
+    if (net.includes("POL")) return "Polygonscan.com";
+    if (net.includes("BSC")) return "BscScan.com";
+    return "Etherscan.io";
   };
 
   // Build Cytoscape elements Definition
@@ -952,25 +964,46 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
               {selectedNode.node_type === "VASP_HOT_WALLET" && "Centralized exchange pooled liquidity vault. Establishes institutional custody for statutory compliance."}
             </div>
 
-            <a
-              href={getExplorerUrl(selectedNode.id, "address", selectedNode.network)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="gov-btn gov-btn-outline"
-              style={{
-                width: "100%",
-                fontSize: "11px",
-                padding: "5px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "5px",
-                textDecoration: "none"
-              }}
-            >
-              <ExternalLink size={12} />
-              Open in Public Ledger Explorer
-            </a>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <a
+                href={getExplorerUrl(selectedNode.id, "address", selectedNode.network)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gov-btn gov-btn-outline"
+                id="btn-open-public-explorer"
+                style={{
+                  width: "100%",
+                  fontSize: "11px",
+                  padding: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  textDecoration: "none"
+                }}
+              >
+                <ExternalLink size={12} />
+                Open in Public Ledger Explorer ({getExplorerName(selectedNode.network)})
+              </a>
+              <button
+                type="button"
+                onClick={() => setSelectedInspectNode(selectedNode)}
+                className="gov-btn gov-btn-secondary"
+                id="btn-inspect-sovereign-calldata"
+                style={{
+                  width: "100%",
+                  fontSize: "11px",
+                  padding: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px"
+                }}
+              >
+                <ShieldCheck size={12} />
+                Inspect Sovereign Calldata & Proof
+              </button>
+            </div>
           </div>
         )}
 
@@ -1071,19 +1104,20 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               className="gov-btn gov-btn-outline"
+              id="btn-verify-edge-explorer"
               style={{
                 width: "100%",
                 fontSize: "11px",
-                padding: "5px",
+                padding: "6px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "5px",
+                gap: "6px",
                 textDecoration: "none"
               }}
             >
               <ExternalLink size={12} />
-              Inspect Transaction on Blockchain
+              Verify Transaction on {getExplorerName(selectedEdge.network)}
             </a>
           </div>
         )}
@@ -1131,6 +1165,14 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
           {attribution ? `${attribution.graph_nodes.length} Nodes • ${attribution.graph_edges.length} Edges` : "0 Nodes"}
         </span>
       </div>
+
+      {/* Sovereign Ledger Calldata & Cryptographic Proof Modal */}
+      <SovereignLedgerModal
+        isOpen={Boolean(selectedInspectNode)}
+        onClose={() => setSelectedInspectNode(null)}
+        node={selectedInspectNode}
+        attribution={attribution}
+      />
     </div>
   );
 };

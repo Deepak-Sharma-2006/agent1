@@ -38,13 +38,13 @@ def test_load_scenario():
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "LOADED"
-    assert data["suggested_request"]["suspect_wallet_address"] == "TXa7bK9mP3qR1sT8uV5wY0zL4e2nJ8hG6f"
+    assert data["suggested_request"]["suspect_wallet_address"] == "TJQQLsfYvwK1gJyET4C7hvPdJ2YyNcAUbL"
 
 def test_trace_attribution():
     req_body = {
         "sahyog_case_id": "SHG-2026-BLR-00412",
         "ncrp_complaint_id": "2026-NCRP-339182",
-        "suspect_wallet_address": "TXa7bK9mP3qR1sT8uV5wY0zL4e2nJ8hG6f",
+        "suspect_wallet_address": "TJQQLsfYvwK1gJyET4C7hvPdJ2YyNcAUbL",
         "network": "TRON",
         "reported_fraud_amount_inr": 4500000.0,
         "max_hops": 5,
@@ -108,7 +108,7 @@ def test_sahyog_notice_generation_and_dispatch():
     req_body = {
         "sahyog_case_id": "SHG-2026-DEL-IFSO-00084",
         "ncrp_complaint_id": "2026-NCRP-119283",
-        "suspect_wallet_address": "bc1qar0s523456789abcdef0123456789abcdef01",
+        "suspect_wallet_address": "bc1q4xurpa5v4wx5ntmznecdn6wr5cyjvtz3rvdqxg",
         "network": "BTC",
         "reported_fraud_amount_inr": 14500000.0,
         "max_hops": 5,
@@ -152,7 +152,7 @@ def test_pdf_endpoints():
     req_body = {
         "sahyog_case_id": "SHG-2026-BLR-00412",
         "ncrp_complaint_id": "2026-NCRP-339182",
-        "suspect_wallet_address": "TXa7bK9mP3qR1sT8uV5wY0zL4e2nJ8hG6f",
+        "suspect_wallet_address": "TJQQLsfYvwK1gJyET4C7hvPdJ2YyNcAUbL",
         "network": "TRON",
         "reported_fraud_amount_inr": 4500000.0,
         "max_hops": 5,

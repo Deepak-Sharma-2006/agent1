@@ -122,7 +122,7 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     // Verify Wallet Input & Chain Select
     const walletInput = page.locator("input.gov-input-mono");
     await expect(walletInput).toBeVisible();
-    await expect(walletInput).toHaveValue("TXa7bK9mP3qR1sT8uV5wY0zL4e2nJ8hG6f");
+    await expect(walletInput).toHaveValue("TJQQLsfYvwK1gJyET4C7hvPdJ2YyNcAUbL");
 
     // Verify Sliders
     await expect(page.locator("text=Degree-Bounded Beam Search Parameters")).toBeVisible();
@@ -340,7 +340,7 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=ACTIVE INCIDENT DOCKET")).toBeVisible();
     await expect(page.locator("text=FIR-2026-BLR-CY-00412").first()).toBeVisible();
     await expect(page.locator("text=2026-NCRP-339182").first()).toBeVisible();
-    await expect(walletInput).toHaveValue("TXa7bK9mP3qR1sT8uV5wY0zL4e2nJ8hG6f");
+    await expect(walletInput).toHaveValue("TJQQLsfYvwK1gJyET4C7hvPdJ2YyNcAUbL");
 
     // -------------------------------------------------------------------------
     // ELEMENTAL VERIFICATION 10: Zero Console Errors Invariant

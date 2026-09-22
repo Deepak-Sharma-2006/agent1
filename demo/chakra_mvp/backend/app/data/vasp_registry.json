@@ -6,7 +6,7 @@
     "jurisdiction": "Offshore / Global",
     "nodal_email": "case-inquiry@binance.com",
     "hot_wallets": {
-      "TRON": ["TND5RzC9hZvxKqj8W8kP2qM4Y1e7uL0sK9", "TNUtR4yDk7k9L2vM8vN7aBcDeFgHiJ1k0p"],
+      "TRON": ["TMuA6YqfCeX8EhbfYEg5y7S4DqzSJireY9", "TND5RzC9hZvxKqj8W8kP2qM4Y1e7uL0sK9", "TNUtR4yDk7k9L2vM8vN7aBcDeFgHiJ1k0p"],
       "ETH": ["0x28C6c06298d514Db089934071355E5743bf21d60", "0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549"],
       "BSC": ["0x8894E0a0c962CB723c1976a4421c95949bE2D4E3"],
       "BTC": ["1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s", "bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h"]
@@ -25,7 +25,7 @@
     "hot_wallets": {
       "TRON": ["TCoinDCXHotStorage01aBcDeFgHiJkLmNoPq", "TCoinDCXHotStorage02SweepPool99281aB"],
       "ETH": ["0x4f8a2b91c7e63d00000000000000000000000001", "0x534631Bcf33BDb069fB20A75d2791C863E115707"],
-      "POL": ["0x4f8a2b91c7e63d00000000000000000000000001"],
+      "POL": ["0x89e4e7578cb813fd2e9bf0daada9a72fa70aa8b5", "0x4f8a2b91c7e63d00000000000000000000000001"],
       "BTC": ["bc1qcoindcxprimaryoperationalvault99281a"]
     },
     "fuelers": {
@@ -42,7 +42,7 @@
     "hot_wallets": {
       "TRON": ["TWazirXOperationalHotWallet03Tron99281", "TWazirXReserveVault01TRC20USDT8821aBc"],
       "ETH": ["0x3P3qWazirXHotStorage03Eth00000000000001"],
-      "BTC": ["3P3qWazirXHotStorage03Btc9999999999999", "bc1qwazirxoperationalstorage02btc881aB"]
+      "BTC": ["3GjLR4wZNF71R8bQ14vkvDZiN8uD91yN4T", "3P3qWazirXHotStorage03Btc9999999999999", "bc1qwazirxoperationalstorage02btc881aB"]
     },
     "fuelers": {
       "TRON": ["TWazirXFuelerGasBotTRX99281aBcDeFgHiJ"]
@@ -56,7 +56,8 @@
     "nodal_email": "legal@coinswitch.co",
     "hot_wallets": {
       "TRON": ["TCoinSwitchKuberColdVault02Tron99281a", "TCoinSwitchOperationalHot01aBcDeFgHi"],
-      "ETH": ["0x71aCoinSwitchPrimaryVaultEth00000000001"]
+      "ETH": ["0x71aCoinSwitchPrimaryVaultEth00000000001"],
+      "BSC": ["0x8894E0a0c962CB723c1976a4421c95949bE2D4E3"]
     },
     "fuelers": {
       "TRON": ["TCoinSwitchGasFuelerTron99281aBcDeFgH"]

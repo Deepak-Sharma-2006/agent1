@@ -15,4 +15,5 @@
 - **2026-09-21 21:55** | [Project CHAKRA MVP Workflow Remediation & 5-Stage Operations Dashboard Walkthrough](2026-09-21_chakra_mvp_workflow_remediation_walkthrough.md) | *Scope: chakra_mvp_workflow_remediation*
 - **2026-09-22 14:05** | [Project CHAKRA: Stage 1 Restyling, Official MHA Logo & Header Optimization Walkthrough](2026-09-22_chakra_stage1_header_ui_remediation_walkthrough.md) | *Scope: CHAKRA Stage 1, MHA Logo & Navigation Overhaul*
 - **2026-09-22 14:35** | [Project CHAKRA: Header Polish, Docket Deduplication, Fixed IO RBAC & Linear Stepwise Workflow Walkthrough](2026-09-22_chakra_linear_workflow_and_header_remediation_walkthrough.md) | *Scope: Official Header Remediation, Docket Deduplication, Fixed IO RBAC & Linear Stepwise Workflow*
+- **2026-09-22 16:47** | [Project CHAKRA: Comprehensive 7-Bug Remediation & Linear Workflow Verification Walkthrough](2026-09-22_chakra_7_bug_remediation_and_linear_workflow_walkthrough.md) | *Scope: CHAKRA 7-Bug Remediation, Linear Gating, Progressive Graph & Statutory PDF Previews*
 

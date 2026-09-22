@@ -88,34 +88,56 @@ export const Navigation: React.FC<NavigationProps> = ({
               cursor: "pointer"
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", minWidth: 0 }}>
               <span
                 style={{
-                  fontSize: "9.5px",
+                  fontSize: "9px",
                   background: isActive ? "#E65100" : tab.isCompleted ? "#047857" : "#64748B",
                   color: "#FFFFFF",
-                  padding: "1px 6px",
+                  padding: "1px 5px",
                   borderRadius: "3px",
                   fontWeight: 800,
-                  letterSpacing: "0.3px"
+                  letterSpacing: "0.3px",
+                  flexShrink: 0
                 }}
               >
                 {tab.stepTag}
               </span>
 
-              {tab.icon}
+              <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+                {tab.icon}
+              </span>
 
-              <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: "12px", fontWeight: 700, color: isActive ? "#0B1B3D" : "#334155" }}>
+              <div style={{ textAlign: "left", minWidth: 0, overflow: "hidden", flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: isActive ? "#0B1B3D" : "#334155",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis"
+                  }}
+                  title={tab.label}
+                >
                   {tab.label}
                 </div>
-                <div style={{ fontSize: "10px", color: isActive ? "#E65100" : "#64748B" }}>
+                <div
+                  style={{
+                    fontSize: "9.5px",
+                    color: isActive ? "#E65100" : "#64748B",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis"
+                  }}
+                  title={tab.sublabel}
+                >
                   {tab.sublabel}
                 </div>
               </div>
 
               {tab.isCompleted && (
-                <CheckCircle2 size={13} color="#047857" style={{ marginLeft: "auto" }} />
+                <CheckCircle2 size={12} color="#047857" style={{ marginLeft: "auto", flexShrink: 0 }} />
               )}
             </div>
           </button>

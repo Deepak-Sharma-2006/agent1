@@ -76,15 +76,14 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="gov-emblem-block">
             <div className="gov-emblem-svg">
               <img
-                src="/emblem_india.svg"
-                alt="Emblem of India"
-                style={{ height: "54px", width: "auto" }}
+                src="/mha_logo.png"
+                alt="Ministry of Home Affairs Logo"
+                style={{ height: "48px", width: "auto", objectFit: "contain" }}
               />
             </div>
 
             <div className="gov-agency-titles">
               <h1>भारतीय साइबर अपराध समन्वय केंद्र (I4C) | INDIAN CYBER CRIME COORDINATION CENTRE</h1>
-              <h2>गृह मंत्रालय, भारत सरकार • MINISTRY OF HOME AFFAIRS, GOVERNMENT OF INDIA</h2>
               <h3>
                 प्रोजेक्ट चक्र : वीएएसपी अन्वेषण व सम्मन पोर्टल • PROJECT CHAKRA : AUTOMATED VASP ATTRIBUTION SYSTEM
               </h3>

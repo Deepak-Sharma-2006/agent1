@@ -79,11 +79,53 @@ const FALLBACK_USERS: AuthUser[] = [
   }
 ];
 
+const FALLBACK_SCENARIOS: ScenarioMetadata[] = [
+  {
+    id: "CASE_1_BLR_TELEGRAM_TASK",
+    title: "Bengaluru Telegram Task-Based Investment Scam",
+    ncrp_id: "2026-NCRP-339182",
+    fir_no: "FIR-2026-BLR-CY-00412",
+    police_station: "Cyber Crime Police Station, Bengaluru City",
+    state_ut: "Karnataka",
+    victim_loss_inr: 4500000.0,
+    asset: "USDT (TRC-20)",
+    network: "TRON",
+    suspect_wallet: "TXa7bK9mP3qR1sT8uV5wY0zL4e2nJ8hG6f",
+    summary: "Victim defrauded of ₹45 Lakh in a fake YouTube rating scam. Funds converted to TRC-20 USDT, hopped across 3 unhosted mule wallets, and swept into Binance Hot Wallet 14."
+  },
+  {
+    id: "CASE_2_MUM_FAKE_TRADING_APP",
+    title: "Mumbai Fake Institutional Stock Trading App Fraud",
+    ncrp_id: "2026-NCRP-448102",
+    fir_no: "FIR-2026-MUM-CY-01189",
+    police_station: "Cyber Crime Police Station, Bandra Kurla Complex (BKC)",
+    state_ut: "Maharashtra",
+    victim_loss_inr: 12000000.0,
+    asset: "USDT (Polygon PoS)",
+    network: "POL",
+    suspect_wallet: "0x71aC4e8812fB567c9d01234567890abcdef12345",
+    summary: "Victim invested ₹1.2 Crore in a fraudulent VIP institutional trading app. Polygon USDT routed through peel chain and swept into CoinDCX Primary Vault."
+  },
+  {
+    id: "CASE_3_DEL_HOSPITAL_RANSOMWARE",
+    title: "Delhi Critical Infrastructure Hospital Ransomware Extortion",
+    ncrp_id: "2026-NCRP-119283",
+    fir_no: "FIR-2026-DEL-IFSO-00084",
+    police_station: "Special Cell (IFSO), Delhi Police",
+    state_ut: "Delhi",
+    victim_loss_inr: 14500000.0,
+    asset: "BTC",
+    network: "BTC",
+    suspect_wallet: "bc1qar0s523456789abcdef0123456789abcdef01",
+    summary: "Hospital database encrypted; ransom demand of 2.50 BTC. Ransomware operator peels BTC through intermediary SegWit mules before depositing into WazirX."
+  }
+];
+
 export const App: React.FC = () => {
   const [allUsers, setAllUsers] = useState<AuthUser[]>(FALLBACK_USERS);
   const [currentUser, setCurrentUser] = useState<AuthUser>(FALLBACK_USERS[0]);
-  const [scenarios, setScenarios] = useState<ScenarioMetadata[]>([]);
-  const [selectedScenario, setSelectedScenario] = useState<ScenarioMetadata | null>(null);
+  const [scenarios, setScenarios] = useState<ScenarioMetadata[]>(FALLBACK_SCENARIOS);
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioMetadata | null>(FALLBACK_SCENARIOS[0]);
   const [activeAttribution, setActiveAttribution] = useState<AttributionResponse | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>("intake");
 
@@ -115,29 +157,28 @@ export const App: React.FC = () => {
           setCurrentUser(usersData[0]);
         }
 
-        setScenarios(scenariosData);
-        if (scenariosData.length > 0) {
-          const firstScenario = scenariosData[0];
-          setSelectedScenario(firstScenario);
+        const effectiveScenarios = scenariosData && scenariosData.length > 0 ? scenariosData : FALLBACK_SCENARIOS;
+        setScenarios(effectiveScenarios);
+        const firstScenario = effectiveScenarios[0];
+        setSelectedScenario(firstScenario);
 
-          // Trigger initial automated trace for Bengaluru Task Fraud
-          setIsTracing(true);
-          try {
-            const initialResult = await api.traceAttribution({
-              sahyog_case_id: firstScenario.fir_no,
-              ncrp_complaint_id: firstScenario.ncrp_id,
-              suspect_wallet_address: firstScenario.suspect_wallet,
-              network: firstScenario.network,
-              reported_fraud_amount_inr: firstScenario.victim_loss_inr,
-              max_hops: 5,
-              dust_threshold_usd: 10.0
-            });
-            setActiveAttribution(initialResult);
-          } catch (err: unknown) {
-            console.error("Initial trace failed:", err);
-          } finally {
-            setIsTracing(false);
-          }
+        // Trigger initial automated trace for Bengaluru Task Fraud
+        setIsTracing(true);
+        try {
+          const initialResult = await api.traceAttribution({
+            sahyog_case_id: firstScenario.fir_no,
+            ncrp_complaint_id: firstScenario.ncrp_id,
+            suspect_wallet_address: firstScenario.suspect_wallet,
+            network: firstScenario.network,
+            reported_fraud_amount_inr: firstScenario.victim_loss_inr,
+            max_hops: 5,
+            dust_threshold_usd: 10.0
+          });
+          setActiveAttribution(initialResult);
+        } catch (err: unknown) {
+          console.error("Initial trace failed:", err);
+        } finally {
+          setIsTracing(false);
         }
       } catch (e: unknown) {
         console.error("Initialization error:", e);
@@ -293,6 +334,50 @@ export const App: React.FC = () => {
           {/* STAGE 1: Case Intake & NCRP Incident Docket */}
           {activeTab === "intake" && (
             <div className="chakra-stage-grid-intake">
+              {/* Active Incident Docket & Quick-Dispatch Bar (Full-Width Top Bar) */}
+              <div className="gov-active-docket-bar">
+                <div className="gov-docket-bar-left">
+                  <span style={{ fontSize: "10px", fontWeight: 800, background: "#0B1B3D", color: "#FFFFFF", padding: "2px 7px", borderRadius: "3px" }}>
+                    ACTIVE INCIDENT DOCKET
+                  </span>
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#0B1B3D" }}>
+                    FIR: <span style={{ fontFamily: "var(--font-mono)" }}>{activeAttribution?.sahyog_case_id || selectedScenario?.fir_no || "FIR-2026-BLR-CY-00412"}</span>
+                  </span>
+                  <span style={{ color: "#94A3B8" }}>•</span>
+                  <span style={{ fontSize: "11.5px", color: "#334155" }}>
+                    NCRP: <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{activeAttribution?.ncrp_complaint_id || selectedScenario?.ncrp_id || "2026-NCRP-339182"}</span>
+                  </span>
+                  <span style={{ color: "#94A3B8" }}>•</span>
+                  <span style={{ fontSize: "11.5px", color: "#334155" }}>
+                    Attributed VASP: <b style={{ color: "#047857" }}>{activeAttribution?.nearest_vasp || "Binance (Hot Wallet 14)"}</b>
+                  </span>
+                  <span style={{ color: "#94A3B8" }}>•</span>
+                  <span style={{ fontSize: "11.5px", color: "#334155" }}>
+                    Confidence: <b style={{ color: isHighConfidence ? "#047857" : "#D97706" }}>
+                      {activeAttribution ? `${activeAttribution.confidence_score.toFixed(1)} / 100 (${activeAttribution.confidence_tier})` : "94.0 / 100 (Tier 1: High Confidence)"}
+                    </b>
+                  </span>
+                </div>
+
+                <div className="gov-docket-bar-actions">
+                  <button
+                    className="gov-btn gov-btn-primary"
+                    onClick={() => setActiveTab("graph")}
+                    style={{ padding: "6px 12px", fontSize: "11.5px" }}
+                  >
+                    <Share2 size={13} /> Open Multi-Chain Graph Canvas (Stage 2) <ArrowRight size={13} />
+                  </button>
+                  <button
+                    className="gov-btn gov-btn-saffron"
+                    onClick={() => setActiveTab("statutory")}
+                    style={{ padding: "6px 12px", fontSize: "11.5px" }}
+                  >
+                    <Scale size={13} /> View Statutory Sanctions (Stage 5) <ArrowRight size={13} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Balanced 2-Column Workstation */}
               <CaseIntakePanel
                 scenarios={scenarios}
                 selectedScenario={selectedScenario}
@@ -301,115 +386,6 @@ export const App: React.FC = () => {
                 onOpenAdHocModal={() => setShowAdHocModal(true)}
                 isTracing={isTracing}
               />
-
-              {/* Stage 1 Executive Incident Briefing Card */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div className="gov-card">
-                  <div className="gov-card-header">
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <FileText size={16} color="#0B1B3D" />
-                      <span className="gov-card-title">National Cyber Crime Operations Briefing</span>
-                    </div>
-                    <span style={{ fontSize: "10.5px", background: "#EFF6FF", color: "#1E40AF", padding: "2px 8px", borderRadius: "4px", fontWeight: 700 }}>
-                      MHA SAHYOG v2 READY
-                    </span>
-                  </div>
-
-                  <div className="gov-card-body" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.6" }}>
-                      Welcome to <b>Project CHAKRA</b> (Centralized High-Confidence Automated Khata Resolution & Attribution), the national cryptocurrency intelligence and automated summons generation system developed for the <b>Ministry of Home Affairs (MHA)</b> and <b>Indian Cyber Crime Coordination Centre (I4C)</b>.
-                    </div>
-
-                    {activeAttribution ? (
-                      <div style={{ background: "#F8FAFC", border: "1px solid #CBD5E1", borderRadius: "6px", padding: "14px" }}>
-                        <div style={{ fontSize: "11px", fontWeight: 800, color: "#0B1B3D", marginBottom: "8px" }}>
-                          CURRENT ACTIVE INVESTIGATION DOCKET:
-                        </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "11.5px" }}>
-                          <div>
-                            <span style={{ color: "#64748B" }}>FIR Docket:</span><br />
-                            <b style={{ color: "#0B1B3D" }}>{activeAttribution.sahyog_case_id}</b>
-                          </div>
-                          <div>
-                            <span style={{ color: "#64748B" }}>NCRP Portal ID:</span><br />
-                            <b style={{ color: "#0B1B3D" }}>{activeAttribution.ncrp_complaint_id}</b>
-                          </div>
-                          <div>
-                            <span style={{ color: "#64748B" }}>Attributed VASP:</span><br />
-                            <b style={{ color: "#047857" }}>{activeAttribution.nearest_vasp || "Unknown"}</b>
-                          </div>
-                          <div>
-                            <span style={{ color: "#64748B" }}>Confidence Score:</span><br />
-                            <b style={{ color: isHighConfidence ? "#047857" : "#D97706" }}>
-                              {activeAttribution.confidence_score.toFixed(1)} / 100 ({activeAttribution.confidence_tier})
-                            </b>
-                          </div>
-                        </div>
-
-                        <div style={{ marginTop: "14px", display: "flex", gap: "10px" }}>
-                          <button
-                            className="gov-btn gov-btn-primary"
-                            onClick={() => setActiveTab("graph")}
-                            style={{ flex: 1, padding: "9px" }}
-                          >
-                            <Share2 size={14} /> Open Multi-Chain Graph Canvas (Stage 2) <ArrowRight size={14} />
-                          </button>
-                          <button
-                            className="gov-btn gov-btn-saffron"
-                            onClick={() => setActiveTab("statutory")}
-                            style={{ flex: 1, padding: "9px" }}
-                          >
-                            <Scale size={14} /> View Statutory Sanctions (Stage 5) <ArrowRight size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ background: "#F1F5F9", padding: "14px", borderRadius: "6px", fontSize: "11.5px", color: "#64748B" }}>
-                        Select an authentic Indian cybercrime case preset on the left or enter a suspect wallet address to initiate degree-bounded traversal.
-                      </div>
-                    )}
-
-                    {/* Operational Capabilities Grid */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "4px" }}>
-                      <div style={{ border: "1px solid #E2E8F0", borderRadius: "6px", padding: "10px" }}>
-                        <div style={{ fontWeight: 700, fontSize: "11.5px", color: "#0B1B3D", display: "flex", alignItems: "center", gap: "4px" }}>
-                          <Share2 size={13} color="#1E3A8A" /> Multi-Chain Graph Traversal
-                        </div>
-                        <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "2px" }}>
-                          Degree-Bounded Beam Search across TRON, ETH, BTC, and BSC with algorithmic peeling chain detection.
-                        </div>
-                      </div>
-
-                      <div style={{ border: "1px solid #E2E8F0", borderRadius: "6px", padding: "10px" }}>
-                        <div style={{ fontWeight: 700, fontSize: "11.5px", color: "#0B1B3D", display: "flex", alignItems: "center", gap: "4px" }}>
-                          <Flame size={13} color="#E65100" /> Internal VASP Sweep Forensics
-                        </div>
-                        <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "2px" }}>
-                          Proves centralized exchange custody via &gt;95% balance zeroing, &lt;120m latency, and fueler gas proofs.
-                        </div>
-                      </div>
-
-                      <div style={{ border: "1px solid #E2E8F0", borderRadius: "6px", padding: "10px" }}>
-                        <div style={{ fontWeight: 700, fontSize: "11.5px", color: "#0B1B3D", display: "flex", alignItems: "center", gap: "4px" }}>
-                          <Award size={13} color="#047857" /> 4-Pillar Explainable Scorer
-                        </div>
-                        <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "2px" }}>
-                          Deterministic formula transparently maps to statutory tiers under Section 94 and 106 BNSS 2023.
-                        </div>
-                      </div>
-
-                      <div style={{ border: "1px solid #E2E8F0", borderRadius: "6px", padding: "10px" }}>
-                        <div style={{ fontWeight: 700, fontSize: "11.5px", color: "#0B1B3D", display: "flex", alignItems: "center", gap: "4px" }}>
-                          <Scale size={13} color="#7C3AED" /> Court-Admissible BSA Evidence
-                        </div>
-                        <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "2px" }}>
-                          Generates SHA-256 Merkle inclusion proofs and Section 63(4) BSA 2023 digital certificates.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 

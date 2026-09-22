@@ -37,9 +37,18 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await fontLargeBtn.click();
     await fontNormalBtn.click();
 
+    // Verify Official MHA Logo
+    const mhaLogo = page.locator('img[src="/mha_logo.png"]');
+    await expect(mhaLogo).toBeVisible();
+
     // -------------------------------------------------------------------------
-    // ELEMENTAL VERIFICATION 2: 5-Stage Navigation Bar Structure
+    // ELEMENTAL VERIFICATION 2: 5-Stage Navigation Bar Structure (Zero Scrollbar)
     // -------------------------------------------------------------------------
+    const navBar = page.locator(".gov-navigation-bar");
+    await expect(navBar).toBeVisible();
+    const isOverflowing = await navBar.evaluate((el) => el.scrollWidth > el.clientWidth);
+    expect(isOverflowing).toBe(false);
+
     const tabIntake = page.locator("#tab-stage-intake");
     const tabGraph = page.locator("#tab-stage-graph");
     const tabSweep = page.locator("#tab-stage-sweep");
@@ -99,6 +108,14 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=Case Intake & Intelligence Ingestion")).toBeVisible();
     await expect(page.locator("text=NCRP / 1930 PORTAL INTEGRATED")).toBeVisible();
 
+    // Verify Active Incident Docket Quick-Dispatch Bar
+    await expect(page.locator(".gov-active-docket-bar")).toBeVisible();
+    await expect(page.locator("text=ACTIVE INCIDENT DOCKET")).toBeVisible();
+
+    // Verify Balanced 2-Column Workstation
+    await expect(page.locator(".chakra-intake-two-column")).toBeVisible();
+    await expect(page.locator("text=Target Suspect Address & Algorithmic Attribution Engine")).toBeVisible();
+
     // Verify Preset Selection
     const scenarioSelect = page.locator("select.gov-select").first();
     await expect(scenarioSelect).toBeVisible();
@@ -121,6 +138,13 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=Ad-Hoc Investigative Flow Ingestion:")).toBeVisible();
     await expect(page.locator("text=Custom Graph Injection JSON Payload:")).toBeVisible();
     await page.locator(".gov-modal-footer button:has-text('Cancel')").click();
+
+    // Execute Automated Attribution and verify transition state
+    const executeBtn = page.locator("button:has-text('Execute Automated Attribution')");
+    await expect(executeBtn).toBeVisible();
+    await executeBtn.click();
+    await expect(page.locator(".gov-active-docket-bar")).toBeVisible();
+    await page.waitForTimeout(800);
 
     // -------------------------------------------------------------------------
     // ELEMENTAL VERIFICATION 5: Stage 2 - Multi-Chain Attribution Canvas
@@ -209,7 +233,7 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     // -------------------------------------------------------------------------
     // Cycle back to Stage 1 and assert data was preserved
     await tabIntake.click();
-    await expect(page.locator("text=CURRENT ACTIVE INVESTIGATION DOCKET:")).toBeVisible();
+    await expect(page.locator("text=ACTIVE INCIDENT DOCKET")).toBeVisible();
     await expect(page.locator("text=FIR-2026-BLR-CY-00412").first()).toBeVisible();
     await expect(page.locator("text=2026-NCRP-339182").first()).toBeVisible();
     await expect(walletInput).toHaveValue("TXa7bK9mP3qR1sT8uV5wY0zL4e2nJ8hG6f");

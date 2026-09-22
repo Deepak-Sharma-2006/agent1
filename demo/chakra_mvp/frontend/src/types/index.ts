@@ -204,3 +204,11 @@ export type ActiveTab =
   | "scoring"
   | "statutory";
 
+export interface InvestigationProgressState {
+  step1_intake: boolean;
+  step2_graph: boolean;
+  step3_sweep: boolean;
+  step4_scoring: boolean;
+  step5_statutory: boolean;
+}
+

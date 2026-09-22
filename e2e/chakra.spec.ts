@@ -29,20 +29,21 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=भारतीय साइबर अपराध समन्वय केंद्र (I4C)")).toBeVisible();
     await expect(page.locator("text=CONFIDENTIAL // LAW ENFORCEMENT SENSITIVE")).toBeVisible();
 
-    // Verify Accessibility Font Zoom
-    const fontNormalBtn = page.locator(".gov-btn-text-size", { hasText: "A" }).first();
-    const fontLargeBtn = page.locator(".gov-btn-text-size", { hasText: "A+" });
-    await expect(fontNormalBtn).toBeVisible();
-    await expect(fontLargeBtn).toBeVisible();
-    await fontLargeBtn.click();
-    await fontNormalBtn.click();
+    // Verify Official Full Form of CHAKRA (Centralized High-Confidence Automated Khata Resolution & Attribution)
+    await expect(page.locator("text=Centralized High-Confidence Automated Khata Resolution & Attribution")).toBeVisible();
 
-    // Verify Official MHA Logo
+    // Verify Official Seamless MHA Logo
     const mhaLogo = page.locator('img[src="/mha_logo.png"]');
     await expect(mhaLogo).toBeVisible();
 
+    // Verify Telemetry Status Bar (Deduplicated, zero repetition of FIR/NCRP in header)
+    const statusBar = page.locator(".gov-status-bar");
+    await expect(statusBar.locator("text=OPERATIONAL DESK:")).toBeVisible();
+    await expect(statusBar.locator("text=CYBER CRIME INVESTIGATION DESK (IO / CCPS)")).toBeVisible();
+    await expect(statusBar.locator("text=SOVEREIGN ENGINE: DEGREE-BOUNDED BEAM SEARCH")).toBeVisible();
+
     // -------------------------------------------------------------------------
-    // ELEMENTAL VERIFICATION 2: 5-Stage Navigation Bar Structure (Zero Scrollbar)
+    // ELEMENTAL VERIFICATION 2: 5-Stage Navigation Bar Structure (Zero Scrollbar Grid)
     // -------------------------------------------------------------------------
     const navBar = page.locator(".gov-navigation-bar");
     await expect(navBar).toBeVisible();
@@ -62,11 +63,12 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(tabStatutory).toBeVisible();
 
     // -------------------------------------------------------------------------
-    // ELEMENTAL VERIFICATION 3: 5-Tier Statutory RBAC Modal & Role Switching
+    // ELEMENTAL VERIFICATION 3: Statutory RBAC Matrix & Fixed IO Persona Highlighting
     // -------------------------------------------------------------------------
     const rbacBadgeBtn = page.locator(".gov-rbac-badge-btn");
     await expect(rbacBadgeBtn).toBeVisible();
     await expect(rbacBadgeBtn).toContainText("INVESTIGATING_OFFICER");
+    await expect(rbacBadgeBtn).toContainText("Insp. Rajesh Kumar");
     await rbacBadgeBtn.click();
 
     // Verify Modal Header & Active Session Banner
@@ -77,27 +79,16 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=CLASS-3 DSC ATTACHED")).toBeVisible();
     await expect(page.locator("text=mTLS Handshake Verified")).toBeVisible();
 
-    // Verify all 5 Tiers in RBAC Table
-    await expect(page.getByRole("cell", { name: "Investigating Officer (IO /" })).toBeVisible();
+    // Verify Designated IO Role Highlighting & Non-Switchable Matrix
+    await expect(page.locator("text=★ DESIGNATED OPERATIONAL DESK (CHAKRA MVP)")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Investigating Officer (IO / SHO)" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "Supervisory Officer (DySP /" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "Forensic Examiner (NCFL /" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "Cyber Threat Analyst (TAU /" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "VASP Nodal Compliance" })).toBeVisible();
 
-    // Switch Role to Supervisory Officer (DySP Vikramaditya Rao)
-    await page.getByRole("cell", { name: "Supervisory Officer (DySP /" }).click();
-    await expect(rbacBadgeBtn).toContainText("SUPERVISORY_OFFICER");
-    await expect(rbacBadgeBtn).toContainText("Vikramaditya Rao");
-
-    // Reopen and Switch Role to Forensic Examiner (Dr. Sunita Deshmukh)
-    await rbacBadgeBtn.click();
-    await page.getByRole("cell", { name: "Forensic Examiner (NCFL /" }).click();
-    await expect(rbacBadgeBtn).toContainText("FORENSIC_EXAMINER");
-    await expect(rbacBadgeBtn).toContainText("Dr. Sunita Deshmukh");
-
-    // Reopen and Switch back to Primary Desk: Investigating Officer (Insp. Rajesh Kumar)
-    await rbacBadgeBtn.click();
-    await page.getByRole("cell", { name: "Investigating Officer (IO /" }).click();
+    // Close RBAC Console Modal and verify role remains anchored to Investigating Officer
+    await page.locator("button:has-text('Close RBAC Console')").click();
     await expect(rbacBadgeBtn).toContainText("INVESTIGATING_OFFICER");
     await expect(rbacBadgeBtn).toContainText("Insp. Rajesh Kumar");
 
@@ -107,6 +98,7 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await tabIntake.click();
     await expect(page.locator("text=Case Intake & Intelligence Ingestion")).toBeVisible();
     await expect(page.locator("text=NCRP / 1930 PORTAL INTEGRATED")).toBeVisible();
+
 
     // Verify Active Incident Docket Quick-Dispatch Bar
     await expect(page.locator(".gov-active-docket-bar")).toBeVisible();
@@ -152,11 +144,15 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await tabGraph.click();
     await expect(page.locator(".cytoscape-viewport-canvas")).toBeVisible();
     await expect(page.locator("text=Interactive Multi-Chain Attribution Canvas")).toBeVisible();
-    await expect(page.locator("text=Suspect Seed")).toBeVisible();
-    await expect(page.locator("text=Unhosted Mule")).toBeVisible();
-    await expect(page.locator("text=Candidate Deposit")).toBeVisible();
-    await expect(page.locator("text=VASP Hot Storage")).toBeVisible();
-    await expect(page.locator("text=Sweep Consolidation")).toBeVisible();
+    await expect(page.getByText("Suspect Seed", { exact: true })).toBeVisible();
+    await expect(page.getByText("Unhosted Mule", { exact: true })).toBeVisible();
+    await expect(page.getByText("Candidate Deposit", { exact: true })).toBeVisible();
+    await expect(page.getByText("VASP Hot Storage", { exact: true })).toBeVisible();
+    await expect(page.getByText("Sweep Consolidation", { exact: true })).toBeVisible();
+
+    // Verify Stepwise Action Dock: Proceed to Stage 3
+    const proceedToSweepBtn = page.locator("button:has-text('Proceed to Stage 3: Sweep Forensics & Fueler Lab')");
+    await expect(proceedToSweepBtn).toBeVisible();
 
     // -------------------------------------------------------------------------
     // ELEMENTAL VERIFICATION 6: Stage 3 - Sweep Forensics & Fueler Lab
@@ -182,6 +178,10 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=Gas Sponsor (VASP Fueler Address):")).toBeVisible();
     await expect(page.locator("text=Cryptographic Merkle Tree Evidence Root (BSA Section 63(4)):")).toBeVisible();
 
+    // Verify Stepwise Action Dock: Proceed to Stage 4
+    const proceedToScoringBtn = page.locator("button:has-text('Proceed to Stage 4: 4-Pillar Confidence Scorer')");
+    await expect(proceedToScoringBtn).toBeVisible();
+
     // -------------------------------------------------------------------------
     // ELEMENTAL VERIFICATION 7: Stage 4 - 4-Pillar Explainable Confidence Scorer
     // -------------------------------------------------------------------------
@@ -198,10 +198,15 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=4. Volume Continuity")).toBeVisible();
     await expect(page.locator("text=Judicial Admissibility & Cross-Examination Resilience (Section 63(4) BSA 2023):")).toBeVisible();
 
+    // Verify Stepwise Action Dock: Proceed to Stage 5
+    const proceedToStatutoryBtn = page.locator("button:has-text('Proceed to Stage 5: SAHYOG Sanctions & Court Docket')");
+    await expect(proceedToStatutoryBtn).toBeVisible();
+
     // -------------------------------------------------------------------------
     // ELEMENTAL VERIFICATION 8: Stage 5 - SAHYOG Sanctions & Court Docket
     // -------------------------------------------------------------------------
     await tabStatutory.click();
+
     await expect(page.locator("text=Stage 5: SAHYOG Statutory Sanctions & Court Docket")).toBeVisible();
     await expect(page.locator("text=SECTIONS 94, 106 & 107 BNSS 2023 • SEC 63 BSA 2023")).toBeVisible();
     await expect(page.locator("text=Case Docket Identifier")).toBeVisible();

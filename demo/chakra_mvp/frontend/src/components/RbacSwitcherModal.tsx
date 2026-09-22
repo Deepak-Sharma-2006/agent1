@@ -208,7 +208,7 @@ export const RbacSwitcherModal: React.FC<RbacSwitcherModalProps> = ({
                 Enterprise Statutory RBAC Privilege Matrix
               </div>
               <div style={{ fontSize: "11px", color: "#64748B" }}>
-                Click any role row below to switch active session:
+                Statutory Governance Architecture (MVP Tailored Exclusively for Investigating Officer Desk):
               </div>
             </div>
 
@@ -219,28 +219,36 @@ export const RbacSwitcherModal: React.FC<RbacSwitcherModalProps> = ({
                     <th style={{ padding: "8px 12px", fontWeight: 700, color: "#334155" }}>Statutory Role</th>
                     <th style={{ padding: "8px 12px", fontWeight: 700, color: "#334155" }}>Statutory Mandate</th>
                     <th style={{ padding: "8px 12px", fontWeight: 700, color: "#334155" }}>Authorized Privileges</th>
-                    <th style={{ padding: "8px 12px", fontWeight: 700, color: "#334155" }}>Access Tier</th>
+                    <th style={{ padding: "8px 12px", fontWeight: 700, color: "#334155" }}>Access Tier & MVP Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Role 1: INVESTIGATING_OFFICER */}
+                  {/* Role 1: INVESTIGATING_OFFICER - PRIMARY DESIGNATED ROLE */}
                   <tr
-                    onClick={() => {
-                      const user = users.find((u) => u.role === "INVESTIGATING_OFFICER") || users[0];
-                      onSelectUser(user);
-                      onClose();
-                    }}
                     style={{
-                      borderBottom: "1px solid #E2E8F0",
-                      background: currentUser.role === "INVESTIGATING_OFFICER" ? "#FEF3C7" : "#FFFFFF",
-                      cursor: "pointer",
-                      transition: "background 0.15s ease"
+                      borderBottom: "1px solid #CBD5E1",
+                      background: "#FEF3C7",
+                      borderLeft: "4px solid #D97706"
                     }}
                   >
                     <td style={{ padding: "10px 12px", fontWeight: 700, color: "#0B1B3D" }}>
-                      Investigating Officer (IO / SHO)<br />
-                      <span style={{ fontSize: "9.5px", color: currentUser.role === "INVESTIGATING_OFFICER" ? "#92400E" : "#64748B" }}>
-                        Insp. Rajesh Kumar (Delhi Police) {currentUser.role === "INVESTIGATING_OFFICER" && "• [ACTIVE SESSION]"}
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        <span>Investigating Officer (IO / SHO)</span>
+                        <span
+                          style={{
+                            background: "#0B1B3D",
+                            color: "#FBBF24",
+                            padding: "2px 6px",
+                            borderRadius: "3px",
+                            fontSize: "9px",
+                            fontWeight: 800
+                          }}
+                        >
+                          ★ DESIGNATED OPERATIONAL DESK (CHAKRA MVP)
+                        </span>
+                      </div>
+                      <span style={{ fontSize: "9.5px", color: "#92400E", fontWeight: 600 }}>
+                        Insp. Rajesh Kumar (Delhi Police) • [AUTHENTICATED ACTIVE OPERATOR]
                       </span>
                     </td>
                     <td style={{ padding: "10px 12px", color: "#334155" }}>
@@ -250,140 +258,141 @@ export const RbacSwitcherModal: React.FC<RbacSwitcherModalProps> = ({
                       Ingest NCRP dockets, run automated degree-bounded beam search, inspect candidate deposit wallets, issue Class-3 DSC 24-hr debit freezes to VASPs.
                     </td>
                     <td style={{ padding: "10px 12px" }}>
-                      <span style={{ background: "#EFF6FF", color: "#1E40AF", border: "1px solid #BFDBFE", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px" }}>
-                        TIER 1 (OPERATIONS)
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ background: "#EFF6FF", color: "#1E40AF", border: "1px solid #BFDBFE", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px", width: "fit-content" }}>
+                          TIER 1 (OPERATIONS)
+                        </span>
+                        <span style={{ fontSize: "9px", color: "#047857", fontWeight: 700 }}>
+                          ACTIVE LIVE SESSION
+                        </span>
+                      </div>
                     </td>
                   </tr>
 
                   {/* Role 2: SUPERVISORY_OFFICER */}
                   <tr
-                    onClick={() => {
-                      const user = users.find((u) => u.role === "SUPERVISORY_OFFICER") || users[1];
-                      onSelectUser(user);
-                      onClose();
-                    }}
                     style={{
                       borderBottom: "1px solid #E2E8F0",
-                      background: currentUser.role === "SUPERVISORY_OFFICER" ? "#FEF3C7" : "#FFFFFF",
-                      cursor: "pointer",
-                      transition: "background 0.15s ease"
+                      background: "#FAFAFA",
+                      opacity: 0.85
                     }}
                   >
-                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "#0B1B3D" }}>
+                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "#334155" }}>
                       Supervisory Officer (DySP / ACP)<br />
-                      <span style={{ fontSize: "9.5px", color: currentUser.role === "SUPERVISORY_OFFICER" ? "#92400E" : "#64748B" }}>
-                        Vikramaditya Rao, DySP (CID Karnataka) {currentUser.role === "SUPERVISORY_OFFICER" && "• [ACTIVE SESSION]"}
+                      <span style={{ fontSize: "9.5px", color: "#64748B" }}>
+                        Vikramaditya Rao, DySP (CID Karnataka)
                       </span>
                     </td>
-                    <td style={{ padding: "10px 12px", color: "#334155" }}>
+                    <td style={{ padding: "10px 12px", color: "#475569" }}>
                       Sec 107 BNSS Attachment Sanctioning Authority
                     </td>
-                    <td style={{ padding: "10px 12px", color: "#475569" }}>
+                    <td style={{ padding: "10px 12px", color: "#64748B" }}>
                       Supervise cross-district investigations, sanction formal court asset attachment orders (&gt;₹25L), review cross-state escalation logs.
                     </td>
                     <td style={{ padding: "10px 12px" }}>
-                      <span style={{ background: "#F0FDF4", color: "#166534", border: "1px solid #BBF7D0", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px" }}>
-                        TIER 2 (SUPERVISORY)
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ background: "#F0FDF4", color: "#166534", border: "1px solid #BBF7D0", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px", width: "fit-content" }}>
+                          TIER 2 (SUPERVISORY)
+                        </span>
+                        <span style={{ fontSize: "9px", color: "#64748B" }}>
+                          Oversight View Only
+                        </span>
+                      </div>
                     </td>
                   </tr>
 
                   {/* Role 3: FORENSIC_EXAMINER */}
                   <tr
-                    onClick={() => {
-                      const user = users.find((u) => u.role === "FORENSIC_EXAMINER") || users[2];
-                      onSelectUser(user);
-                      onClose();
-                    }}
                     style={{
                       borderBottom: "1px solid #E2E8F0",
-                      background: currentUser.role === "FORENSIC_EXAMINER" ? "#FEF3C7" : "#FFFFFF",
-                      cursor: "pointer",
-                      transition: "background 0.15s ease"
+                      background: "#FAFAFA",
+                      opacity: 0.85
                     }}
                   >
-                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "#0B1B3D" }}>
+                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "#334155" }}>
                       Forensic Examiner (NCFL / I4C)<br />
-                      <span style={{ fontSize: "9.5px", color: currentUser.role === "FORENSIC_EXAMINER" ? "#92400E" : "#64748B" }}>
-                        Dr. Sunita Deshmukh (NCFL) {currentUser.role === "FORENSIC_EXAMINER" && "• [ACTIVE SESSION]"}
+                      <span style={{ fontSize: "9.5px", color: "#64748B" }}>
+                        Dr. Sunita Deshmukh (NCFL)
                       </span>
                     </td>
-                    <td style={{ padding: "10px 12px", color: "#334155" }}>
+                    <td style={{ padding: "10px 12px", color: "#475569" }}>
                       Sec 63(4) BSA 2023 Digital Evidence Certifier
                     </td>
-                    <td style={{ padding: "10px 12px", color: "#475569" }}>
+                    <td style={{ padding: "10px 12px", color: "#64748B" }}>
                       Audit SHA-256 Merkle inclusion proofs, verify raw calldata and internal sweep transactions, sign Part B BSA 63(4) court certificate.
                     </td>
                     <td style={{ padding: "10px 12px" }}>
-                      <span style={{ background: "#ECFDF5", color: "#047857", border: "1px solid #A7F3D0", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px" }}>
-                        TIER 1 (FORENSICS)
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ background: "#ECFDF5", color: "#047857", border: "1px solid #A7F3D0", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px", width: "fit-content" }}>
+                          TIER 1 (FORENSICS)
+                        </span>
+                        <span style={{ fontSize: "9px", color: "#64748B" }}>
+                          NCFL Audit Scope
+                        </span>
+                      </div>
                     </td>
                   </tr>
 
                   {/* Role 4: THREAT_ANALYST */}
                   <tr
-                    onClick={() => {
-                      const user = users.find((u) => u.role === "THREAT_ANALYST") || users[3];
-                      onSelectUser(user);
-                      onClose();
-                    }}
                     style={{
                       borderBottom: "1px solid #E2E8F0",
-                      background: currentUser.role === "THREAT_ANALYST" ? "#FEF3C7" : "#FFFFFF",
-                      cursor: "pointer",
-                      transition: "background 0.15s ease"
+                      background: "#FAFAFA",
+                      opacity: 0.85
                     }}
                   >
-                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "#0B1B3D" }}>
+                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "#334155" }}>
                       Cyber Threat Analyst (TAU / I4C)<br />
-                      <span style={{ fontSize: "9.5px", color: currentUser.role === "THREAT_ANALYST" ? "#92400E" : "#64748B" }}>
-                        Amitabh Sen (Threat Analytics Unit) {currentUser.role === "THREAT_ANALYST" && "• [ACTIVE SESSION]"}
+                      <span style={{ fontSize: "9.5px", color: "#64748B" }}>
+                        Amitabh Sen (Threat Analytics Unit)
                       </span>
                     </td>
-                    <td style={{ padding: "10px 12px", color: "#334155" }}>
+                    <td style={{ padding: "10px 12px", color: "#475569" }}>
                       Sec 69 IT Act 2000 CTI & Syndicate Profiler
                     </td>
-                    <td style={{ padding: "10px 12px", color: "#475569" }}>
+                    <td style={{ padding: "10px 12px", color: "#64748B" }}>
                       Aggregate macro mule networks across multiple state police dockets, identify overseas laundering syndicates, export OASIS STIX 2.1 intelligence.
                     </td>
                     <td style={{ padding: "10px 12px" }}>
-                      <span style={{ background: "#F5F3FF", color: "#6D28D9", border: "1px solid #DDD6FE", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px" }}>
-                        TIER 2 (ANALYTICS)
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ background: "#F5F3FF", color: "#6D28D9", border: "1px solid #DDD6FE", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px", width: "fit-content" }}>
+                          TIER 2 (ANALYTICS)
+                        </span>
+                        <span style={{ fontSize: "9px", color: "#64748B" }}>
+                          CTI Syndicate Scope
+                        </span>
+                      </div>
                     </td>
                   </tr>
 
                   {/* Role 5: VASP_NODAL_OFFICER */}
                   <tr
-                    onClick={() => {
-                      const user = users.find((u) => u.role === "VASP_NODAL_OFFICER") || users[4];
-                      onSelectUser(user);
-                      onClose();
-                    }}
                     style={{
-                      background: currentUser.role === "VASP_NODAL_OFFICER" ? "#FEF3C7" : "#FFFFFF",
-                      cursor: "pointer",
-                      transition: "background 0.15s ease"
+                      background: "#FAFAFA",
+                      opacity: 0.85
                     }}
                   >
-                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "#0B1B3D" }}>
+                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "#334155" }}>
                       VASP Nodal Compliance Officer<br />
-                      <span style={{ fontSize: "9.5px", color: currentUser.role === "VASP_NODAL_OFFICER" ? "#92400E" : "#64748B" }}>
-                        Nodal Compliance Desk (FIU-IND Reg Exchange) {currentUser.role === "VASP_NODAL_OFFICER" && "• [ACTIVE SESSION]"}
+                      <span style={{ fontSize: "9.5px", color: "#64748B" }}>
+                        Nodal Compliance Desk (FIU-IND Reg Exchange)
                       </span>
                     </td>
-                    <td style={{ padding: "10px 12px", color: "#334155" }}>
+                    <td style={{ padding: "10px 12px", color: "#475569" }}>
                       PMLA 2002 & Sec 106 BNSS Statutory Compliance
                     </td>
-                    <td style={{ padding: "10px 12px", color: "#475569" }}>
+                    <td style={{ padding: "10px 12px", color: "#64748B" }}>
                       Receive SAHYOG API v2 encrypted statutory orders, execute 24-hr emergency debit freezes on candidate deposit wallets, issue confirmation tickets.
                     </td>
                     <td style={{ padding: "10px 12px" }}>
-                      <span style={{ background: "#FFFBEB", color: "#B45309", border: "1px solid #FDE68A", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px" }}>
-                        TIER 3 (EXTERNAL VASP)
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ background: "#FFFBEB", color: "#B45309", border: "1px solid #FDE68A", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "9.5px", width: "fit-content" }}>
+                          TIER 3 (EXTERNAL VASP)
+                        </span>
+                        <span style={{ fontSize: "9px", color: "#64748B" }}>
+                          External Gateway Scope
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 </tbody>

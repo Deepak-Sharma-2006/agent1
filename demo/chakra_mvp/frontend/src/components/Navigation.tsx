@@ -1,5 +1,5 @@
 import React from "react";
-import type { ActiveTab } from "../types";
+import type { ActiveTab, InvestigationProgressState } from "../types";
 import {
   FileText,
   Share2,
@@ -13,6 +13,7 @@ import {
 interface NavigationProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
+  progress: InvestigationProgressState;
   hasAttribution: boolean;
   isHighConfidence: boolean;
 }
@@ -20,6 +21,7 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   onSelectTab,
+  progress,
   hasAttribution,
   isHighConfidence
 }) => {
@@ -29,7 +31,9 @@ export const Navigation: React.FC<NavigationProps> = ({
     label: string;
     sublabel: string;
     icon: React.ReactNode;
+    isLocked: boolean;
     isCompleted: boolean;
+    lockReason?: string;
   }> = [
     {
       key: "intake",
@@ -37,7 +41,8 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "Case Intake & NCRP Docket",
       sublabel: "FIR & Suspect Ingestion",
       icon: <FileText size={15} />,
-      isCompleted: hasAttribution
+      isLocked: false,
+      isCompleted: progress.step1_intake
     },
     {
       key: "graph",
@@ -45,7 +50,9 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "Multi-Chain Attribution Canvas",
       sublabel: "Degree-Bounded Graph",
       icon: <Share2 size={15} />,
-      isCompleted: hasAttribution
+      isLocked: !progress.step1_intake && !hasAttribution,
+      isCompleted: progress.step2_graph,
+      lockReason: "Requires Stage 1 Beam Search Attribution Execution"
     },
     {
       key: "sweep",
@@ -53,7 +60,9 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "Sweep Forensics & Fueler Lab",
       sublabel: "VASP Custody Verification",
       icon: <Flame size={15} />,
-      isCompleted: hasAttribution
+      isLocked: (!progress.step1_intake && !hasAttribution) || !progress.step2_graph,
+      isCompleted: progress.step3_sweep,
+      lockReason: "Requires Stage 2 Graph Traversal Verification"
     },
     {
       key: "scoring",
@@ -61,7 +70,9 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "4-Pillar Confidence Scorer",
       sublabel: "Explainable Admissibility",
       icon: <Award size={15} />,
-      isCompleted: hasAttribution
+      isLocked: (!progress.step1_intake && !hasAttribution) || !progress.step3_sweep,
+      isCompleted: progress.step4_scoring,
+      lockReason: "Requires Stage 3 Sweep Forensics Verification"
     },
     {
       key: "statutory",
@@ -69,7 +80,9 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "SAHYOG Sanctions & Court Docket",
       sublabel: "Sec 106 BNSS & BSA Certs",
       icon: <Scale size={15} />,
-      isCompleted: isHighConfidence
+      isLocked: (!progress.step1_intake && !hasAttribution) || !progress.step4_scoring || !isHighConfidence,
+      isCompleted: progress.step5_statutory,
+      lockReason: !isHighConfidence ? "Requires Stage 4 Admissibility Score (≥85%)" : "Requires Stage 4 Admissibility Audit"
     }
   ];
 
@@ -82,17 +95,24 @@ export const Navigation: React.FC<NavigationProps> = ({
             key={tab.key}
             id={`tab-stage-${tab.key}`}
             className={`gov-nav-tab ${isActive ? "active" : ""}`}
-            onClick={() => onSelectTab(tab.key)}
+            onClick={() => {
+              if (!tab.isLocked) {
+                onSelectTab(tab.key);
+              }
+            }}
+            disabled={tab.isLocked}
             style={{
               position: "relative",
-              cursor: "pointer"
+              cursor: tab.isLocked ? "not-allowed" : "pointer",
+              opacity: tab.isLocked ? 0.45 : 1
             }}
+            title={tab.isLocked ? `Locked: ${tab.lockReason}` : tab.label}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", minWidth: 0 }}>
               <span
                 style={{
                   fontSize: "9px",
-                  background: isActive ? "#E65100" : tab.isCompleted ? "#047857" : "#64748B",
+                  background: tab.isLocked ? "#94A3B8" : isActive ? "#E65100" : tab.isCompleted ? "#047857" : "#64748B",
                   color: "#FFFFFF",
                   padding: "1px 5px",
                   borderRadius: "3px",
@@ -113,7 +133,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   style={{
                     fontSize: "11px",
                     fontWeight: 700,
-                    color: isActive ? "#0B1B3D" : "#334155",
+                    color: tab.isLocked ? "#94A3B8" : isActive ? "#0B1B3D" : "#334155",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis"
@@ -125,7 +145,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <div
                   style={{
                     fontSize: "9.5px",
-                    color: isActive ? "#E65100" : "#64748B",
+                    color: tab.isLocked ? "#CBD5E1" : isActive ? "#E65100" : "#64748B",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis"
@@ -136,9 +156,11 @@ export const Navigation: React.FC<NavigationProps> = ({
                 </div>
               </div>
 
-              {tab.isCompleted && (
+              {tab.isLocked ? (
+                <Lock size={12} color="#94A3B8" style={{ marginLeft: "auto", flexShrink: 0 }} />
+              ) : tab.isCompleted ? (
                 <CheckCircle2 size={12} color="#047857" style={{ marginLeft: "auto", flexShrink: 0 }} />
-              )}
+              ) : null}
             </div>
           </button>
         );
@@ -146,3 +168,4 @@ export const Navigation: React.FC<NavigationProps> = ({
     </nav>
   );
 };
+

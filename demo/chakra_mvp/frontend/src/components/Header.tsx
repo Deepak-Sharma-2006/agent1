@@ -21,12 +21,6 @@ export const Header: React.FC<HeaderProps> = ({
   isResetting
 }) => {
   const [showRbacModal, setShowRbacModal] = useState<boolean>(false);
-  const [textSize, setTextSize] = useState<"normal" | "large">("normal");
-
-  const handleTextZoom = (mode: "normal" | "large") => {
-    setTextSize(mode);
-    document.documentElement.style.fontSize = mode === "large" ? "17px" : "16px";
-  };
 
   return (
     <>
@@ -34,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* 1. National Tricolor Strip */}
         <div className="gov-national-strip" />
 
-        {/* 2. Top Administrative & Accessibility Utility Bar */}
+        {/* 2. Top Administrative & Security Utility Bar */}
         <div className="gov-utility-bar">
           <div className="gov-utility-left">
             <span style={{ fontWeight: 700, color: "#0F2942" }}>भारत सरकार | Government of India</span>
@@ -47,26 +41,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="gov-utility-right">
-            <div className="gov-accessibility-controls">
-              <span>Font:</span>
-              <button
-                className="gov-btn-text-size"
-                onClick={() => handleTextZoom("normal")}
-                style={{ fontWeight: textSize === "normal" ? 700 : 400 }}
-              >
-                A
-              </button>
-              <button
-                className="gov-btn-text-size"
-                onClick={() => handleTextZoom("large")}
-                style={{ fontWeight: textSize === "large" ? 700 : 400 }}
-              >
-                A+
-              </button>
-            </div>
-            <span>|</span>
             <span style={{ fontSize: "10.5px", color: "#64748B" }}>
               FIU-IND CASP Gateway: <b style={{ color: "#059669" }}>ONLINE</b>
+            </span>
+            <span>•</span>
+            <span style={{ fontSize: "10.5px", color: "#64748B" }}>
+              Enclave Mode: <b style={{ color: "#0284C7" }}>SOVEREIGN LOCAL AIR-GAP</b>
             </span>
           </div>
         </div>
@@ -78,14 +58,14 @@ export const Header: React.FC<HeaderProps> = ({
               <img
                 src="/mha_logo.png"
                 alt="Ministry of Home Affairs Logo"
-                style={{ height: "48px", width: "auto", objectFit: "contain" }}
+                style={{ height: "44px", width: "auto", objectFit: "contain", mixBlendMode: "multiply", background: "transparent" }}
               />
             </div>
 
             <div className="gov-agency-titles">
               <h1>भारतीय साइबर अपराध समन्वय केंद्र (I4C) | INDIAN CYBER CRIME COORDINATION CENTRE</h1>
               <h3>
-                प्रोजेक्ट चक्र : वीएएसपी अन्वेषण व सम्मन पोर्टल • PROJECT CHAKRA : AUTOMATED VASP ATTRIBUTION SYSTEM
+                प्रोजेक्ट चक्र : केंद्रीकृत उच्च-विश्वसनीयता स्वचालित खाता समाधान व एट्रिब्यूशन • PROJECT CHAKRA : Centralized High-Confidence Automated Khata Resolution & Attribution
               </h3>
             </div>
           </div>
@@ -107,40 +87,40 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            <button className="gov-rbac-badge-btn" onClick={() => setShowRbacModal(true)}>
+            <button
+              className="gov-rbac-badge-btn"
+              onClick={() => setShowRbacModal(true)}
+              title="View Statutory Role-Based Access Control (RBAC) Matrix (Sections 94 & 106 BNSS 2023)"
+            >
               <Shield size={13} />
               <span>
-                ROLE: <b>{currentUser.role}</b> ({currentUser.name})
+                ROLE: <b>INVESTIGATING_OFFICER</b> (Insp. Rajesh Kumar)
               </span>
-              {currentUser.has_dsc_token && (
-                <span style={{ background: "#059669", color: "#FFFFFF", padding: "1px 4px", borderRadius: "3px", fontSize: "9px" }}>
-                  DSC
-                </span>
-              )}
+              <span style={{ background: "#059669", color: "#FFFFFF", padding: "1px 4px", borderRadius: "3px", fontSize: "9px" }}>
+                DSC
+              </span>
             </button>
           </div>
         </div>
 
-        {/* 4. Sub-Navigation / Operational Context Bar */}
+        {/* 4. Operational Telemetry & Sovereign Engine Status Bar (Deduplicated from case incident card) */}
         <div className="gov-status-bar">
           <div className="gov-status-chips">
             <div className="gov-chip">
-              <span style={{ color: "#94A3B8" }}>CASE DOCKET:</span>
-              <b style={{ color: "#FFFFFF", fontFamily: "var(--font-mono)" }}>
-                {activeAttribution?.sahyog_case_id || "SHG-2026-DEL-IFSO-00084"}
+              <span style={{ color: "#94A3B8" }}>OPERATIONAL DESK:</span>
+              <b style={{ color: "#FFFFFF" }}>
+                CYBER CRIME INVESTIGATION DESK (IO / CCPS)
               </b>
-            </div>
-            <span>|</span>
-            <div className="gov-chip">
-              <span style={{ color: "#94A3B8" }}>NCRP COMPLAINT:</span>
-              <span style={{ color: "#F8FAFC", fontFamily: "var(--font-mono)" }}>
-                {activeAttribution?.ncrp_complaint_id || "2026-NCRP-339182"}
-              </span>
             </div>
             <span>|</span>
             <div className="gov-chip">
               <span style={{ color: "#94A3B8" }}>STATION:</span>
               <span style={{ color: "#F8FAFC" }}>{currentUser.station}</span>
+            </div>
+            <span>|</span>
+            <div className="gov-chip">
+              <span style={{ color: "#94A3B8" }}>JURISDICTION:</span>
+              <span style={{ color: "#F8FAFC" }}>{currentUser.state_ut}</span>
             </div>
           </div>
 
@@ -151,6 +131,10 @@ export const Header: React.FC<HeaderProps> = ({
             <span>•</span>
             <span style={{ color: "#94A3B8", fontSize: "11px" }}>
               LATENCY: <b style={{ color: "#F59E0B" }}>{activeAttribution ? `${activeAttribution.processing_time_ms.toFixed(2)} ms` : "< 1.0 ms"}</b>
+            </span>
+            <span>•</span>
+            <span style={{ color: "#94A3B8", fontSize: "11px" }}>
+              SECURITY: <b style={{ color: "#38BDF8" }}>TLS 1.3 / mTLS</b>
             </span>
           </div>
         </div>

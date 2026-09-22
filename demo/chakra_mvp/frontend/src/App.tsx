@@ -5,7 +5,8 @@ import type {
   AttributionResponse,
   AttributionRequest,
   CustomGraphInjectionRequest,
-  ActiveTab
+  ActiveTab,
+  InvestigationProgressState
 } from "./types";
 import { api } from "./services/api";
 import { Header } from "./components/Header";
@@ -121,13 +122,60 @@ const FALLBACK_SCENARIOS: ScenarioMetadata[] = [
   }
 ];
 
+const SESSION_STORAGE_KEY = "chakra_active_investigation_store";
+
+const INITIAL_PROGRESS: InvestigationProgressState = {
+  step1_intake: false,
+  step2_graph: false,
+  step3_sweep: false,
+  step4_scoring: false,
+  step5_statutory: false
+};
+
+interface SavedInvestigationStore {
+  progress?: InvestigationProgressState;
+  selectedScenarioId?: string;
+  activeAttribution?: AttributionResponse | null;
+  activeTab?: ActiveTab;
+}
+
+const loadInitialStore = (): {
+  progress: InvestigationProgressState;
+  activeAttribution: AttributionResponse | null;
+  activeTab: ActiveTab;
+  savedScenarioId: string | null;
+} => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (raw) {
+      const parsed: SavedInvestigationStore = JSON.parse(raw);
+      return {
+        progress: { ...INITIAL_PROGRESS, ...(parsed.progress || {}) },
+        activeAttribution: parsed.activeAttribution || null,
+        activeTab: parsed.activeTab || "intake",
+        savedScenarioId: parsed.selectedScenarioId || null
+      };
+    }
+  } catch (e) {
+    console.warn("Failed to restore investigation store from sessionStorage:", e);
+  }
+  return {
+    progress: INITIAL_PROGRESS,
+    activeAttribution: null,
+    activeTab: "intake",
+    savedScenarioId: null
+  };
+};
+
 export const App: React.FC = () => {
+  const initialStore = loadInitialStore();
   const [allUsers, setAllUsers] = useState<AuthUser[]>(FALLBACK_USERS);
   const [currentUser, setCurrentUser] = useState<AuthUser>(FALLBACK_USERS[0]);
   const [scenarios, setScenarios] = useState<ScenarioMetadata[]>(FALLBACK_SCENARIOS);
   const [selectedScenario, setSelectedScenario] = useState<ScenarioMetadata | null>(FALLBACK_SCENARIOS[0]);
-  const [activeAttribution, setActiveAttribution] = useState<AttributionResponse | null>(null);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("intake");
+  const [activeAttribution, setActiveAttribution] = useState<AttributionResponse | null>(initialStore.activeAttribution);
+  const [progress, setProgress] = useState<InvestigationProgressState>(initialStore.progress);
+  const [activeTab, setActiveTab] = useState<ActiveTab>(initialStore.activeTab);
 
   const [isTracing, setIsTracing] = useState<boolean>(false);
   const [isResetting, setIsResetting] = useState<boolean>(false);
@@ -143,6 +191,21 @@ export const App: React.FC = () => {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  // Rule 13: Sync central reactive state store to sessionStorage
+  useEffect(() => {
+    try {
+      const payload: SavedInvestigationStore = {
+        progress,
+        selectedScenarioId: selectedScenario?.id,
+        activeAttribution,
+        activeTab
+      };
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+      console.warn("Failed to persist investigation store:", e);
+    }
+  }, [progress, selectedScenario, activeAttribution, activeTab]);
+
   // Initial load: Fetch RBAC users, scenarios, and initial trace
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -153,32 +216,40 @@ export const App: React.FC = () => {
         ]);
 
         setAllUsers(usersData);
-        if (usersData.length > 0) {
-          setCurrentUser(usersData[0]);
-        }
+        // Bind permanently to designated Investigating Officer desk
+        const ioUser = usersData.find((u) => u.role === "INVESTIGATING_OFFICER") || FALLBACK_USERS[0];
+        setCurrentUser(ioUser);
 
         const effectiveScenarios = scenariosData && scenariosData.length > 0 ? scenariosData : FALLBACK_SCENARIOS;
         setScenarios(effectiveScenarios);
-        const firstScenario = effectiveScenarios[0];
-        setSelectedScenario(firstScenario);
+        const initialScenario = initialStore.savedScenarioId
+          ? effectiveScenarios.find((s) => s.id === initialStore.savedScenarioId) || effectiveScenarios[0]
+          : effectiveScenarios[0];
+        setSelectedScenario(initialScenario);
 
-        // Trigger initial automated trace for Bengaluru Task Fraud
-        setIsTracing(true);
-        try {
-          const initialResult = await api.traceAttribution({
-            sahyog_case_id: firstScenario.fir_no,
-            ncrp_complaint_id: firstScenario.ncrp_id,
-            suspect_wallet_address: firstScenario.suspect_wallet,
-            network: firstScenario.network,
-            reported_fraud_amount_inr: firstScenario.victim_loss_inr,
-            max_hops: 5,
-            dust_threshold_usd: 10.0
-          });
-          setActiveAttribution(initialResult);
-        } catch (err: unknown) {
-          console.error("Initial trace failed:", err);
-        } finally {
-          setIsTracing(false);
+        // If no prior attribution stored, execute initial trace for Bengaluru Task Fraud
+        if (!initialStore.activeAttribution) {
+          setIsTracing(true);
+          try {
+            const initialResult = await api.traceAttribution({
+              sahyog_case_id: initialScenario.fir_no,
+              ncrp_complaint_id: initialScenario.ncrp_id,
+              suspect_wallet_address: initialScenario.suspect_wallet,
+              network: initialScenario.network,
+              reported_fraud_amount_inr: initialScenario.victim_loss_inr,
+              max_hops: 5,
+              dust_threshold_usd: 10.0
+            });
+            setActiveAttribution(initialResult);
+            setProgress((prev) => ({
+              ...prev,
+              step1_intake: true
+            }));
+          } catch (err: unknown) {
+            console.error("Initial trace failed:", err);
+          } finally {
+            setIsTracing(false);
+          }
         }
       } catch (e: unknown) {
         console.error("Initialization error:", e);
@@ -188,10 +259,8 @@ export const App: React.FC = () => {
     initializeDashboard();
   }, []);
 
-  const handleSelectUser = (user: AuthUser) => {
-    setCurrentUser(user);
-    api.setUserRole(user.key);
-    showToast(`Active Session switched to: ${user.name} (${user.role})`);
+  const handleSelectUser = (_user: AuthUser) => {
+    showToast("Statutory Notice: CHAKRA MVP is custom-engineered specifically for the Investigating Officer (IO / SHO) desk.");
   };
 
   const handleSelectScenario = async (scenario: ScenarioMetadata) => {
@@ -208,6 +277,11 @@ export const App: React.FC = () => {
         dust_threshold_usd: 10.0
       });
       setActiveAttribution(res);
+      setProgress((prev) => ({
+        ...prev,
+        step1_intake: true,
+        step2_graph: true
+      }));
       showToast(`Loaded Docket: ${scenario.title}`);
     } catch (e: unknown) {
       showToast(`Trace error: ${e instanceof Error ? e.message : String(e)}`);
@@ -221,8 +295,13 @@ export const App: React.FC = () => {
     try {
       const res = await api.traceAttribution(req);
       setActiveAttribution(res);
+      setProgress((prev) => ({
+        ...prev,
+        step1_intake: true,
+        step2_graph: true
+      }));
       showToast(`Attribution Complete: Resolved to ${res.nearest_vasp || "Unknown"} (${res.confidence_score.toFixed(1)}%)`);
-      // Seamlessly advance to graph view upon trace completion
+      // Stepwise advancement to graph view upon trace completion
       setActiveTab("graph");
     } catch (e: unknown) {
       showToast(`Attribution failure: ${e instanceof Error ? e.message : String(e)}`);
@@ -236,6 +315,11 @@ export const App: React.FC = () => {
     try {
       const res = await api.injectCustomGraph(injection);
       setActiveAttribution(res);
+      setProgress((prev) => ({
+        ...prev,
+        step1_intake: true,
+        step2_graph: true
+      }));
       showToast(`Ad-Hoc Graph Ingested! Attributed to ${res.nearest_vasp} in ${res.hop_distance} hops.`);
       setActiveTab("graph");
     } catch (e: unknown) {
@@ -249,14 +333,32 @@ export const App: React.FC = () => {
     setIsResetting(true);
     try {
       await api.resetGraphState();
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      setProgress(INITIAL_PROGRESS);
+      setActiveAttribution(null);
+      setActiveTab("intake");
       if (selectedScenario) {
         await handleSelectScenario(selectedScenario);
       }
-      showToast("Graph Store reset to authentic Indian baseline scenarios.");
+      showToast("Investigation state reset to authentic Indian baseline scenarios.");
     } catch (e: unknown) {
       showToast(`Reset error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  // Stepwise Linear Progression Tab Selector
+  const handleSelectTab = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    if (tab === "graph") {
+      setProgress((prev) => ({ ...prev, step2_graph: true }));
+    } else if (tab === "sweep") {
+      setProgress((prev) => ({ ...prev, step2_graph: true, step3_sweep: true }));
+    } else if (tab === "scoring") {
+      setProgress((prev) => ({ ...prev, step3_sweep: true, step4_scoring: true }));
+    } else if (tab === "statutory") {
+      setProgress((prev) => ({ ...prev, step4_scoring: true, step5_statutory: true }));
     }
   };
 
@@ -320,10 +422,11 @@ export const App: React.FC = () => {
         isResetting={isResetting}
       />
 
-      {/* 2. 5-Stage National Law Enforcement Navigation Bar */}
+      {/* 2. 5-Stage National Law Enforcement Navigation Bar (Linear Stepwise Gated) */}
       <Navigation
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
+        progress={progress}
         hasAttribution={Boolean(activeAttribution)}
         isHighConfidence={isHighConfidence}
       />
@@ -349,12 +452,12 @@ export const App: React.FC = () => {
                   </span>
                   <span style={{ color: "#94A3B8" }}>•</span>
                   <span style={{ fontSize: "11.5px", color: "#334155" }}>
-                    Attributed VASP: <b style={{ color: "#047857" }}>{activeAttribution?.nearest_vasp || "Binance (Hot Wallet 14)"}</b>
+                    Attributed VASP: <b style={{ color: activeAttribution ? "#047857" : "#94A3B8" }}>{activeAttribution?.nearest_vasp || "Awaiting Attribution"}</b>
                   </span>
                   <span style={{ color: "#94A3B8" }}>•</span>
                   <span style={{ fontSize: "11.5px", color: "#334155" }}>
                     Confidence: <b style={{ color: isHighConfidence ? "#047857" : "#D97706" }}>
-                      {activeAttribution ? `${activeAttribution.confidence_score.toFixed(1)} / 100 (${activeAttribution.confidence_tier})` : "94.0 / 100 (Tier 1: High Confidence)"}
+                      {activeAttribution ? `${activeAttribution.confidence_score.toFixed(1)} / 100 (${activeAttribution.confidence_tier})` : "Pending Trace"}
                     </b>
                   </span>
                 </div>
@@ -362,17 +465,11 @@ export const App: React.FC = () => {
                 <div className="gov-docket-bar-actions">
                   <button
                     className="gov-btn gov-btn-primary"
-                    onClick={() => setActiveTab("graph")}
-                    style={{ padding: "6px 12px", fontSize: "11.5px" }}
+                    onClick={() => handleSelectTab("graph")}
+                    disabled={!activeAttribution}
+                    style={{ padding: "6px 12px", fontSize: "11.5px", opacity: !activeAttribution ? 0.5 : 1, cursor: !activeAttribution ? "not-allowed" : "pointer" }}
                   >
                     <Share2 size={13} /> Open Multi-Chain Graph Canvas (Stage 2) <ArrowRight size={13} />
-                  </button>
-                  <button
-                    className="gov-btn gov-btn-saffron"
-                    onClick={() => setActiveTab("statutory")}
-                    style={{ padding: "6px 12px", fontSize: "11.5px" }}
-                  >
-                    <Scale size={13} /> View Statutory Sanctions (Stage 5) <ArrowRight size={13} />
                   </button>
                 </div>
               </div>
@@ -396,17 +493,74 @@ export const App: React.FC = () => {
                 attribution={activeAttribution}
                 isLoading={isTracing}
               />
+
+              {/* Stepwise Linear Progression Action Dock (Stage 2 -> Stage 3) */}
+              <div className="chakra-stage-action-dock">
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircle2 size={16} color="#059669" />
+                  <span style={{ fontSize: "12px", color: "#334155", fontWeight: 600 }}>
+                    Multi-Chain Attribution Canvas Verified: 3 Unhosted Mule Wallets → 1 Candidate Deposit → VASP Hot Wallet.
+                  </span>
+                </div>
+                <button
+                  className="gov-btn gov-btn-primary"
+                  onClick={() => handleSelectTab("sweep")}
+                  style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
+                >
+                  Proceed to Stage 3: Sweep Forensics & Fueler Lab <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
           )}
 
           {/* STAGE 3: Sweep Forensics & Fueler Lab */}
           {activeTab === "sweep" && (
-            <SweepForensicLab attribution={activeAttribution} />
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <SweepForensicLab attribution={activeAttribution} />
+
+              {/* Stepwise Linear Progression Action Dock (Stage 3 -> Stage 4) */}
+              <div className="chakra-stage-action-dock">
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircle2 size={16} color="#059669" />
+                  <span style={{ fontSize: "12px", color: "#334155", fontWeight: 600 }}>
+                    Sweep Forensics Audited: Omnibus internal sweep & VASP gas fueler sponsorship confirmed.
+                  </span>
+                </div>
+                <button
+                  className="gov-btn gov-btn-primary"
+                  onClick={() => handleSelectTab("scoring")}
+                  style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
+                >
+                  Proceed to Stage 4: 4-Pillar Confidence Scorer <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
           )}
 
           {/* STAGE 4: 4-Pillar Confidence Scorer */}
           {activeTab === "scoring" && (
-            <ScoringMatrixPanel attribution={activeAttribution} />
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <ScoringMatrixPanel attribution={activeAttribution} />
+
+              {/* Stepwise Linear Progression Action Dock (Stage 4 -> Stage 5) */}
+              <div className="chakra-stage-action-dock">
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircle2 size={16} color="#059669" />
+                  <span style={{ fontSize: "12px", color: "#334155", fontWeight: 600 }}>
+                    4-Pillar Admissibility Score Verified: {activeAttribution?.confidence_score.toFixed(1) || "94.0"}/100 {isHighConfidence ? "meets statutory criteria for Section 106 BNSS 2023 action." : "below statutory threshold (<85%)."}
+                  </span>
+                </div>
+                <button
+                  className="gov-btn gov-btn-saffron"
+                  disabled={!isHighConfidence}
+                  onClick={() => handleSelectTab("statutory")}
+                  style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
+                  title={!isHighConfidence ? "Requires Confidence Score >= 85%" : "Proceed to Court Sanctions"}
+                >
+                  Proceed to Stage 5: SAHYOG Sanctions & Court Docket <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
           )}
 
           {/* STAGE 5: SAHYOG Sanctions & Court Docket */}

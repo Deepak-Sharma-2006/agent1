@@ -500,3 +500,19 @@ body {
   justify-content: flex-end;
   gap: 10px;
 }
+
+/* 10. Stepwise Linear Action Dock (Rule 14 Component Shell Anchor) */
+.chakra-stage-action-dock {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: #FFFFFF;
+  border: 1px solid var(--gov-border);
+  border-left: 4px solid var(--gov-navy);
+  border-radius: 6px;
+  margin-top: 14px;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: 12px;
+}

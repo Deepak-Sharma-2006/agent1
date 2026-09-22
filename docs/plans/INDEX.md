@@ -17,3 +17,5 @@
 - **2026-09-21 21:44** | [Implementation Plan: Project CHAKRA Deficiencies Remediation & Government Operations Dashboard](2026-09-21_chakra_mvp_workflow_remediation_plan.md) | *Scope: CHAKRA MVP & 5-Stage Dashboard Overhaul*
 - **2026-09-21 20:37** | [Implementation Plan: Remediate Project BHEDAK MVP & Workflow Standards Compliance](2026-09-21_bhedak_mvp_workflow_remediation_plan.md) | *Scope: BHEDAK MVP & Workflow Standards*
 - **2026-09-22 13:50** | [Implementation Plan: Project CHAKRA Stage 1 Restyling, Official MHA Logo & Header Optimization](2026-09-22_chakra_stage1_header_ui_remediation_plan.md) | *Scope: CHAKRA Stage 1, MHA Logo & Navigation Overhaul*
+- **2026-09-22 14:26** | [Implementation Plan: Project CHAKRA Header Polish, Docket Deduplication, Fixed IO RBAC & Linear Stepwise Workflow](2026-09-22_chakra_linear_workflow_and_header_remediation_plan.md) | *Scope: CHAKRA Header Polish, Docket Deduplication, Fixed IO RBAC & Linear Stepwise Workflow*
+

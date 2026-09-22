@@ -1,6 +1,6 @@
 # Enterprise Project Diagnostic & Remediation Dossier
 
-> **Target Assessed**: `demo/bhedak_mvp`  
+> **Target Assessed**: `demo/chakra_mvp`  
 > **Enterprise Health Score**: **100 / 100**  
 > **Economic Sustainability**: **SUSTAINABLE (>=75% Margin)**  
 > **Anti-Tamper Cryptographic Compliance**: **COMPLIANT**  
@@ -13,7 +13,7 @@
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                               ENTERPRISE HEALTH SCORECARD                              │
 ├────────────────────────────────┬───────────────────────────┬───────────────────────────┤
-│ Overall Health Score: 100 / 100 │ Modules Detected: 13       │ Test Suites: 1              │
+│ Overall Health Score: 100 / 100 │ Modules Detected: 19       │ Test Suites: 4              │
 │ Economic Status: SUSTAINABLE (>=75% Margin) │ Anti-Tamper State: ACTIVE   │ Critical Flaws (P0): 0     │
 └────────────────────────────────┴───────────────────────────┴───────────────────────────┘
 ```

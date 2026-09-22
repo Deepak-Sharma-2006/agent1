@@ -180,3 +180,9 @@ def export_bsa63_certificate() -> Dict[str, Any]:
 def export_stix_bundle() -> Dict[str, Any]:
     """Statutory Exporter: Generates OASIS STIX 2.1 Cyber Threat Intelligence JSON bundle."""
     return STIX21Exporter.export_bundle(MASTER_CASE)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("demo.bhedak_mvp.backend.main:app", host="127.0.0.1", port=8000, reload=True)
+

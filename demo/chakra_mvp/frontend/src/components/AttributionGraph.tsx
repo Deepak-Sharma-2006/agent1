@@ -258,6 +258,13 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
 
     cyRef.current = cy;
     cy.fit(undefined, 30);
+
+    return () => {
+      if (cyRef.current && !cyRef.current.destroyed()) {
+        cyRef.current.destroy();
+        cyRef.current = null;
+      }
+    };
   }, [attribution]);
 
   const handleZoomIn = () => cyRef.current?.zoom(cyRef.current.zoom() * 1.25);
@@ -308,7 +315,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
           </div>
         )}
 
-        <div ref={containerRef} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
+        <div ref={containerRef} className="cytoscape-viewport-canvas" style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
 
         {/* Selected Node Details Floating Drawer */}
         {selectedNode && (

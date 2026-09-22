@@ -295,3 +295,73 @@ export interface ActiveInvestigationStore {
   engine4LatencyMs: number;
 }
 
+export interface CytoscapeElement {
+  group?: "nodes" | "edges";
+  data: {
+    id: string;
+    label?: string;
+    source?: string;
+    target?: string;
+    type?: string;
+    category?: string;
+    confidence?: number;
+    weight?: number;
+    relation?: string;
+    [key: string]: unknown;
+  };
+  position?: { x: number; y: number };
+  classes?: string;
+}
+
+export interface AttributionPathHop {
+  edge?: {
+    source: string;
+    target: string;
+    label: string;
+    weight?: number;
+  };
+  node: {
+    id: string;
+    label: string;
+    type: string;
+    category?: string;
+    confidence?: number;
+  };
+}
+
+export interface BlockchainHop {
+  from_wallet: string;
+  to_entity: string;
+  relation: string;
+  entity_type?: string;
+  entity_label?: string;
+}
+
+export interface STIXBundle {
+  type: string;
+  id: string;
+  objects: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface GraphNodeData {
+  id: string;
+  label: string;
+  fullLabel?: string;
+  type: string;
+  category?: string;
+  confidence?: number;
+  [key: string]: unknown;
+}
+
+export interface GraphEdgeData {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  weight?: number;
+  [key: string]: unknown;
+}
+
+export type DiurnalPresetId = "suspect-ist" | "utc-european" | "est-us" | "random-bot";
+

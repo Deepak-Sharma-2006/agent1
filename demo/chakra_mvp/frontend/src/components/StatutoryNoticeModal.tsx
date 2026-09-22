@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { AttributionResponse, AuthUser, SahyogNotice } from "../types";
+import type { AttributionResponse, AuthUser, SahyogNotice, DispatchNoticeResult } from "../types";
 import { api } from "../services/api";
 import { Send, FileText, CheckCircle2, AlertTriangle, Key, ShieldCheck, X, Clock } from "lucide-react";
 
@@ -19,8 +19,8 @@ export const StatutoryNoticeModal: React.FC<StatutoryNoticeModalProps> = ({
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isDispatching, setIsDispatching] = useState<boolean>(false);
   const [notice, setNotice] = useState<SahyogNotice | null>(null);
-  const [dispatchResult, setDispatchResult] = useState<any | null>(null);
-  const [dscChecked, setDscChecked] = useState<boolean>(currentUser.has_dsc_token);
+  const [dispatchResult, setDispatchResult] = useState<DispatchNoticeResult | null>(null);
+  const [dscChecked, setDscChecked] = useState<boolean>(Boolean(currentUser.has_dsc_token));
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -160,7 +160,7 @@ export const StatutoryNoticeModal: React.FC<StatutoryNoticeModalProps> = ({
             <input
               type="checkbox"
               id="dscTokenCheck"
-              checked={dscChecked}
+              checked={Boolean(dscChecked)}
               onChange={(e) => setDscChecked(e.target.checked)}
               style={{ width: "16px", height: "16px" }}
             />

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import type { Core, NodeSingular } from "cytoscape";
-import type { FullCaseDossier, ActiveInvestigationStore } from "../types";
+import type { FullCaseDossier, ActiveInvestigationStore, CytoscapeElement, GraphNodeData, GraphEdgeData } from "../types";
 import {
   Share2,
   Route,
@@ -151,8 +151,8 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
   const cyRef = useRef<Core | null>(null);
   const traceAbortIdRef = useRef<number>(0);
 
-  const [selectedNode, setSelectedNode] = useState<any | null>(null);
-  const [selectedEdge, setSelectedEdge] = useState<any | null>(null);
+  const [selectedNode, setSelectedNode] = useState<GraphNodeData | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<GraphEdgeData | null>(null);
   const [isPathActive, setIsPathActive] = useState<boolean>(store.engine2Traced);
   const [activeHopStep, setActiveHopStep] = useState<number | null>(store.engine2ActiveHop);
   const [tracingStatus, setTracingStatus] = useState<string | null>(null);
@@ -160,8 +160,8 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
   const [_synthesisStage, setSynthesisStage] = useState<number>(0);
 
   // Helper to construct elements for a given set of allowed node IDs
-  const getCytoscapeElements = (allowedNodeIds?: Set<string>) => {
-    const elements: any[] = [];
+  const getCytoscapeElements = (allowedNodeIds?: Set<string>): CytoscapeElement[] => {
+    const elements: CytoscapeElement[] = [];
     const includedNodeIds = new Set<string>();
 
     (dossier.graph_nodes || []).forEach((n) => {
@@ -200,14 +200,14 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
     return elements;
   };
 
-  const cyStyle: any[] = [
+  const cyStyle = [
     {
       selector: "node",
       style: {
         label: "data(label)",
         "font-family": "Inter, sans-serif",
         "font-size": "11px",
-        "font-weight": "700",
+        "font-weight": "bold",
         "text-valign": "bottom",
         "text-margin-y": 8,
         color: "#0F172A",
@@ -222,10 +222,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
         width: 38,
         height: 38,
         "border-width": 2.5,
-        "border-color": "#FFFFFF",
-        "shadow-blur": 6,
-        "shadow-color": "rgba(0,0,0,0.12)",
-        "shadow-opacity": 0.5
+        "border-color": "#FFFFFF"
       }
     },
     {
@@ -316,10 +313,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       selector: ".highlighted-node",
       style: {
         "border-color": "#D97706",
-        "border-width": 6,
-        "shadow-color": "#D97706",
-        "shadow-blur": 16,
-        "shadow-opacity": 0.95
+        "border-width": 6
       }
     },
     {
@@ -350,7 +344,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
     }
   ];
 
-  const initCytoscapeInstance = (elements: any[]) => {
+  const initCytoscapeInstance = (elements: CytoscapeElement[]): Core | null => {
     if (!containerRef.current) return null;
 
     traceAbortIdRef.current++;
@@ -365,7 +359,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       autounselectify: false,
       minZoom: 0.35,
       maxZoom: 1.05,
-      style: cyStyle,
+      style: cyStyle as unknown as cytoscape.StylesheetStyle[],
       layout: {
         name: "preset",
         fit: true,
@@ -431,13 +425,14 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       }
     }
 
+    const cyInstance = cyRef.current;
     return () => {
       traceAbortIdRef.current++;
-      if (cyRef.current) {
-        cyRef.current.destroy();
+      if (cyInstance && !cyInstance.destroyed()) {
+        cyInstance.destroy();
       }
     };
-  }, [dossier, store.engine2Synthesized]);
+  }, [dossier, store.engine2Synthesized, store.engine2Traced, store.engine2ActiveHop]);
 
   // Viewport resize watcher when tab becomes active
   useEffect(() => {
@@ -838,7 +833,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
               {selectedNode ? (
                 <>
                   <div style={{ fontSize: "14px", fontWeight: "bold", color: "var(--gov-navy)", marginBottom: "4px" }}>
-                    {selectedNode.fullLabel || selectedNode.label}
+                    {String(selectedNode.fullLabel || selectedNode.label)}
                   </div>
                   <div style={{ fontSize: "11px", color: "var(--gov-text-muted)", textTransform: "uppercase", marginBottom: "12px" }}>
                     Category: <strong style={{ color: "var(--gov-blue)" }}>{selectedNode.category || selectedNode.type}</strong>

@@ -188,3 +188,19 @@ export interface MerkleVerificationResult {
   root_match: boolean;
   proof_audit_steps: number;
 }
+
+export interface DispatchNoticeResult {
+  message: string;
+  notice_id: string;
+  vasp_ticket_id: string;
+  debit_freeze_active: boolean;
+  notice_details: SahyogNotice;
+}
+
+export type ActiveTab =
+  | "intake"
+  | "graph"
+  | "sweep"
+  | "scoring"
+  | "statutory";
+

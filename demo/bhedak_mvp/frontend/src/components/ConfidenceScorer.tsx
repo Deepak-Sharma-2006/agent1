@@ -239,7 +239,7 @@ export const ConfidenceScorer: React.FC<ConfidenceScorerProps> = ({
                   }}
                 >
                   <CheckCircle2 size={14} />
-                  Enable All Verified Signals (95.0%)
+                  Enable All Verified Signals (Full Attributed)
                 </button>
               </div>
             </div>
@@ -315,7 +315,7 @@ export const ConfidenceScorer: React.FC<ConfidenceScorerProps> = ({
                     <td style={{ textAlign: "center" }}>
                       <input
                         type="checkbox"
-                        checked={isEnabled}
+                        checked={Boolean(isEnabled)}
                         onChange={() => toggleSignal(s.signal_name)}
                         style={{ cursor: "pointer", accentColor: "var(--gov-navy)" }}
                       />

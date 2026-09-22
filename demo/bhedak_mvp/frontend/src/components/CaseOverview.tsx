@@ -83,7 +83,7 @@ export const CaseOverview: React.FC<CaseOverviewProps> = ({
               style={{ fontSize: "11px", padding: "4px 10px" }}
             >
               <CheckCircle2 size={12} />
-              Resolve All Engines (95.0%)
+              Fast-Forward All Engines (Attributed)
             </button>
           </div>
         </div>

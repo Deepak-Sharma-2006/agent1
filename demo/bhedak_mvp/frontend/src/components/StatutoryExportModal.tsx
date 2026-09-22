@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { FullCaseDossier, BSA63Certificate, ActiveInvestigationStore } from "../types";
+import type { FullCaseDossier, BSA63Certificate, ActiveInvestigationStore, STIXBundle } from "../types";
 import { apiService } from "../services/api";
 import {
   FileText,
@@ -21,7 +21,7 @@ export const StatutoryExportModal: React.FC<StatutoryExportModalProps> = ({ doss
   const [activeFormat, setActiveFormat] = useState<"bsa63" | "stix">("bsa63");
   const [bsaViewMode, setBsaViewMode] = useState<"formal" | "plaintext">("formal");
   const [certData, setCertData] = useState<BSA63Certificate | null>(null);
-  const [stixData, setStixData] = useState<any | null>(null);
+  const [stixData, setStixData] = useState<STIXBundle | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -231,10 +231,10 @@ export const StatutoryExportModal: React.FC<StatutoryExportModalProps> = ({ doss
           <Shield size={22} color="#DC2626" style={{ flexShrink: 0 }} />
           <div>
             <div style={{ fontSize: "12.5px", fontWeight: 800, color: "#991B1B", textTransform: "uppercase" }}>
-              Provisional Investigation Draft — Not Admissible in Court
+              Provisional Investigation Draft — Actions Locked (Rule 13 Fail-Closed)
             </div>
             <div style={{ fontSize: "11.5px", color: "#7F1D1D", marginTop: "2px", lineHeight: "1.5" }}>
-              Composite Admissibility Score: <strong>{evaluatedScore.toFixed(1)}%</strong>. Official submission under Section 63 BSA 2023 requires composite certainty ≥ 85.0% deterministic proof. This certificate is rendered as a provisional investigative working draft.
+              Composite Admissibility Score: <strong>{evaluatedScore.toFixed(1)}%</strong>. Official submission and export under Section 63 BSA 2023 requires composite certainty ≥ 85.0% with deterministic proof. Export triggers remain fail-closed and disabled until all prerequisite engines are resolved.
             </div>
           </div>
         </div>
@@ -270,29 +270,64 @@ export const StatutoryExportModal: React.FC<StatutoryExportModalProps> = ({ doss
                   </button>
                 </div>
 
-                <button id="copy-export-btn" className="gov-btn-secondary" onClick={handleCopy}>
+                <button
+                  id="copy-export-btn"
+                  className="gov-btn-secondary"
+                  onClick={handleCopy}
+                  disabled={!isAdmissible}
+                  style={{ opacity: isAdmissible ? 1 : 0.5, cursor: isAdmissible ? "pointer" : "not-allowed" }}
+                  title={!isAdmissible ? "Locked: Statutory certainty threshold (>=85.0% deterministic proof) unfulfilled" : undefined}
+                >
                   {copied ? <CheckCircle2 size={14} color="var(--gov-green)" /> : <Copy size={14} />}
                   {copied ? "Copied" : "Copy Plaintext"}
                 </button>
 
-                <button id="download-bsa-txt-btn" className="gov-btn-secondary" onClick={handleDownloadTxt}>
+                <button
+                  id="download-bsa-txt-btn"
+                  className="gov-btn-secondary"
+                  onClick={handleDownloadTxt}
+                  disabled={!isAdmissible}
+                  style={{ opacity: isAdmissible ? 1 : 0.5, cursor: isAdmissible ? "pointer" : "not-allowed" }}
+                  title={!isAdmissible ? "Locked: Statutory certainty threshold (>=85.0% deterministic proof) unfulfilled" : undefined}
+                >
                   <Download size={14} />
                   Download Plaintext (.txt)
                 </button>
 
-                <button id="print-court-pdf-btn" className="gov-btn-primary" onClick={handlePrintCourtCertificate}>
+                <button
+                  id="print-court-pdf-btn"
+                  className="gov-btn-primary"
+                  onClick={handlePrintCourtCertificate}
+                  disabled={!isAdmissible}
+                  style={{ opacity: isAdmissible ? 1 : 0.5, cursor: isAdmissible ? "pointer" : "not-allowed" }}
+                  title={!isAdmissible ? "Locked: Statutory certainty threshold (>=85.0% deterministic proof) unfulfilled" : undefined}
+                >
                   <Printer size={14} />
                   Print / Save Court PDF
                 </button>
               </>
             ) : (
               <>
-                <button id="copy-stix-btn" className="gov-btn-secondary" onClick={handleCopy}>
+                <button
+                  id="copy-stix-btn"
+                  className="gov-btn-secondary"
+                  onClick={handleCopy}
+                  disabled={!isAdmissible}
+                  style={{ opacity: isAdmissible ? 1 : 0.5, cursor: isAdmissible ? "pointer" : "not-allowed" }}
+                  title={!isAdmissible ? "Locked: Threat intelligence bundle requires complete attribution" : undefined}
+                >
                   {copied ? <CheckCircle2 size={14} color="var(--gov-green)" /> : <Copy size={14} />}
                   {copied ? "Copied JSON" : "Copy STIX JSON"}
                 </button>
 
-                <button id="download-stix-json-btn" className="gov-btn-primary" onClick={handleDownloadStixJson}>
+                <button
+                  id="download-stix-json-btn"
+                  className="gov-btn-primary"
+                  onClick={handleDownloadStixJson}
+                  disabled={!isAdmissible}
+                  style={{ opacity: isAdmissible ? 1 : 0.5, cursor: isAdmissible ? "pointer" : "not-allowed" }}
+                  title={!isAdmissible ? "Locked: Threat intelligence bundle requires complete attribution" : undefined}
+                >
                   <Download size={14} />
                   Download OASIS STIX 2.1 Bundle (.json)
                 </button>

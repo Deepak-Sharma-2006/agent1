@@ -10,7 +10,8 @@ import type {
   ScenarioMetadata,
   AuthUser,
   SahyogNotice,
-  MerkleVerificationResult
+  MerkleVerificationResult,
+  DispatchNoticeResult
 } from "../types";
 
 const API_BASE = "/api/v1";
@@ -77,7 +78,7 @@ export class ChakraApiService {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || "Jury dynamic injection failed");
+      throw new Error(err.detail || "Custom transaction stream injection failed");
     }
     return res.json();
   }
@@ -91,15 +92,11 @@ export class ChakraApiService {
     return res.json();
   }
 
-  async generateSahyogNotice(attribution: AttributionResponse, firNumber?: string): Promise<SahyogNotice> {
+  async generateSahyogNotice(attribution: AttributionResponse): Promise<SahyogNotice> {
     const res = await fetch(`${API_BASE}/sahyog/notices/generate`, {
       method: "POST",
       headers: this.getHeaders(),
-      body: JSON.stringify({
-        attribution_result: attribution,
-        fir_number: firNumber || `${attribution.sahyog_case_id}/FIR-2026`,
-        urgency_level: "EMERGENCY_24HR"
-      })
+      body: JSON.stringify(attribution)
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -112,7 +109,7 @@ export class ChakraApiService {
     noticeId: string,
     dscSignature: string,
     notes: string
-  ): Promise<{ message: string; notice_id: string; vasp_ticket_id: string; debit_freeze_active: boolean; notice_details: SahyogNotice }> {
+  ): Promise<DispatchNoticeResult> {
     const res = await fetch(`${API_BASE}/sahyog/notices/dispatch`, {
       method: "POST",
       headers: this.getHeaders(),

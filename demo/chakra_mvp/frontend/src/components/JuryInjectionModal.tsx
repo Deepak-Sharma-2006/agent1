@@ -9,16 +9,16 @@ interface JuryInjectionModalProps {
   isLoading: boolean;
 }
 
-const DEFAULT_JURY_TEMPLATE = JSON.stringify(
+const DEFAULT_ADHOC_TEMPLATE = JSON.stringify(
   {
-    suspect_wallet_address: "0xJuryEvaluatorSuspectWallet0001",
+    suspect_wallet_address: "0xAdHocSuspectWallet0001",
     network: "ETH",
     edges: [
       {
-        tx_hash: "0xjury_eval_tx_001_initial_peel",
+        tx_hash: "0xadhoc_eval_tx_001_initial_peel",
         network: "ETH",
-        source_address: "0xJuryEvaluatorSuspectWallet0001",
-        destination_address: "0xJuryMuleIntermediaryWallet0002",
+        source_address: "0xAdHocSuspectWallet0001",
+        destination_address: "0xAdHocMuleIntermediaryWallet0002",
         asset_symbol: "USDT",
         raw_amount: "60000000000",
         decimal_amount: "60000.000000",
@@ -28,10 +28,10 @@ const DEFAULT_JURY_TEMPLATE = JSON.stringify(
         block_height: 21000000
       },
       {
-        tx_hash: "0xjury_eval_tx_002_to_coindcx_deposit",
+        tx_hash: "0xadhoc_eval_tx_002_to_coindcx_deposit",
         network: "ETH",
-        source_address: "0xJuryMuleIntermediaryWallet0002",
-        destination_address: "0xJuryCandidateDepositAddress0003",
+        source_address: "0xAdHocMuleIntermediaryWallet0002",
+        destination_address: "0xAdHocCandidateDepositAddress0003",
         asset_symbol: "USDT",
         raw_amount: "59950000000",
         decimal_amount: "59950.000000",
@@ -41,9 +41,9 @@ const DEFAULT_JURY_TEMPLATE = JSON.stringify(
         block_height: 21000050
       },
       {
-        tx_hash: "0xjury_eval_tx_003_sweep_to_coindcx_hot",
+        tx_hash: "0xadhoc_eval_tx_003_sweep_to_coindcx_hot",
         network: "ETH",
-        source_address: "0xJuryCandidateDepositAddress0003",
+        source_address: "0xAdHocCandidateDepositAddress0003",
         destination_address: "0x534631Bcf33BDb069fB20A75d2791C863E115707", // Registered CoinDCX ETH Hot Storage
         asset_symbol: "USDT",
         raw_amount: "59950000000",
@@ -66,7 +66,7 @@ export const JuryInjectionModal: React.FC<JuryInjectionModalProps> = ({
   onInject,
   isLoading
 }) => {
-  const [jsonContent, setJsonContent] = useState<string>(DEFAULT_JURY_TEMPLATE);
+  const [jsonContent, setJsonContent] = useState<string>(DEFAULT_ADHOC_TEMPLATE);
   const [parseError, setParseError] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -95,7 +95,7 @@ export const JuryInjectionModal: React.FC<JuryInjectionModalProps> = ({
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <Zap size={18} color="#B45309" />
             <h3 style={{ fontSize: "14px", fontWeight: "700", color: "#92400E" }}>
-              SIH Evaluator / Jury Dynamic Stress-Test Injection Console
+              Ad-Hoc Intelligence & Offline Calldata Ingestion Console
             </h3>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}>
@@ -115,7 +115,7 @@ export const JuryInjectionModal: React.FC<JuryInjectionModalProps> = ({
               color: "#92400E"
             }}
           >
-            <b>Zero-Hardcoding Guarantee:</b> This console allows judges to inject arbitrary custom cryptocurrency transaction edges at runtime. The backend Degree-Bounded Beam Search and Sweep Detector will process this graph dynamically without pre-baked static responses.
+            <b>Ad-Hoc Investigative Flow Ingestion:</b> This operational console allows investigating officers to ingest raw transaction calldata or seized private evidence directly into active graph memory. The Degree-Bounded Beam Search and Sweep Detector will process this graph dynamically in real-time.
           </div>
 
           <div style={{ marginBottom: "12px" }}>
@@ -125,7 +125,7 @@ export const JuryInjectionModal: React.FC<JuryInjectionModalProps> = ({
               </label>
               <button
                 className="gov-btn-text-size"
-                onClick={() => setJsonContent(DEFAULT_JURY_TEMPLATE)}
+                onClick={() => setJsonContent(DEFAULT_ADHOC_TEMPLATE)}
               >
                 Reset to 3-Hop CoinDCX Sweep Template
               </button>
@@ -134,7 +134,7 @@ export const JuryInjectionModal: React.FC<JuryInjectionModalProps> = ({
             <textarea
               className="gov-input gov-input-mono"
               rows={14}
-              value={jsonContent}
+              value={jsonContent || ""}
               onChange={(e) => setJsonContent(e.target.value)}
               style={{ fontSize: "11px", lineHeight: "1.4", background: "#0F172A", color: "#34D399" }}
             />
@@ -168,7 +168,7 @@ export const JuryInjectionModal: React.FC<JuryInjectionModalProps> = ({
             onClick={handleExecuteInjection}
             disabled={isLoading}
           >
-            <Zap size={14} /> {isLoading ? "Injecting & Tracing..." : "Inject Graph & Execute Dynamic Attribution"}
+            <Zap size={14} /> {isLoading ? "Ingesting & Tracing..." : "Ingest Graph & Execute Dynamic Attribution"}
           </button>
         </div>
       </div>

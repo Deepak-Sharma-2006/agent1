@@ -4,17 +4,21 @@ import type {
   ScenarioMetadata,
   AttributionResponse,
   AttributionRequest,
-  CustomGraphInjectionRequest
+  CustomGraphInjectionRequest,
+  ActiveTab
 } from "./types";
 import { api } from "./services/api";
 import { Header } from "./components/Header";
+import { Navigation } from "./components/Navigation";
 import { CaseIntakePanel } from "./components/CaseIntakePanel";
 import { AttributionGraph } from "./components/AttributionGraph";
-import { AttributionVerdictPanel } from "./components/AttributionVerdictPanel";
+import { SweepForensicLab } from "./components/SweepForensicLab";
+import { ScoringMatrixPanel } from "./components/ScoringMatrixPanel";
+import { StatutoryCourtDocket } from "./components/StatutoryCourtDocket";
 import { StatutoryNoticeModal } from "./components/StatutoryNoticeModal";
 import { JuryInjectionModal } from "./components/JuryInjectionModal";
 import { MerkleAuditModal } from "./components/MerkleAuditModal";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowRight, Share2, Flame, Award, Scale, FileText } from "lucide-react";
 import "./App.css";
 
 const FALLBACK_USERS: AuthUser[] = [
@@ -81,6 +85,7 @@ export const App: React.FC = () => {
   const [scenarios, setScenarios] = useState<ScenarioMetadata[]>([]);
   const [selectedScenario, setSelectedScenario] = useState<ScenarioMetadata | null>(null);
   const [activeAttribution, setActiveAttribution] = useState<AttributionResponse | null>(null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("intake");
 
   const [isTracing, setIsTracing] = useState<boolean>(false);
   const [isResetting, setIsResetting] = useState<boolean>(false);
@@ -88,7 +93,7 @@ export const App: React.FC = () => {
 
   // Modals
   const [showNoticeModal, setShowNoticeModal] = useState<boolean>(false);
-  const [showJuryModal, setShowJuryModal] = useState<boolean>(false);
+  const [showAdHocModal, setShowAdHocModal] = useState<boolean>(false);
   const [showMerkleModal, setShowMerkleModal] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
@@ -176,6 +181,8 @@ export const App: React.FC = () => {
       const res = await api.traceAttribution(req);
       setActiveAttribution(res);
       showToast(`Attribution Complete: Resolved to ${res.nearest_vasp || "Unknown"} (${res.confidence_score.toFixed(1)}%)`);
+      // Seamlessly advance to graph view upon trace completion
+      setActiveTab("graph");
     } catch (e: unknown) {
       showToast(`Attribution failure: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -183,12 +190,13 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleInjectJuryGraph = async (injection: CustomGraphInjectionRequest) => {
+  const handleInjectAdHocGraph = async (injection: CustomGraphInjectionRequest) => {
     setIsTracing(true);
     try {
       const res = await api.injectCustomGraph(injection);
       setActiveAttribution(res);
-      showToast(`Dynamic Jury Graph Injected! Attributed to ${res.nearest_vasp} in ${res.hop_distance} hops.`);
+      showToast(`Ad-Hoc Graph Ingested! Attributed to ${res.nearest_vasp} in ${res.hop_distance} hops.`);
+      setActiveTab("graph");
     } catch (e: unknown) {
       showToast(`Injection error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -257,8 +265,11 @@ export const App: React.FC = () => {
     }
   };
 
+  const isHighConfidence = Boolean(activeAttribution && activeAttribution.confidence_score >= 85.0);
+
   return (
     <div className="chakra-app-container">
+      {/* 1. Official Government Header */}
       <Header
         currentUser={currentUser}
         allUsers={allUsers}
@@ -268,38 +279,176 @@ export const App: React.FC = () => {
         isResetting={isResetting}
       />
 
+      {/* 2. 5-Stage National Law Enforcement Navigation Bar */}
+      <Navigation
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        hasAttribution={Boolean(activeAttribution)}
+        isHighConfidence={isHighConfidence}
+      />
+
+      {/* 3. Main Stage Content Viewport */}
       <main className="chakra-main-content">
-        <div className="chakra-dashboard-grid">
-          {/* Panel 1: Case Intake & Presets */}
-          <CaseIntakePanel
-            scenarios={scenarios}
-            selectedScenario={selectedScenario}
-            onSelectScenario={handleSelectScenario}
-            onRequestTrace={handleRequestTrace}
-            onOpenJuryModal={() => setShowJuryModal(true)}
-            isTracing={isTracing}
-          />
+        <div className="chakra-stage-container">
+          {/* STAGE 1: Case Intake & NCRP Incident Docket */}
+          {activeTab === "intake" && (
+            <div className="chakra-stage-grid-intake">
+              <CaseIntakePanel
+                scenarios={scenarios}
+                selectedScenario={selectedScenario}
+                onSelectScenario={handleSelectScenario}
+                onRequestTrace={handleRequestTrace}
+                onOpenAdHocModal={() => setShowAdHocModal(true)}
+                isTracing={isTracing}
+              />
 
-          {/* Panel 2: Interactive Cytoscape Canvas */}
-          <AttributionGraph
-            attribution={activeAttribution}
-            isLoading={isTracing}
-          />
+              {/* Stage 1 Executive Incident Briefing Card */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className="gov-card">
+                  <div className="gov-card-header">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <FileText size={16} color="#0B1B3D" />
+                      <span className="gov-card-title">National Cyber Crime Operations Briefing</span>
+                    </div>
+                    <span style={{ fontSize: "10.5px", background: "#EFF6FF", color: "#1E40AF", padding: "2px 8px", borderRadius: "4px", fontWeight: 700 }}>
+                      MHA SAHYOG v2 READY
+                    </span>
+                  </div>
 
-          {/* Panel 3: Attribution Verdict & Statutory Sanctions */}
-          <AttributionVerdictPanel
-            attribution={activeAttribution}
-            currentUser={currentUser}
-            onOpenNoticeModal={() => setShowNoticeModal(true)}
-            onOpenMerkleModal={() => setShowMerkleModal(true)}
-            onDownloadDossierPdf={handleDownloadDossierPdf}
-            onDownloadSummonsPdf={handleDownloadSummonsPdf}
-            onDownloadBsaPdf={handleDownloadBsaPdf}
-          />
+                  <div className="gov-card-body" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                    <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.6" }}>
+                      Welcome to <b>Project CHAKRA</b> (Centralized High-Confidence Automated Khata Resolution & Attribution), the national cryptocurrency intelligence and automated summons generation system developed for the <b>Ministry of Home Affairs (MHA)</b> and <b>Indian Cyber Crime Coordination Centre (I4C)</b>.
+                    </div>
+
+                    {activeAttribution ? (
+                      <div style={{ background: "#F8FAFC", border: "1px solid #CBD5E1", borderRadius: "6px", padding: "14px" }}>
+                        <div style={{ fontSize: "11px", fontWeight: 800, color: "#0B1B3D", marginBottom: "8px" }}>
+                          CURRENT ACTIVE INVESTIGATION DOCKET:
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "11.5px" }}>
+                          <div>
+                            <span style={{ color: "#64748B" }}>FIR Docket:</span><br />
+                            <b style={{ color: "#0B1B3D" }}>{activeAttribution.sahyog_case_id}</b>
+                          </div>
+                          <div>
+                            <span style={{ color: "#64748B" }}>NCRP Portal ID:</span><br />
+                            <b style={{ color: "#0B1B3D" }}>{activeAttribution.ncrp_complaint_id}</b>
+                          </div>
+                          <div>
+                            <span style={{ color: "#64748B" }}>Attributed VASP:</span><br />
+                            <b style={{ color: "#047857" }}>{activeAttribution.nearest_vasp || "Unknown"}</b>
+                          </div>
+                          <div>
+                            <span style={{ color: "#64748B" }}>Confidence Score:</span><br />
+                            <b style={{ color: isHighConfidence ? "#047857" : "#D97706" }}>
+                              {activeAttribution.confidence_score.toFixed(1)} / 100 ({activeAttribution.confidence_tier})
+                            </b>
+                          </div>
+                        </div>
+
+                        <div style={{ marginTop: "14px", display: "flex", gap: "10px" }}>
+                          <button
+                            className="gov-btn gov-btn-primary"
+                            onClick={() => setActiveTab("graph")}
+                            style={{ flex: 1, padding: "9px" }}
+                          >
+                            <Share2 size={14} /> Open Multi-Chain Graph Canvas (Stage 2) <ArrowRight size={14} />
+                          </button>
+                          <button
+                            className="gov-btn gov-btn-saffron"
+                            onClick={() => setActiveTab("statutory")}
+                            style={{ flex: 1, padding: "9px" }}
+                          >
+                            <Scale size={14} /> View Statutory Sanctions (Stage 5) <ArrowRight size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ background: "#F1F5F9", padding: "14px", borderRadius: "6px", fontSize: "11.5px", color: "#64748B" }}>
+                        Select an authentic Indian cybercrime case preset on the left or enter a suspect wallet address to initiate degree-bounded traversal.
+                      </div>
+                    )}
+
+                    {/* Operational Capabilities Grid */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "4px" }}>
+                      <div style={{ border: "1px solid #E2E8F0", borderRadius: "6px", padding: "10px" }}>
+                        <div style={{ fontWeight: 700, fontSize: "11.5px", color: "#0B1B3D", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Share2 size={13} color="#1E3A8A" /> Multi-Chain Graph Traversal
+                        </div>
+                        <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "2px" }}>
+                          Degree-Bounded Beam Search across TRON, ETH, BTC, and BSC with algorithmic peeling chain detection.
+                        </div>
+                      </div>
+
+                      <div style={{ border: "1px solid #E2E8F0", borderRadius: "6px", padding: "10px" }}>
+                        <div style={{ fontWeight: 700, fontSize: "11.5px", color: "#0B1B3D", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Flame size={13} color="#E65100" /> Internal VASP Sweep Forensics
+                        </div>
+                        <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "2px" }}>
+                          Proves centralized exchange custody via &gt;95% balance zeroing, &lt;120m latency, and fueler gas proofs.
+                        </div>
+                      </div>
+
+                      <div style={{ border: "1px solid #E2E8F0", borderRadius: "6px", padding: "10px" }}>
+                        <div style={{ fontWeight: 700, fontSize: "11.5px", color: "#0B1B3D", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Award size={13} color="#047857" /> 4-Pillar Explainable Scorer
+                        </div>
+                        <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "2px" }}>
+                          Deterministic formula transparently maps to statutory tiers under Section 94 and 106 BNSS 2023.
+                        </div>
+                      </div>
+
+                      <div style={{ border: "1px solid #E2E8F0", borderRadius: "6px", padding: "10px" }}>
+                        <div style={{ fontWeight: 700, fontSize: "11.5px", color: "#0B1B3D", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Scale size={13} color="#7C3AED" /> Court-Admissible BSA Evidence
+                        </div>
+                        <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "2px" }}>
+                          Generates SHA-256 Merkle inclusion proofs and Section 63(4) BSA 2023 digital certificates.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STAGE 2: Multi-Chain Attribution Canvas */}
+          {activeTab === "graph" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <AttributionGraph
+                attribution={activeAttribution}
+                isLoading={isTracing}
+              />
+            </div>
+          )}
+
+          {/* STAGE 3: Sweep Forensics & Fueler Lab */}
+          {activeTab === "sweep" && (
+            <SweepForensicLab attribution={activeAttribution} />
+          )}
+
+          {/* STAGE 4: 4-Pillar Confidence Scorer */}
+          {activeTab === "scoring" && (
+            <ScoringMatrixPanel attribution={activeAttribution} />
+          )}
+
+          {/* STAGE 5: SAHYOG Sanctions & Court Docket */}
+          {activeTab === "statutory" && (
+            <StatutoryCourtDocket
+              attribution={activeAttribution}
+              currentUser={currentUser}
+              onOpenNoticeModal={() => setShowNoticeModal(true)}
+              onOpenMerkleModal={() => setShowMerkleModal(true)}
+              onDownloadDossierPdf={handleDownloadDossierPdf}
+              onDownloadSummonsPdf={handleDownloadSummonsPdf}
+              onDownloadBsaPdf={handleDownloadBsaPdf}
+            />
+          )}
         </div>
       </main>
 
-      {/* Official GIGW Footer */}
+      {/* 4. Official Government Footer */}
       <footer className="chakra-footer">
         <div>
           <b>Project CHAKRA</b> • Indian Cyber Crime Coordination Centre (I4C), Ministry of Home Affairs, Government of India
@@ -331,9 +480,9 @@ export const App: React.FC = () => {
       )}
 
       <JuryInjectionModal
-        isOpen={showJuryModal}
-        onClose={() => setShowJuryModal(false)}
-        onInject={handleInjectJuryGraph}
+        isOpen={showAdHocModal}
+        onClose={() => setShowAdHocModal(false)}
+        onInject={handleInjectAdHocGraph}
         isLoading={isTracing}
       />
 

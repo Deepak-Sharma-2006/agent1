@@ -14,3 +14,5 @@
 - **2026-09-21 02:20** | [Solution Plan: BHEDAK: Sovereign Autonomous Threat Triangulation Platform](2026-09-21_test_plan.md) | *Scope: Test*
 - **2026-09-21 02:20** | [Solution Plan: AGRIVISION: Autonomous Multispectral Edge Drone Swarm](2026-09-21_test_solution_plan.md) | *Scope: Test Solution*
 - **2026-09-21 02:21** | [Solution Plan: SIH2026-CORE: Autonomous SIH-2026: Satellite Fire Early Warning Platform](2026-09-21_sih_2026__satellite_fire_early_warning_plan.md) | *Scope: SIH-2026: Satellite Fire Early Warning*
+- **2026-09-21 21:44** | [Implementation Plan: Project CHAKRA Deficiencies Remediation & Government Operations Dashboard](2026-09-21_chakra_mvp_workflow_remediation_plan.md) | *Scope: CHAKRA MVP & 5-Stage Dashboard Overhaul*
+- **2026-09-21 20:37** | [Implementation Plan: Remediate Project BHEDAK MVP & Workflow Standards Compliance](2026-09-21_bhedak_mvp_workflow_remediation_plan.md) | *Scope: BHEDAK MVP & Workflow Standards*

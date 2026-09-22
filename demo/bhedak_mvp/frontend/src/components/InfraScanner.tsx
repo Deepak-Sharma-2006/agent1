@@ -45,7 +45,7 @@ export const InfraScanner: React.FC<InfraScannerProps> = ({
   onNavigateNext
 }) => {
   const [targetOnion, setTargetOnion] = useState<string>(
-    store.activeTargetOnion || infrastructure.hidden_service
+    store.activeTargetOnion || infrastructure?.hidden_service || ""
   );
   const [loading, setLoading] = useState<boolean>(false);
   const [probeLog, setProbeLog] = useState<string[]>(store.engine1ProbeLogs || []);
@@ -55,8 +55,8 @@ export const InfraScanner: React.FC<InfraScannerProps> = ({
   useEffect(() => {
     setScanResult(store.engine1ScanResult);
     setProbeLog(store.engine1ProbeLogs || []);
-    if (store.activeTargetOnion) {
-      setTargetOnion(store.activeTargetOnion);
+    if (store.activeTargetOnion !== undefined) {
+      setTargetOnion(store.activeTargetOnion || "");
     }
   }, [store.engine1ScanResult, store.engine1ProbeLogs, store.activeTargetOnion]);
 
@@ -212,7 +212,7 @@ export const InfraScanner: React.FC<InfraScannerProps> = ({
                 id="onion-target-input"
                 type="text"
                 className="gov-form-input"
-                value={targetOnion}
+                value={targetOnion || ""}
                 onChange={(e) => setTargetOnion(e.target.value)}
                 placeholder="e.g. bharatlk528491038571928471928374910283749182374918237491.onion"
               />

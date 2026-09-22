@@ -51,6 +51,9 @@ export const StylometryLab: React.FC<StylometryLabProps> = ({
   const [selectedPresetId, setSelectedPresetId] = useState<string>(
     store.engine3SelectedSampleId || "sample-hinglish"
   );
+  const [evaluatedSampleId, setEvaluatedSampleId] = useState<string>(
+    store.engine3SelectedSampleId || "sample-hinglish"
+  );
   const [loading, setLoading] = useState<boolean>(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<StylometryResponse | null>(
@@ -60,18 +63,23 @@ export const StylometryLab: React.FC<StylometryLabProps> = ({
   // Sync with store updates (e.g. from Reset or Resolve All)
   useEffect(() => {
     setAnalysisResult(store.engine3Result);
-    if (store.engine3InputText) {
-      setInputText(store.engine3InputText);
+    if (store.engine3InputText !== undefined) {
+      setInputText(store.engine3InputText || PRESET_SAMPLES[0].text);
     }
     if (store.engine3SelectedSampleId) {
       setSelectedPresetId(store.engine3SelectedSampleId);
+      if (store.engine3Result) {
+        setEvaluatedSampleId(store.engine3SelectedSampleId);
+      }
+    } else if (!store.engine3Result) {
+      setEvaluatedSampleId("sample-hinglish");
     }
   }, [store.engine3Result, store.engine3InputText, store.engine3SelectedSampleId]);
 
   const handleAnalyze = async (e?: React.FormEvent, overrideText?: string, overrideId?: string) => {
     if (e) e.preventDefault();
     const textToAnalyze = overrideText || inputText;
-    const presetId = overrideId || selectedPresetId;
+    const presetId = overrideId || selectedPresetId || "custom";
     if (!textToAnalyze.trim()) return;
 
     setLoading(true);
@@ -84,6 +92,7 @@ export const StylometryLab: React.FC<StylometryLabProps> = ({
         linguistic_markers: res.linguistic_markers || []
       };
       setAnalysisResult(cleaned);
+      setEvaluatedSampleId(presetId);
       onUpdateAnalysis(presetId, textToAnalyze, cleaned);
     } catch (err) {
       console.warn("API request returned an error or backend offline; calculating resilient local features:", err);
@@ -108,6 +117,7 @@ export const StylometryLab: React.FC<StylometryLabProps> = ({
         attribution_tier: "PROBABILISTIC_LEAD (Capped at 0.65)"
       };
       setAnalysisResult(fallback);
+      setEvaluatedSampleId(presetId);
       onUpdateAnalysis(presetId, textToAnalyze, fallback);
     } finally {
       setLoading(false);
@@ -117,11 +127,14 @@ export const StylometryLab: React.FC<StylometryLabProps> = ({
   const handleSelectPreset = (preset: typeof PRESET_SAMPLES[0]) => {
     setSelectedPresetId(preset.id);
     setInputText(preset.text);
-    // Note: User/operator must explicitly click "Execute IndicBERT Stylometric Analysis" to evaluate
+    // Note: Circadian trough and evaluation dossier remain bound to evaluatedSampleId until "Evaluate Stylometric Fingerprint" is clicked
   };
 
   const resetLab = () => {
     setAnalysisResult(null);
+    setSelectedPresetId("sample-hinglish");
+    setInputText(PRESET_SAMPLES[0].text);
+    setEvaluatedSampleId("sample-hinglish");
     onReset();
   };
 
@@ -231,15 +244,17 @@ export const StylometryLab: React.FC<StylometryLabProps> = ({
     if (analysisResult?.is_adversarially_sanitized) {
       return DIURNAL_PATTERNS["sample-ai-bot"];
     }
-    if (selectedPresetId && (DIURNAL_PATTERNS as any)[selectedPresetId]) {
-      return (DIURNAL_PATTERNS as any)[selectedPresetId];
+    if (evaluatedSampleId && evaluatedSampleId in DIURNAL_PATTERNS) {
+      return DIURNAL_PATTERNS[evaluatedSampleId as keyof typeof DIURNAL_PATTERNS];
     }
-    const lower = inputText.toLowerCase();
-    if (lower.includes("furthermore") || lower.includes("in conclusion") || lower.includes("it is important to note")) {
-      return DIURNAL_PATTERNS["sample-ai-bot"];
-    }
-    if (lower.includes("bhai") || lower.includes("jaldi") || lower.includes("revert back") || lower.includes("karo") || lower.includes("yaar")) {
-      return DIURNAL_PATTERNS["sample-hinglish"];
+    if (analysisResult) {
+      const dialect = (analysisResult.inferred_dialect || "").toLowerCase();
+      if (dialect.includes("ai") || dialect.includes("paraphrased") || dialect.includes("bot")) {
+        return DIURNAL_PATTERNS["sample-ai-bot"];
+      }
+      if (dialect.includes("hinglish") || dialect.includes("south asian")) {
+        return DIURNAL_PATTERNS["sample-hinglish"];
+      }
     }
     return DIURNAL_PATTERNS["sample-control"];
   })();
@@ -310,7 +325,7 @@ export const StylometryLab: React.FC<StylometryLabProps> = ({
                 id="stylometry-input-text"
                 className="gov-form-textarea"
                 rows={3}
-                value={inputText}
+                value={inputText || ""}
                 onChange={(e) => {
                   setInputText(e.target.value);
                   setSelectedPresetId("");

@@ -237,5 +237,7 @@ npm run pentest
 - **Comprehensive Guides**:
   - **[The Master Implementation Guide](implementation_setup_guide.md)**: Exhaustive architectural guide covering workflow topologies, graduated autonomy, database migrations, Styx DAST, and the 2-person collaboration runbook.
   - **[Master Command Cheat Sheet](SYSTEM_COMMANDS.md)**: CLI and prompt commands for all tasks.
+  - **[Standalone Project Execution Guides]**: [`Project CHAKRA Run Commands`](demo/chakra_mvp/RUN_COMMANDS.md) | [`Project BHEDAK Run Commands`](demo/bhedak_mvp/RUN_COMMANDS.md)
   - **[Comprehensive System Audit](docs/audits/2026-09-21_agentic_workflow_comprehensive_audit.md)**: Stress test analysis of 15 enterprise subsystems and their remediations.
+
 

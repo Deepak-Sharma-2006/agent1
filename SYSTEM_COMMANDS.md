@@ -264,6 +264,9 @@ node --experimental-strip-types scripts/lock-manager.ts release --domain core --
   - Research Dossiers: [`docs/research/INDEX.md`](file:///docs/research/INDEX.md)
   - Formal RFCs & Schemas: [`docs/rfcs/INDEX.md`](file:///docs/rfcs/INDEX.md)
 - **Comprehensive Setup & Architecture Guide**: [implementation_setup_guide.md](file:///implementation_setup_guide.md)
+- **Standalone MVP Execution Guides**:
+  - Project CHAKRA Standalone Commands: [`demo/chakra_mvp/RUN_COMMANDS.md`](file:///demo/chakra_mvp/RUN_COMMANDS.md)
+  - Project BHEDAK Standalone Commands: [`demo/bhedak_mvp/RUN_COMMANDS.md`](file:///demo/bhedak_mvp/RUN_COMMANDS.md)
 - **SIH Problem Solution Blueprints**: Located in `docs/sih_solutions/`
   - `docs/sih_solutions/sih-2026-mha-vasp-attribution-blueprint.md` (MHA I4C Cryptocurrency VASP Attribution)
   - `docs/sih_solutions/sih-2026-ntro-solution-blueprint.md` (NTRO Critical Infrastructure SAR Anomaly Detection)
@@ -272,4 +275,5 @@ node --experimental-strip-types scripts/lock-manager.ts release --domain core --
   - `specs/presentations/CHAKRA_SIH2026.pptx` (Championship Reference Deck)
   - `specs/presentations/assets/` (Visual vector and diagram fixtures)
 - **Latest Comprehensive Audit**: [`docs/audits/2026-09-21_agentic_workflow_comprehensive_audit.md`](file:///docs/audits/2026-09-21_agentic_workflow_comprehensive_audit.md)
+
 

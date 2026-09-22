@@ -50,7 +50,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "Multi-Chain Attribution Canvas",
       sublabel: "Degree-Bounded Graph",
       icon: <Share2 size={15} />,
-      isLocked: !progress.step1_intake && !hasAttribution,
+      isLocked: !progress.step1_intake,
       isCompleted: progress.step2_graph,
       lockReason: "Requires Stage 1 Beam Search Attribution Execution"
     },
@@ -60,7 +60,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "Sweep Forensics & Fueler Lab",
       sublabel: "VASP Custody Verification",
       icon: <Flame size={15} />,
-      isLocked: (!progress.step1_intake && !hasAttribution) || !progress.step2_graph,
+      isLocked: !progress.step2_graph,
       isCompleted: progress.step3_sweep,
       lockReason: "Requires Stage 2 Graph Traversal Verification"
     },
@@ -70,7 +70,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "4-Pillar Confidence Scorer",
       sublabel: "Explainable Admissibility",
       icon: <Award size={15} />,
-      isLocked: (!progress.step1_intake && !hasAttribution) || !progress.step3_sweep,
+      isLocked: !progress.step3_sweep,
       isCompleted: progress.step4_scoring,
       lockReason: "Requires Stage 3 Sweep Forensics Verification"
     },
@@ -80,7 +80,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "SAHYOG Sanctions & Court Docket",
       sublabel: "Sec 106 BNSS & BSA Certs",
       icon: <Scale size={15} />,
-      isLocked: (!progress.step1_intake && !hasAttribution) || !progress.step4_scoring || !isHighConfidence,
+      isLocked: !progress.step4_scoring || !isHighConfidence,
       isCompleted: progress.step5_statutory,
       lockReason: !isHighConfidence ? "Requires Stage 4 Admissibility Score (≥85%)" : "Requires Stage 4 Admissibility Audit"
     }

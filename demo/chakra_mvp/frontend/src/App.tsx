@@ -227,30 +227,7 @@ export const App: React.FC = () => {
           : effectiveScenarios[0];
         setSelectedScenario(initialScenario);
 
-        // If no prior attribution stored, execute initial trace for Bengaluru Task Fraud
-        if (!initialStore.activeAttribution) {
-          setIsTracing(true);
-          try {
-            const initialResult = await api.traceAttribution({
-              sahyog_case_id: initialScenario.fir_no,
-              ncrp_complaint_id: initialScenario.ncrp_id,
-              suspect_wallet_address: initialScenario.suspect_wallet,
-              network: initialScenario.network,
-              reported_fraud_amount_inr: initialScenario.victim_loss_inr,
-              max_hops: 5,
-              dust_threshold_usd: 10.0
-            });
-            setActiveAttribution(initialResult);
-            setProgress((prev) => ({
-              ...prev,
-              step1_intake: true
-            }));
-          } catch (err: unknown) {
-            console.error("Initial trace failed:", err);
-          } finally {
-            setIsTracing(false);
-          }
-        }
+        // Initial load: do not auto-run trace so fresh sessions start with only Stage 1 accessible
       } catch (e: unknown) {
         console.error("Initialization error:", e);
       }
@@ -277,11 +254,13 @@ export const App: React.FC = () => {
         dust_threshold_usd: 10.0
       });
       setActiveAttribution(res);
-      setProgress((prev) => ({
-        ...prev,
+      setProgress({
         step1_intake: true,
-        step2_graph: true
-      }));
+        step2_graph: false,
+        step3_sweep: false,
+        step4_scoring: false,
+        step5_statutory: false
+      });
       showToast(`Loaded Docket: ${scenario.title}`);
     } catch (e: unknown) {
       showToast(`Trace error: ${e instanceof Error ? e.message : String(e)}`);
@@ -295,11 +274,13 @@ export const App: React.FC = () => {
     try {
       const res = await api.traceAttribution(req);
       setActiveAttribution(res);
-      setProgress((prev) => ({
-        ...prev,
+      setProgress({
         step1_intake: true,
-        step2_graph: true
-      }));
+        step2_graph: false,
+        step3_sweep: false,
+        step4_scoring: false,
+        step5_statutory: false
+      });
       showToast(`Attribution Complete: Resolved to ${res.nearest_vasp || "Unknown"} (${res.confidence_score.toFixed(1)}%)`);
       // Stepwise advancement to graph view upon trace completion
       setActiveTab("graph");
@@ -315,11 +296,13 @@ export const App: React.FC = () => {
     try {
       const res = await api.injectCustomGraph(injection);
       setActiveAttribution(res);
-      setProgress((prev) => ({
-        ...prev,
+      setProgress({
         step1_intake: true,
-        step2_graph: true
-      }));
+        step2_graph: false,
+        step3_sweep: false,
+        step4_scoring: false,
+        step5_statutory: false
+      });
       showToast(`Ad-Hoc Graph Ingested! Attributed to ${res.nearest_vasp} in ${res.hop_distance} hops.`);
       setActiveTab("graph");
     } catch (e: unknown) {
@@ -337,9 +320,6 @@ export const App: React.FC = () => {
       setProgress(INITIAL_PROGRESS);
       setActiveAttribution(null);
       setActiveTab("intake");
-      if (selectedScenario) {
-        await handleSelectScenario(selectedScenario);
-      }
       showToast("Investigation state reset to authentic Indian baseline scenarios.");
     } catch (e: unknown) {
       showToast(`Reset error: ${e instanceof Error ? e.message : String(e)}`);
@@ -348,18 +328,30 @@ export const App: React.FC = () => {
     }
   };
 
-  // Stepwise Linear Progression Tab Selector
+  // Tab Navigation: Only switches tab viewport, does NOT modify progress flags
   const handleSelectTab = (tab: ActiveTab) => {
     setActiveTab(tab);
-    if (tab === "graph") {
-      setProgress((prev) => ({ ...prev, step2_graph: true }));
-    } else if (tab === "sweep") {
-      setProgress((prev) => ({ ...prev, step2_graph: true, step3_sweep: true }));
-    } else if (tab === "scoring") {
-      setProgress((prev) => ({ ...prev, step3_sweep: true, step4_scoring: true }));
-    } else if (tab === "statutory") {
-      setProgress((prev) => ({ ...prev, step4_scoring: true, step5_statutory: true }));
-    }
+  };
+
+  // Strict Linear Stage Advancement Handlers (called by Stepwise Action Docks)
+  const handleAdvanceToStage2 = () => {
+    setProgress((prev) => ({ ...prev, step1_intake: true }));
+    setActiveTab("graph");
+  };
+
+  const handleAdvanceToStage3 = () => {
+    setProgress((prev) => ({ ...prev, step2_graph: true }));
+    setActiveTab("sweep");
+  };
+
+  const handleAdvanceToStage4 = () => {
+    setProgress((prev) => ({ ...prev, step3_sweep: true }));
+    setActiveTab("scoring");
+  };
+
+  const handleAdvanceToStage5 = () => {
+    setProgress((prev) => ({ ...prev, step4_scoring: true, step5_statutory: true }));
+    setActiveTab("statutory");
   };
 
   // PDF Download Handlers
@@ -465,7 +457,7 @@ export const App: React.FC = () => {
                 <div className="gov-docket-bar-actions">
                   <button
                     className="gov-btn gov-btn-primary"
-                    onClick={() => handleSelectTab("graph")}
+                    onClick={handleAdvanceToStage2}
                     disabled={!activeAttribution}
                     style={{ padding: "6px 12px", fontSize: "11.5px", opacity: !activeAttribution ? 0.5 : 1, cursor: !activeAttribution ? "not-allowed" : "pointer" }}
                   >
@@ -504,7 +496,7 @@ export const App: React.FC = () => {
                 </div>
                 <button
                   className="gov-btn gov-btn-primary"
-                  onClick={() => handleSelectTab("sweep")}
+                  onClick={handleAdvanceToStage3}
                   style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
                 >
                   Proceed to Stage 3: Sweep Forensics & Fueler Lab <ArrowRight size={14} />
@@ -528,7 +520,7 @@ export const App: React.FC = () => {
                 </div>
                 <button
                   className="gov-btn gov-btn-primary"
-                  onClick={() => handleSelectTab("scoring")}
+                  onClick={handleAdvanceToStage4}
                   style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
                 >
                   Proceed to Stage 4: 4-Pillar Confidence Scorer <ArrowRight size={14} />
@@ -553,7 +545,7 @@ export const App: React.FC = () => {
                 <button
                   className="gov-btn gov-btn-saffron"
                   disabled={!isHighConfidence}
-                  onClick={() => handleSelectTab("statutory")}
+                  onClick={handleAdvanceToStage5}
                   style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
                   title={!isHighConfidence ? "Requires Confidence Score >= 85%" : "Proceed to Court Sanctions"}
                 >

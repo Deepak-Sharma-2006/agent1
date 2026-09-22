@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="gov-agency-titles">
               <h1>भारतीय साइबर अपराध समन्वय केंद्र (I4C) | INDIAN CYBER CRIME COORDINATION CENTRE</h1>
               <h3>
-                प्रोजेक्ट चक्र : केंद्रीकृत उच्च-विश्वसनीयता स्वचालित खाता समाधान व एट्रिब्यूशन • PROJECT CHAKRA : Centralized High-Confidence Automated Khata Resolution & Attribution
+                प्रोजेक्ट चक्र • PROJECT CHAKRA : Crypto Hop Analytics & Knowledge for Rapid Attribution
               </h3>
             </div>
           </div>

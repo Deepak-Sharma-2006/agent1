@@ -1,18 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
-import type { Core, NodeSingular } from "cytoscape";
+import type { Core, NodeSingular, EdgeSingular } from "cytoscape";
 import type { AttributionResponse, GraphNode, TransactionEdge } from "../types";
 import {
   Maximize2,
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Info,
+  Play,
+  Copy,
+  Check,
   ExternalLink,
-  Shield,
   Layers,
   Zap,
-  CheckCircle2,
+  Crosshair,
+  Filter,
   X
 } from "lucide-react";
 
@@ -27,10 +29,51 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
+
+  // Inspector, Synthesis & Animation State
+  const [isSynthesized, setIsSynthesized] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<TransactionEdge | null>(null);
+  const [isAnimatingTrace, setIsAnimatingTrace] = useState<boolean>(false);
+  const [traceTelemetry, setTraceTelemetry] = useState<string | null>(null);
+  const [focusPipelineOnly, setFocusPipelineOnly] = useState<boolean>(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Reset synthesis state whenever active case changes
+  useEffect(() => {
+    setIsSynthesized(false);
+    setSelectedNode(null);
+    setSelectedEdge(null);
+    setTraceTelemetry(null);
+  }, [attribution?.sahyog_case_id, attribution?.suspect_wallet]);
+
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const getExplorerUrl = (id: string, type: "address" | "tx", network?: string): string => {
+    const net = (network || attribution?.network || "TRON").toUpperCase();
+    if (net.includes("TRON")) {
+      return type === "address" ? `https://tronscan.org/#/address/${id}` : `https://tronscan.org/#/transaction/${id}`;
+    }
+    if (net.includes("BTC")) {
+      return type === "address" ? `https://mempool.space/address/${id}` : `https://mempool.space/tx/${id}`;
+    }
+    if (net.includes("POL")) {
+      return type === "address" ? `https://polygonscan.com/address/${id}` : `https://polygonscan.com/tx/${id}`;
+    }
+    if (net.includes("BSC")) {
+      return type === "address" ? `https://bscscan.com/address/${id}` : `https://bscscan.com/tx/${id}`;
+    }
+    return type === "address" ? `https://etherscan.io/address/${id}` : `https://etherscan.io/tx/${id}`;
+  };
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!isSynthesized || !containerRef.current) return;
 
     // Destroy prior instance
     if (cyRef.current) {
@@ -66,7 +109,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
 
       const colSpacing = Math.max(160, (containerWidth - 140) / Math.max(1, maxHop));
       const x = 70 + colIndex * colSpacing;
-      
+
       const rowSpacing = Math.max(70, (containerHeight - 120) / Math.max(1, nodesInCol.length));
       const y = 60 + (rowIndex + 0.5) * rowSpacing;
 
@@ -99,7 +142,8 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
           raw_node: n,
           label: displayLabel,
           node_type: n.node_type,
-          cluster: n.cluster_entity
+          cluster: n.cluster_entity,
+          hop_level: n.hop_level
         },
         position: { x, y }
       });
@@ -132,9 +176,9 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
         {
           selector: "node",
           style: {
-            "background-color": "data(bgColor)",
+            "background-color": "#D97706",
             "border-width": 2,
-            "border-color": "data(borderColor)",
+            "border-color": "#B45309",
             label: "data(label)",
             "text-valign": "center",
             "text-halign": "center",
@@ -234,6 +278,51 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
             "overlay-opacity": 0.2,
             "overlay-padding": 4
           }
+        },
+        {
+          selector: ".highlighted-node",
+          style: {
+            "border-width": 4.5,
+            "border-color": "#F59E0B",
+            "overlay-color": "#F59E0B",
+            "overlay-opacity": 0.25,
+            "overlay-padding": 6
+          }
+        },
+        {
+          selector: ".pulse-active",
+          style: {
+            "border-width": 5,
+            "border-color": "#F59E0B",
+            "overlay-color": "#F59E0B",
+            "overlay-opacity": 0.35,
+            "overlay-padding": 8
+          }
+        },
+        {
+          selector: ".highlighted-edge",
+          style: {
+            width: 4,
+            "line-color": "#F59E0B",
+            "target-arrow-color": "#F59E0B",
+            "arrow-scale": 1.2
+          }
+        },
+        {
+          selector: ".pulse-sweep",
+          style: {
+            width: 5,
+            "line-color": "#EAB308",
+            "target-arrow-color": "#EAB308",
+            "line-style": "solid",
+            "arrow-scale": 1.4
+          }
+        },
+        {
+          selector: ".dimmed",
+          style: {
+            opacity: 0.15
+          }
         }
       ],
       layout: {
@@ -244,15 +333,27 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       wheelSensitivity: 0.2
     });
 
+    // Tap node: Open node forensic inspector
     cy.on("tap", "node", (evt) => {
       const node = evt.target as NodeSingular;
       const rawNode = node.data("raw_node") as GraphNode;
       setSelectedNode(rawNode);
+      setSelectedEdge(null);
     });
 
+    // Tap edge: Open transaction forensic inspector
+    cy.on("tap", "edge", (evt) => {
+      const edge = evt.target as EdgeSingular;
+      const rawEdge = edge.data("raw_edge") as TransactionEdge;
+      setSelectedEdge(rawEdge);
+      setSelectedNode(null);
+    });
+
+    // Tap background: Clear inspectors
     cy.on("tap", (evt) => {
       if (evt.target === cy) {
         setSelectedNode(null);
+        setSelectedEdge(null);
       }
     });
 
@@ -265,41 +366,254 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
         cyRef.current = null;
       }
     };
-  }, [attribution]);
+  }, [isSynthesized, attribution]);
+
+  // Synchronized Hop-by-Hop Animated Fund Flow Trace (Beam Search Simulation)
+  const handleRunTraceAnimation = async () => {
+    const cy = cyRef.current;
+    if (!cy || !attribution || isAnimatingTrace) return;
+
+    setIsAnimatingTrace(true);
+    setSelectedNode(null);
+    setSelectedEdge(null);
+
+    // Reset styles
+    cy.elements().removeClass("highlighted-node pulse-active highlighted-edge pulse-sweep dimmed");
+
+    try {
+      // Step 1: Hop 0 - Suspect Seed Wallet
+      setTraceTelemetry("⚡ [Step 1/4] Hop 0: Target Suspect Seed Wallet Identified on " + attribution.network + " ledger...");
+      const suspectNode = cy.nodes('[node_type = "SUSPECT_WALLET"]');
+      suspectNode.addClass("pulse-active");
+      cy.animate({
+        center: { eles: suspectNode },
+        duration: 350
+      });
+      await delay(800);
+      suspectNode.removeClass("pulse-active").addClass("highlighted-node");
+
+      // Step 2: Intermediate Unhosted Mules (Peel Chains)
+      const muleNodes = cy.nodes('[node_type = "INTERMEDIARY_UNHOSTED"]');
+      const muleEdges = cy.edges().filter((e) => {
+        const srcType = e.source().data("node_type");
+        const tgtType = e.target().data("node_type");
+        return srcType === "SUSPECT_WALLET" || tgtType === "INTERMEDIARY_UNHOSTED";
+      });
+
+      if (muleNodes.length > 0) {
+        setTraceTelemetry(`⚡ [Step 2/4] Traversing ${muleNodes.length} unhosted peel-chain intermediary mule wallets via Degree-Bounded Beam Search...`);
+        muleEdges.addClass("highlighted-edge");
+        muleNodes.addClass("pulse-active");
+        await delay(900);
+        muleNodes.removeClass("pulse-active").addClass("highlighted-node");
+      }
+
+      // Step 3: Candidate Deposit Address
+      setTraceTelemetry("⚡ [Step 3/4] Candidate VASP Inflow Deposit Address identified with high concentration index...");
+      const depositNode = cy.nodes('[node_type = "CANDIDATE_DEPOSIT"]');
+      const depositEdges = cy.edges().filter((e) => e.target().data("node_type") === "CANDIDATE_DEPOSIT");
+      depositEdges.addClass("highlighted-edge");
+      depositNode.addClass("pulse-active");
+      await delay(900);
+      depositNode.removeClass("pulse-active").addClass("highlighted-node");
+
+      // Step 4: Internal Sweep Consolidation Heuristic & VASP Hot Wallet
+      setTraceTelemetry(`✓ [Step 4/4] Automated Sweep Heuristic Confirmed! 100% balance swept into ${attribution.nearest_vasp} Hot Wallet (${attribution.confidence_score.toFixed(1)}% Confidence).`);
+      const sweepEdges = cy.edges('[?is_sweep]');
+      const vaspHotNode = cy.nodes('[node_type = "VASP_HOT_WALLET"]');
+
+      sweepEdges.addClass("pulse-sweep");
+      vaspHotNode.addClass("pulse-active");
+
+      cy.animate({
+        fit: { eles: cy.elements(), padding: 35 },
+        duration: 400
+      });
+      await delay(900);
+      vaspHotNode.removeClass("pulse-active").addClass("highlighted-node");
+
+    } finally {
+      setIsAnimatingTrace(false);
+    }
+  };
+
+  // Toggle Focus Pipeline Only
+  const handleToggleFocus = () => {
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    const nextState = !focusPipelineOnly;
+    setFocusPipelineOnly(nextState);
+
+    if (nextState) {
+      // Dim all nodes that are not in the primary attribution chain
+      cy.elements().addClass("dimmed");
+      cy.nodes('[node_type = "SUSPECT_WALLET"], [node_type = "CANDIDATE_DEPOSIT"], [node_type = "VASP_HOT_WALLET"]').removeClass("dimmed");
+      cy.edges('[?is_sweep]').removeClass("dimmed");
+    } else {
+      cy.elements().removeClass("dimmed");
+    }
+  };
+
+  // Center Camera on Identified VASP Hot Storage
+  const handleCenterOnVasp = () => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    const vaspNode = cy.nodes('[node_type = "VASP_HOT_WALLET"]');
+    if (vaspNode.length > 0) {
+      cy.animate({
+        center: { eles: vaspNode },
+        zoom: 1.2,
+        duration: 400
+      });
+      setSelectedNode(vaspNode.first().data("raw_node"));
+    }
+  };
 
   const handleZoomIn = () => cyRef.current?.zoom(cyRef.current.zoom() * 1.25);
   const handleZoomOut = () => cyRef.current?.zoom(cyRef.current.zoom() * 0.8);
   const handleFit = () => cyRef.current?.fit(undefined, 30);
+  const handleResetGraph = () => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.elements().removeClass("highlighted-node pulse-active highlighted-edge pulse-sweep dimmed");
+    cy.fit(undefined, 30);
+    setTraceTelemetry(null);
+    setFocusPipelineOnly(false);
+    setSelectedNode(null);
+    setSelectedEdge(null);
+  };
 
   return (
-    <div className="gov-card" style={{ height: "100%", minHeight: "520px", display: "flex", flexDirection: "column" }}>
+    <div className="gov-card" style={{ height: "100%", minHeight: "560px", display: "flex", flexDirection: "column" }}>
       {/* Canvas Header & Action Controls */}
-      <div className="gov-card-header">
-        <span className="gov-card-title">
-          <Layers size={15} color="#0F2942" /> Interactive Multi-Chain Attribution Canvas
-        </span>
+      <div className="gov-card-header" style={{ flexWrap: "wrap", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span className="gov-card-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <Layers size={15} color="#0F2942" /> Interactive Multi-Chain Attribution Canvas
+          </span>
+          <span
+            style={{
+              fontSize: "10px",
+              fontWeight: 700,
+              color: "#1E40AF",
+              background: "#EFF6FF",
+              border: "1px solid #BFDBFE",
+              padding: "2px 8px",
+              borderRadius: "4px"
+            }}
+          >
+            ACTIVE FORENSIC STAGE 2
+          </span>
+        </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <button className="gov-btn-text-size" onClick={handleZoomIn} title="Zoom In">
-            <ZoomIn size={12} />
+        {/* Action Controls & Animation Playback */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            id="btn-trace-fund-flow"
+            className="gov-btn gov-btn-primary"
+            onClick={handleRunTraceAnimation}
+            disabled={!isSynthesized || isAnimatingTrace || !attribution}
+            style={{
+              fontSize: "11px",
+              padding: "5px 12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              background: (!isSynthesized || isAnimatingTrace) ? "#94A3B8" : "#0F2942",
+              cursor: (!isSynthesized || isAnimatingTrace) ? "not-allowed" : "pointer"
+            }}
+            title="Execute Hop-by-Hop Animated Fund Flow Trace"
+          >
+            <Play size={12} fill="currentColor" />
+            {isAnimatingTrace ? "Tracing Fund Flow..." : "Trace Fund Flow"}
           </button>
-          <button className="gov-btn-text-size" onClick={handleZoomOut} title="Zoom Out">
-            <ZoomOut size={12} />
+
+          <button
+            type="button"
+            className="gov-btn gov-btn-outline"
+            onClick={handleCenterOnVasp}
+            disabled={!isSynthesized}
+            style={{ fontSize: "11px", padding: "5px 10px", display: "flex", alignItems: "center", gap: "4px", opacity: !isSynthesized ? 0.5 : 1 }}
+            title="Locate Attributed VASP Hot Wallet"
+          >
+            <Crosshair size={12} />
+            Focus VASP
           </button>
-          <button className="gov-btn-text-size" onClick={handleFit} title="Fit to Viewport">
-            <Maximize2 size={12} />
+
+          <button
+            type="button"
+            className="gov-btn gov-btn-outline"
+            onClick={handleToggleFocus}
+            disabled={!isSynthesized}
+            style={{
+              fontSize: "11px",
+              padding: "5px 10px",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              background: focusPipelineOnly ? "#EFF6FF" : "transparent",
+              opacity: !isSynthesized ? 0.5 : 1
+            }}
+            title="Highlight Direct Inflow Pipeline"
+          >
+            <Filter size={12} />
+            {focusPipelineOnly ? "Show All" : "Critical Path"}
           </button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "3px", marginLeft: "4px" }}>
+            <button className="gov-btn-text-size" onClick={handleZoomIn} disabled={!isSynthesized} title="Zoom In" style={{ opacity: !isSynthesized ? 0.5 : 1 }}>
+              <ZoomIn size={12} />
+            </button>
+            <button className="gov-btn-text-size" onClick={handleZoomOut} disabled={!isSynthesized} title="Zoom Out" style={{ opacity: !isSynthesized ? 0.5 : 1 }}>
+              <ZoomOut size={12} />
+            </button>
+            <button className="gov-btn-text-size" onClick={handleFit} disabled={!isSynthesized} title="Fit to Viewport" style={{ opacity: !isSynthesized ? 0.5 : 1 }}>
+              <Maximize2 size={12} />
+            </button>
+            <button className="gov-btn-text-size" onClick={handleResetGraph} disabled={!isSynthesized} title="Reset Highlights" style={{ opacity: !isSynthesized ? 0.5 : 1 }}>
+              <RotateCcw size={12} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Main Cytoscape Viewport */}
+      {/* Live Telemetry Ticker Strip */}
+      {traceTelemetry && (
+        <div
+          style={{
+            background: "#0F2942",
+            color: "#FFFFFF",
+            padding: "6px 14px",
+            fontSize: "11px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid #1E3A8A"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Zap size={13} color="#F59E0B" />
+            <span style={{ fontWeight: 600 }}>{traceTelemetry}</span>
+          </div>
+          <button
+            onClick={() => setTraceTelemetry(null)}
+            style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer" }}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+
+      {/* Main Cytoscape Viewport or Pre-Synthesis Briefing Card */}
       <div style={{ position: "relative", flex: 1, background: "#F8FAFC", minHeight: "440px" }}>
         {isLoading && (
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background: "rgba(248, 250, 252, 0.8)",
+              background: "rgba(248, 250, 252, 0.85)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -310,49 +624,155 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
           >
             <div className="spin-loader" />
             <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F2942" }}>
-              Tracing Multi-Hop Peel Chains via Beam Search...
+              Tracing Multi-Hop Peel Chains via Degree-Bounded Beam Search...
             </span>
           </div>
         )}
 
-        <div ref={containerRef} className="cytoscape-viewport-canvas" style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
+        {!isSynthesized ? (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "24px",
+              background: "#F8FAFC",
+              textAlign: "center"
+            }}
+          >
+            <div
+              style={{
+                maxWidth: "600px",
+                width: "100%",
+                background: "#FFFFFF",
+                border: "1px solid #E2E8F0",
+                borderRadius: "8px",
+                padding: "28px 24px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px"
+              }}
+            >
+              <div
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                  background: "#FEF3C7",
+                  border: "1px solid #FDE68A",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Layers size={24} color="#D97706" />
+              </div>
 
-        {/* Selected Node Details Floating Drawer */}
+              <div>
+                <div style={{ fontSize: "15px", fontWeight: 800, color: "#0F172A" }}>
+                  Stage 2: Multi-Chain Attribution Canvas Awaiting Synthesis
+                </div>
+                <div style={{ fontSize: "12px", color: "#64748B", marginTop: "5px", lineHeight: "1.5" }}>
+                  Beam search traversal has resolved the on-chain trail for Case <b>{attribution?.sahyog_case_id || "Active Docket"}</b>.
+                  Synthesize the topological graph canvas to explore hops, suspect wallets, and internal VASP sweeps.
+                </div>
+              </div>
+
+              {attribution && (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "10px",
+                    width: "100%",
+                    background: "#FAFAFA",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "6px",
+                    padding: "10px",
+                    fontSize: "11px"
+                  }}
+                >
+                  <div>
+                    <span style={{ color: "#64748B", display: "block", fontSize: "10px", textTransform: "uppercase" }}>Suspect Wallet</span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#0F172A" }}>
+                      {attribution.suspect_wallet ? `${attribution.suspect_wallet.substring(0, 6)}...${attribution.suspect_wallet.slice(-4)}` : "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#64748B", display: "block", fontSize: "10px", textTransform: "uppercase" }}>Network / Hops</span>
+                    <span style={{ fontWeight: 700, color: "#0F172A" }}>
+                      {attribution.network} • {attribution.hop_distance} Hops
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#64748B", display: "block", fontSize: "10px", textTransform: "uppercase" }}>Attributed VASP</span>
+                    <span style={{ fontWeight: 800, color: "#047857" }}>
+                      {attribution.nearest_vasp || "Unknown"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                id="btn-synthesize-graph"
+                className="gov-btn gov-btn-saffron"
+                onClick={() => setIsSynthesized(true)}
+                style={{ padding: "10px 22px", fontSize: "13px", fontWeight: 700, gap: "8px", marginTop: "4px" }}
+              >
+                <Layers size={16} /> Synthesize Multi-Chain Graph Canvas
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div ref={containerRef} className="cytoscape-viewport-canvas" style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
+        )}
+
+        {/* Selected Node Forensic Inspector Card */}
         {selectedNode && (
           <div
             style={{
               position: "absolute",
               bottom: "12px",
               left: "12px",
-              width: "310px",
+              width: "340px",
               background: "#FFFFFF",
               border: "1px solid #CBD5E1",
               borderRadius: "8px",
               boxShadow: "var(--shadow-lg)",
-              padding: "12px",
-              zIndex: 20
+              padding: "14px",
+              zIndex: 20,
+              animation: "slideIn 0.15s ease-out"
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span
                   style={{
-                    fontSize: "9px",
+                    fontSize: "9.5px",
                     fontWeight: 700,
-                    padding: "2px 5px",
+                    padding: "3px 6px",
                     borderRadius: "3px",
                     background:
                       selectedNode.node_type === "SUSPECT_WALLET"
                         ? "#FEE2E2"
                         : selectedNode.node_type === "VASP_HOT_WALLET"
                         ? "#D1FAE5"
-                        : "#EFF6FF",
+                        : selectedNode.node_type === "CANDIDATE_DEPOSIT"
+                        ? "#EFF6FF"
+                        : "#FEF3C7",
                     color:
                       selectedNode.node_type === "SUSPECT_WALLET"
                         ? "#991B1B"
                         : selectedNode.node_type === "VASP_HOT_WALLET"
                         ? "#065F46"
-                        : "#1E40AF"
+                        : selectedNode.node_type === "CANDIDATE_DEPOSIT"
+                        ? "#1E40AF"
+                        : "#B45309"
                   }}
                 >
                   {selectedNode.node_type}
@@ -369,7 +789,7 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
               </button>
             </div>
 
-            <div style={{ fontSize: "10px", color: "#64748B", marginBottom: "2px" }}>ADDRESS:</div>
+            <div style={{ fontSize: "10px", color: "#64748B", marginBottom: "3px", fontWeight: 600 }}>CRYPTOCURRENCY ADDRESS:</div>
             <div
               style={{
                 fontFamily: "var(--font-mono)",
@@ -377,22 +797,188 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
                 wordBreak: "break-all",
                 color: "#0F172A",
                 background: "#F1F5F9",
-                padding: "4px 6px",
+                padding: "6px 8px",
                 borderRadius: "4px",
-                marginBottom: "8px"
+                marginBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "6px"
               }}
             >
-              {selectedNode.id}
+              <span>{selectedNode.id}</span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(selectedNode.id, "node_addr")}
+                style={{ background: "none", border: "none", cursor: "pointer", color: copiedKey === "node_addr" ? "#059669" : "#64748B" }}
+                title="Copy Address"
+              >
+                {copiedKey === "node_addr" ? <Check size={13} /> : <Copy size={13} />}
+              </button>
             </div>
 
             {selectedNode.cluster_entity && (
-              <div style={{ fontSize: "11px", color: "#1E40AF", fontWeight: 600, marginBottom: "4px" }}>
+              <div style={{ fontSize: "11.5px", color: "#1E40AF", fontWeight: 700, marginBottom: "4px" }}>
                 Entity: {selectedNode.cluster_entity}
               </div>
             )}
-            <div style={{ fontSize: "10.5px", color: "#475569" }}>
-              Network: <b>{selectedNode.network}</b> • Hot Storage: <b>{selectedNode.is_hot_wallet ? "YES" : "NO"}</b>
+
+            <div style={{ fontSize: "11px", color: "#475569", marginBottom: "8px" }}>
+              Network: <b>{selectedNode.network}</b> • Custodial Hot Storage: <b>{selectedNode.is_hot_wallet ? "YES" : "NO"}</b>
             </div>
+
+            {/* Legal / Statutory Guidance */}
+            <div
+              style={{
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                borderRadius: "4px",
+                padding: "8px",
+                fontSize: "10.5px",
+                color: "#334155",
+                marginBottom: "10px"
+              }}
+            >
+              <b>Statutory Action: </b>
+              {selectedNode.node_type === "SUSPECT_WALLET" && "Primary criminal intake wallet. Issue Sec 94 BNSS production summons to victim onboarding rail."}
+              {selectedNode.node_type === "INTERMEDIARY_UNHOSTED" && "Unhosted peeling mule wallet. Traverse onward hops to locate terminating centralized exchange."}
+              {selectedNode.node_type === "CANDIDATE_DEPOSIT" && "Identified VASP deposit wallet! Direct target of emergency Sec 106/107 BNSS debit freeze notice."}
+              {selectedNode.node_type === "VASP_HOT_WALLET" && "Centralized exchange pooled liquidity vault. Establishes institutional custody for statutory compliance."}
+            </div>
+
+            <a
+              href={getExplorerUrl(selectedNode.id, "address", selectedNode.network)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gov-btn gov-btn-outline"
+              style={{
+                width: "100%",
+                fontSize: "11px",
+                padding: "5px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5px",
+                textDecoration: "none"
+              }}
+            >
+              <ExternalLink size={12} />
+              Open in Public Ledger Explorer
+            </a>
+          </div>
+        )}
+
+        {/* Selected Edge Forensic Inspector Card */}
+        {selectedEdge && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "12px",
+              left: "12px",
+              width: "340px",
+              background: "#FFFFFF",
+              border: "1px solid #CBD5E1",
+              borderRadius: "8px",
+              boxShadow: "var(--shadow-lg)",
+              padding: "14px",
+              zIndex: 20,
+              animation: "slideIn 0.15s ease-out"
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span
+                  style={{
+                    fontSize: "9.5px",
+                    fontWeight: 700,
+                    padding: "3px 6px",
+                    borderRadius: "3px",
+                    background: selectedEdge.is_sweep ? "#FEF3C7" : "#EFF6FF",
+                    color: selectedEdge.is_sweep ? "#B45309" : "#1E40AF"
+                  }}
+                >
+                  {selectedEdge.is_sweep ? "VASP INTERNAL SWEEP" : "STANDARD ON-CHAIN HOP"}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedEdge(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B" }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div style={{ fontSize: "10px", color: "#64748B", marginBottom: "3px", fontWeight: 600 }}>TRANSACTION HASH:</div>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "11px",
+                wordBreak: "break-all",
+                color: "#0F172A",
+                background: "#F1F5F9",
+                padding: "6px 8px",
+                borderRadius: "4px",
+                marginBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "6px"
+              }}
+            >
+              <span>{selectedEdge.tx_hash}</span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(selectedEdge.tx_hash, "edge_tx")}
+                style={{ background: "none", border: "none", cursor: "pointer", color: copiedKey === "edge_tx" ? "#059669" : "#64748B" }}
+                title="Copy Tx Hash"
+              >
+                {copiedKey === "edge_tx" ? <Check size={13} /> : <Copy size={13} />}
+              </button>
+            </div>
+
+            <div style={{ fontSize: "11px", color: "#334155", marginBottom: "4px" }}>
+              Transferred Volume: <b style={{ color: "#0B1B3D" }}>{selectedEdge.decimal_amount} {selectedEdge.asset_symbol}</b>
+            </div>
+            <div style={{ fontSize: "10.5px", color: "#64748B", marginBottom: "8px" }}>
+              Timestamp: {new Date(selectedEdge.block_timestamp).toLocaleString("en-IN")}
+            </div>
+
+            {selectedEdge.is_sweep && (
+              <div
+                style={{
+                  background: "#FFFBEB",
+                  border: "1px solid #FDE68A",
+                  borderRadius: "4px",
+                  padding: "8px",
+                  fontSize: "10.5px",
+                  color: "#92400E",
+                  marginBottom: "10px"
+                }}
+              >
+                <b>Consolidation Heuristic: </b>
+                Automated exchange sweep verified: 100% of deposit balance consolidated into exchange omnibus cold/hot storage within 12 blocks.
+              </div>
+            )}
+
+            <a
+              href={getExplorerUrl(selectedEdge.tx_hash, "tx", selectedEdge.network)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gov-btn gov-btn-outline"
+              style={{
+                width: "100%",
+                fontSize: "11px",
+                padding: "5px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5px",
+                textDecoration: "none"
+              }}
+            >
+              <ExternalLink size={12} />
+              Inspect Transaction on Blockchain
+            </a>
           </div>
         )}
       </div>

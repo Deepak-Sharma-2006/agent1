@@ -41,6 +41,9 @@ export const CaseIntakePanel: React.FC<CaseIntakePanelProps> = ({
   const handleScenarioChange = (scenarioId: string) => {
     const sc = scenarios.find((s) => s.id === scenarioId);
     if (sc) {
+      setSuspectWallet(sc.suspect_wallet || "");
+      setNetwork(sc.network || "TRON");
+      setFraudLossInr(sc.victim_loss_inr ?? 0);
       onSelectScenario(sc);
     }
   };
@@ -277,12 +280,20 @@ export const CaseIntakePanel: React.FC<CaseIntakePanelProps> = ({
                 <input
                   type="number"
                   className="gov-input"
-                  value={fraudLossInr ?? 0}
-                  onChange={(e) => setFraudLossInr(parseFloat(e.target.value) || 0)}
-                  step="10000"
-                  min="1000"
+                  value={fraudLossInr}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setFraudLossInr(isNaN(val) ? 0 : val);
+                  }}
+                  step="any"
+                  min="0"
+                  placeholder="e.g. 4500000"
+                  required
                   style={{ fontSize: "12px", padding: "8px 10px" }}
                 />
+                <div style={{ fontSize: "10.5px", color: "#64748B", marginTop: "3px" }}>
+                  Formatted: <b style={{ color: "#0B1B3D" }}>₹ {fraudLossInr.toLocaleString("en-IN")}</b>
+                </div>
               </div>
             </div>
 

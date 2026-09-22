@@ -152,14 +152,18 @@ export class ChakraApiService {
     return res.json();
   }
 
-  async downloadPdfBlob(endpoint: string, attribution: AttributionResponse, filename: string): Promise<void> {
+  async getPdfBlob(endpoint: string, attribution: AttributionResponse): Promise<Blob> {
     const res = await fetch(`${API_BASE}/evidence/${endpoint}`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(attribution)
     });
-    if (!res.ok) throw new Error(`PDF download failed: ${res.statusText}`);
-    const blob = await res.blob();
+    if (!res.ok) throw new Error(`PDF generation failed: ${res.statusText}`);
+    return res.blob();
+  }
+
+  async downloadPdfBlob(endpoint: string, attribution: AttributionResponse, filename: string): Promise<void> {
+    const blob = await this.getPdfBlob(endpoint, attribution);
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

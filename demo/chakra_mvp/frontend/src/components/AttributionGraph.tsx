@@ -21,17 +21,23 @@ import {
 interface AttributionGraphProps {
   attribution: AttributionResponse | null;
   isLoading: boolean;
+  isSynthesized?: boolean;
+  onGraphSynthesized?: () => void;
 }
 
 export const AttributionGraph: React.FC<AttributionGraphProps> = ({
   attribution,
-  isLoading
+  isLoading,
+  isSynthesized: propIsSynthesized,
+  onGraphSynthesized
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
 
   // Inspector, Synthesis & Animation State
-  const [isSynthesized, setIsSynthesized] = useState<boolean>(false);
+  const [internalSynthesized, setInternalSynthesized] = useState<boolean>(false);
+  const isSynthesized = propIsSynthesized !== undefined ? propIsSynthesized : internalSynthesized;
+  const [isSynthesizing, setIsSynthesizing] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<TransactionEdge | null>(null);
   const [isAnimatingTrace, setIsAnimatingTrace] = useState<boolean>(false);
@@ -41,10 +47,15 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
 
   // Reset synthesis state whenever active case changes
   useEffect(() => {
-    setIsSynthesized(false);
+    setInternalSynthesized(false);
+    setIsSynthesizing(false);
     setSelectedNode(null);
     setSelectedEdge(null);
     setTraceTelemetry(null);
+    if (cyRef.current && !cyRef.current.destroyed()) {
+      cyRef.current.destroy();
+      cyRef.current = null;
+    }
   }, [attribution?.sahyog_case_id, attribution?.suspect_wallet]);
 
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -72,23 +83,13 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
     return type === "address" ? `https://etherscan.io/address/${id}` : `https://etherscan.io/tx/${id}`;
   };
 
-  useEffect(() => {
-    if (!isSynthesized || !containerRef.current) return;
-
-    // Destroy prior instance
-    if (cyRef.current) {
-      cyRef.current.destroy();
-      cyRef.current = null;
-    }
-
+  // Build Cytoscape elements Definition
+  const buildElements = (): cytoscape.ElementDefinition[] => {
     if (!attribution || !attribution.graph_nodes || attribution.graph_nodes.length === 0) {
-      return;
+      return [];
     }
 
-    // Build Cytoscape Elements
     const elements: cytoscape.ElementDefinition[] = [];
-
-    // Group nodes by hop level for spatial column layout
     const nodesByHop: Record<number, GraphNode[]> = {};
     attribution.graph_nodes.forEach((n) => {
       const hop = n.hop_level ?? 0;
@@ -97,10 +98,9 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
     });
 
     const maxHop = Math.max(0, ...Object.keys(nodesByHop).map(Number));
-    const containerWidth = containerRef.current.clientWidth || 700;
-    const containerHeight = containerRef.current.clientHeight || 500;
+    const containerWidth = containerRef.current?.clientWidth || 700;
+    const containerHeight = containerRef.current?.clientHeight || 500;
 
-    // Distribute nodes spatially across columns
     attribution.graph_nodes.forEach((n) => {
       const hop = n.hop_level ?? 0;
       const colIndex = hop;
@@ -149,7 +149,6 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       });
     });
 
-    // Add Edges
     attribution.graph_edges.forEach((e) => {
       const isSweep = e.is_sweep || false;
       const edgeLabel = isSweep
@@ -169,6 +168,21 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       });
     });
 
+    return elements;
+  };
+
+  // Initialize Cytoscape Instance
+  const initCytoscapeInstance = (hideAll: boolean = false): Core | null => {
+    if (!containerRef.current) return null;
+
+    if (cyRef.current && !cyRef.current.destroyed()) {
+      cyRef.current.destroy();
+      cyRef.current = null;
+    }
+
+    const elements = buildElements();
+    if (elements.length === 0) return null;
+
     const cy = cytoscape({
       container: containerRef.current,
       elements: elements,
@@ -183,20 +197,21 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
             "text-valign": "center",
             "text-halign": "center",
             "text-wrap": "wrap",
+            "text-max-width": "110px",
             color: "#FFFFFF",
             "font-size": "9.5px",
             "font-family": "Inter, sans-serif",
-            "font-weight": "bold",
-            width: 95,
-            height: 48,
-            "overlay-opacity": 0
+            "font-weight": 700,
+            "text-outline-width": 1.5,
+            "text-outline-color": "#0F172A",
+            "text-outline-opacity": 0.8
           }
         },
         {
           selector: 'node[node_type = "SUSPECT_WALLET"]',
           style: {
             "background-color": "#DC2626",
-            "border-color": "#7F1D1D",
+            "border-color": "#991B1B",
             "border-width": 3,
             shape: "hexagon",
             width: 105,
@@ -319,6 +334,12 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
           }
         },
         {
+          selector: ".staged-hidden",
+          style: {
+            display: "none"
+          }
+        },
+        {
           selector: ".dimmed",
           style: {
             opacity: 0.15
@@ -333,7 +354,6 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       wheelSensitivity: 0.2
     });
 
-    // Tap node: Open node forensic inspector
     cy.on("tap", "node", (evt) => {
       const node = evt.target as NodeSingular;
       const rawNode = node.data("raw_node") as GraphNode;
@@ -341,7 +361,6 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       setSelectedEdge(null);
     });
 
-    // Tap edge: Open transaction forensic inspector
     cy.on("tap", "edge", (evt) => {
       const edge = evt.target as EdgeSingular;
       const rawEdge = edge.data("raw_edge") as TransactionEdge;
@@ -349,7 +368,6 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       setSelectedNode(null);
     });
 
-    // Tap background: Clear inspectors
     cy.on("tap", (evt) => {
       if (evt.target === cy) {
         setSelectedNode(null);
@@ -357,15 +375,89 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
       }
     });
 
-    cyRef.current = cy;
-    cy.fit(undefined, 30);
+    if (hideAll) {
+      cy.elements().addClass("staged-hidden");
+    } else {
+      cy.fit(undefined, 30);
+    }
 
-    return () => {
-      if (cyRef.current && !cyRef.current.destroyed()) {
-        cyRef.current.destroy();
-        cyRef.current = null;
+    cyRef.current = cy;
+    return cy;
+  };
+
+  // Progressive 4-Stage Multi-Chain Synthesis Animation (Bhedak Architecture)
+  const handleSynthesizeGraph = async () => {
+    if (!containerRef.current || !attribution || isSynthesizing) return;
+    setIsSynthesizing(true);
+    setSelectedNode(null);
+    setSelectedEdge(null);
+
+    const cy = initCytoscapeInstance(true);
+    if (!cy) {
+      setIsSynthesizing(false);
+      return;
+    }
+
+    try {
+      // Stage 1: Hop 0 - Suspect Seed Wallet
+      setTraceTelemetry(`⚡ [Stage 1/4] Ingesting Target Suspect Seed Wallet on ${attribution.network} ledger...`);
+      const suspectNode = cy.nodes('[node_type = "SUSPECT_WALLET"]');
+      suspectNode.removeClass("staged-hidden");
+      cy.animate({
+        center: { eles: suspectNode },
+        duration: 300
+      });
+      await delay(450);
+
+      // Stage 2: Intermediate Peel-Chain Mule Wallets
+      const muleNodes = cy.nodes('[node_type = "INTERMEDIARY_UNHOSTED"]');
+      setTraceTelemetry(`⚡ [Stage 2/4] Traversing ${muleNodes.length} unhosted peel-chain intermediary mule wallets via Degree-Bounded Beam Search...`);
+      muleNodes.removeClass("staged-hidden");
+      cy.edges().forEach((e) => {
+        if (!e.source().hasClass("staged-hidden") && !e.target().hasClass("staged-hidden")) {
+          e.removeClass("staged-hidden");
+        }
+      });
+      await delay(450);
+
+      // Stage 3: Candidate Deposit Address
+      setTraceTelemetry(`⚡ [Stage 3/4] Candidate VASP Inflow Deposit Address identified with high concentration index...`);
+      const depositNodes = cy.nodes('[node_type = "CANDIDATE_DEPOSIT"]');
+      depositNodes.removeClass("staged-hidden");
+      cy.edges().forEach((e) => {
+        if (!e.source().hasClass("staged-hidden") && !e.target().hasClass("staged-hidden")) {
+          e.removeClass("staged-hidden");
+        }
+      });
+      await delay(450);
+
+      // Stage 4: Attributed VASP Hot Wallet & Internal Sweep Consolidation
+      setTraceTelemetry(`✓ [Stage 4/4] Automated Sweep Heuristic Confirmed! 100% balance swept into ${attribution.nearest_vasp || "VASP"} Hot Wallet (${attribution.confidence_score.toFixed(1)}% Confidence).`);
+      cy.elements().removeClass("staged-hidden");
+      cy.animate({
+        fit: { eles: cy.elements(), padding: 35 },
+        duration: 350
+      });
+      await delay(400);
+
+      setTraceTelemetry(`✓ Multi-Chain Attribution Graph Synthesized: ${attribution.graph_nodes.length} Nodes & ${attribution.graph_edges.length} Edges Attributed to ${attribution.nearest_vasp || "VASP"}`);
+      setInternalSynthesized(true);
+      onGraphSynthesized?.();
+    } finally {
+      setIsSynthesizing(false);
+    }
+  };
+
+  // Re-mount or fit when isSynthesized is already true
+  useEffect(() => {
+    if (isSynthesized && containerRef.current && attribution) {
+      if (!cyRef.current || cyRef.current.destroyed()) {
+        initCytoscapeInstance(false);
+      } else {
+        cyRef.current.elements().removeClass("staged-hidden");
+        cyRef.current.fit(undefined, 30);
       }
-    };
+    }
   }, [isSynthesized, attribution]);
 
   // Synchronized Hop-by-Hop Animated Fund Flow Trace (Beam Search Simulation)
@@ -629,7 +721,20 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
           </div>
         )}
 
-        {!isSynthesized ? (
+        {/* Cytoscape Viewport Canvas - Always Mounted to Guarantee Layout Geometry */}
+        <div
+          ref={containerRef}
+          className="cytoscape-viewport-canvas"
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            inset: 0,
+            visibility: (!isSynthesized && !isSynthesizing) ? "hidden" : "visible"
+          }}
+        />
+
+        {!isSynthesized && !isSynthesizing && (
           <div
             style={{
               position: "absolute",
@@ -640,7 +745,8 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
               justifyContent: "center",
               padding: "24px",
               background: "#F8FAFC",
-              textAlign: "center"
+              textAlign: "center",
+              zIndex: 5
             }}
           >
             <div
@@ -719,17 +825,17 @@ export const AttributionGraph: React.FC<AttributionGraphProps> = ({
               )}
 
               <button
+                type="button"
                 id="btn-synthesize-graph"
                 className="gov-btn gov-btn-saffron"
-                onClick={() => setIsSynthesized(true)}
+                onClick={handleSynthesizeGraph}
+                disabled={isSynthesizing}
                 style={{ padding: "10px 22px", fontSize: "13px", fontWeight: 700, gap: "8px", marginTop: "4px" }}
               >
                 <Layers size={16} /> Synthesize Multi-Chain Graph Canvas
               </button>
             </div>
           </div>
-        ) : (
-          <div ref={containerRef} className="cytoscape-viewport-canvas" style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
         )}
 
         {/* Selected Node Forensic Inspector Card */}

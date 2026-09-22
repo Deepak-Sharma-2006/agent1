@@ -19,6 +19,7 @@ import { StatutoryCourtDocket } from "./components/StatutoryCourtDocket";
 import { StatutoryNoticeModal } from "./components/StatutoryNoticeModal";
 import { JuryInjectionModal } from "./components/JuryInjectionModal";
 import { MerkleAuditModal } from "./components/MerkleAuditModal";
+import { DocumentPreviewModal } from "./components/DocumentPreviewModal";
 import { CheckCircle2, AlertCircle, ArrowRight, Share2, Flame, Award, Scale, FileText } from "lucide-react";
 import "./App.css";
 
@@ -181,6 +182,26 @@ export const App: React.FC = () => {
   const [isResetting, setIsResetting] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Stage Completion Flags (Strict Linear Gating)
+  const [isGraphSynthesized, setIsGraphSynthesized] = useState<boolean>(false);
+  const [isSweepAnalyzed, setIsSweepAnalyzed] = useState<boolean>(false);
+  const [isScoringComputed, setIsScoringComputed] = useState<boolean>(false);
+
+  // PDF Preview Modal State
+  const [previewModal, setPreviewModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    endpoint: string;
+    blobUrl: string | null;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    endpoint: "",
+    blobUrl: null,
+    isLoading: false
+  });
+
   // Modals
   const [showNoticeModal, setShowNoticeModal] = useState<boolean>(false);
   const [showAdHocModal, setShowAdHocModal] = useState<boolean>(false);
@@ -240,37 +261,22 @@ export const App: React.FC = () => {
     showToast("Statutory Notice: CHAKRA MVP is custom-engineered specifically for the Investigating Officer (IO / SHO) desk.");
   };
 
-  const handleSelectScenario = async (scenario: ScenarioMetadata) => {
+  // Bug 1 Fix: Selecting scenario ONLY populates form state; does NOT auto-trace or open Stage 2
+  const handleSelectScenario = (scenario: ScenarioMetadata) => {
     setSelectedScenario(scenario);
-    setIsTracing(true);
-    try {
-      const res = await api.traceAttribution({
-        sahyog_case_id: scenario.fir_no,
-        ncrp_complaint_id: scenario.ncrp_id,
-        suspect_wallet_address: scenario.suspect_wallet,
-        network: scenario.network,
-        reported_fraud_amount_inr: scenario.victim_loss_inr,
-        max_hops: 5,
-        dust_threshold_usd: 10.0
-      });
-      setActiveAttribution(res);
-      setProgress({
-        step1_intake: true,
-        step2_graph: false,
-        step3_sweep: false,
-        step4_scoring: false,
-        step5_statutory: false
-      });
-      showToast(`Loaded Docket: ${scenario.title}`);
-    } catch (e: unknown) {
-      showToast(`Trace error: ${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setIsTracing(false);
-    }
+    setActiveAttribution(null);
+    setIsGraphSynthesized(false);
+    setIsSweepAnalyzed(false);
+    setIsScoringComputed(false);
+    setProgress(INITIAL_PROGRESS);
+    showToast(`Loaded Docket: ${scenario.title}. Click 'Execute Automated Attribution' to begin.`);
   };
 
   const handleRequestTrace = async (req: AttributionRequest) => {
     setIsTracing(true);
+    setIsGraphSynthesized(false);
+    setIsSweepAnalyzed(false);
+    setIsScoringComputed(false);
     try {
       const res = await api.traceAttribution(req);
       setActiveAttribution(res);
@@ -293,6 +299,9 @@ export const App: React.FC = () => {
 
   const handleInjectAdHocGraph = async (injection: CustomGraphInjectionRequest) => {
     setIsTracing(true);
+    setIsGraphSynthesized(false);
+    setIsSweepAnalyzed(false);
+    setIsScoringComputed(false);
     try {
       const res = await api.injectCustomGraph(injection);
       setActiveAttribution(res);
@@ -320,6 +329,9 @@ export const App: React.FC = () => {
       setProgress(INITIAL_PROGRESS);
       setActiveAttribution(null);
       setActiveTab("intake");
+      setIsGraphSynthesized(false);
+      setIsSweepAnalyzed(false);
+      setIsScoringComputed(false);
       showToast("Investigation state reset to authentic Indian baseline scenarios.");
     } catch (e: unknown) {
       showToast(`Reset error: ${e instanceof Error ? e.message : String(e)}`);
@@ -352,6 +364,43 @@ export const App: React.FC = () => {
   const handleAdvanceToStage5 = () => {
     setProgress((prev) => ({ ...prev, step4_scoring: true, step5_statutory: true }));
     setActiveTab("statutory");
+  };
+
+  // PDF Preview Handlers
+  const handleOpenPdfPreview = async (endpoint: string, title: string) => {
+    if (!activeAttribution) return;
+    setPreviewModal({
+      isOpen: true,
+      title,
+      endpoint,
+      blobUrl: null,
+      isLoading: true
+    });
+    try {
+      const blob = await api.getPdfBlob(endpoint, activeAttribution);
+      const blobUrl = window.URL.createObjectURL(blob);
+      setPreviewModal((prev) => ({
+        ...prev,
+        blobUrl,
+        isLoading: false
+      }));
+    } catch (e: unknown) {
+      showToast(`Preview generation error: ${e instanceof Error ? e.message : String(e)}`);
+      setPreviewModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+    }
+  };
+
+  const handleClosePdfPreview = () => {
+    if (previewModal.blobUrl) {
+      window.URL.revokeObjectURL(previewModal.blobUrl);
+    }
+    setPreviewModal({
+      isOpen: false,
+      title: "",
+      endpoint: "",
+      blobUrl: null,
+      isLoading: false
+    });
   };
 
   // PDF Download Handlers
@@ -484,20 +533,34 @@ export const App: React.FC = () => {
               <AttributionGraph
                 attribution={activeAttribution}
                 isLoading={isTracing}
+                isSynthesized={isGraphSynthesized}
+                onGraphSynthesized={() => setIsGraphSynthesized(true)}
               />
 
               {/* Stepwise Linear Progression Action Dock (Stage 2 -> Stage 3) */}
               <div className="chakra-stage-action-dock">
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <CheckCircle2 size={16} color="#059669" />
+                  <CheckCircle2 size={16} color={isGraphSynthesized ? "#059669" : "#94A3B8"} />
                   <span style={{ fontSize: "12px", color: "#334155", fontWeight: 600 }}>
-                    Multi-Chain Attribution Canvas Verified: 3 Unhosted Mule Wallets → 1 Candidate Deposit → VASP Hot Wallet.
+                    {isGraphSynthesized
+                      ? `Multi-Chain Attribution Canvas Synthesized: ${activeAttribution?.graph_nodes.length || 0} Nodes & ${activeAttribution?.graph_edges.length || 0} Edges → ${activeAttribution?.nearest_vasp || "VASP"}.`
+                      : "Multi-Chain Attribution Canvas awaiting operator synthesis trigger."}
                   </span>
                 </div>
                 <button
+                  type="button"
+                  id="btn-proceed-stage-3"
                   className="gov-btn gov-btn-primary"
                   onClick={handleAdvanceToStage3}
-                  style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
+                  disabled={!isGraphSynthesized}
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    opacity: !isGraphSynthesized ? 0.5 : 1,
+                    cursor: !isGraphSynthesized ? "not-allowed" : "pointer"
+                  }}
+                  title={!isGraphSynthesized ? "Synthesize graph canvas to proceed" : "Proceed to Stage 3"}
                 >
                   Proceed to Stage 3: Sweep Forensics & Fueler Lab <ArrowRight size={14} />
                 </button>
@@ -508,20 +571,36 @@ export const App: React.FC = () => {
           {/* STAGE 3: Sweep Forensics & Fueler Lab */}
           {activeTab === "sweep" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <SweepForensicLab attribution={activeAttribution} />
+              <SweepForensicLab
+                attribution={activeAttribution}
+                isAnalyzed={isSweepAnalyzed}
+                onAnalysisComplete={() => setIsSweepAnalyzed(true)}
+              />
 
               {/* Stepwise Linear Progression Action Dock (Stage 3 -> Stage 4) */}
               <div className="chakra-stage-action-dock">
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <CheckCircle2 size={16} color="#059669" />
+                  <CheckCircle2 size={16} color={isSweepAnalyzed ? "#059669" : "#94A3B8"} />
                   <span style={{ fontSize: "12px", color: "#334155", fontWeight: 600 }}>
-                    Sweep Forensics Audited: Omnibus internal sweep & VASP gas fueler sponsorship confirmed.
+                    {isSweepAnalyzed
+                      ? `Sweep Forensics Audited: Omnibus internal sweep & ${activeAttribution?.nearest_vasp || "VASP"} gas fueler sponsorship confirmed.`
+                      : "Sweep Forensics & Gas Fueler calldata awaiting operator analysis execution."}
                   </span>
                 </div>
                 <button
+                  type="button"
+                  id="btn-proceed-stage-4"
                   className="gov-btn gov-btn-primary"
                   onClick={handleAdvanceToStage4}
-                  style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
+                  disabled={!isSweepAnalyzed}
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    opacity: !isSweepAnalyzed ? 0.5 : 1,
+                    cursor: !isSweepAnalyzed ? "not-allowed" : "pointer"
+                  }}
+                  title={!isSweepAnalyzed ? "Execute sweep forensics to proceed" : "Proceed to Stage 4"}
                 >
                   Proceed to Stage 4: 4-Pillar Confidence Scorer <ArrowRight size={14} />
                 </button>
@@ -532,22 +611,47 @@ export const App: React.FC = () => {
           {/* STAGE 4: 4-Pillar Confidence Scorer */}
           {activeTab === "scoring" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <ScoringMatrixPanel attribution={activeAttribution} />
+              <ScoringMatrixPanel
+                attribution={activeAttribution}
+                isComputed={isScoringComputed}
+                onScoringComplete={() => setIsScoringComputed(true)}
+              />
 
               {/* Stepwise Linear Progression Action Dock (Stage 4 -> Stage 5) */}
               <div className="chakra-stage-action-dock">
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <CheckCircle2 size={16} color="#059669" />
+                  <CheckCircle2 size={16} color={isScoringComputed && isHighConfidence ? "#059669" : "#94A3B8"} />
                   <span style={{ fontSize: "12px", color: "#334155", fontWeight: 600 }}>
-                    4-Pillar Admissibility Score Verified: {activeAttribution?.confidence_score.toFixed(1) || "94.0"}/100 {isHighConfidence ? "meets statutory criteria for Section 106 BNSS 2023 action." : "below statutory threshold (<85%)."}
+                    {!isScoringComputed
+                      ? "4-Pillar Admissibility Scorer awaiting mathematical matrix calculation."
+                      : `4-Pillar Admissibility Score Verified: ${activeAttribution?.confidence_score.toFixed(1) || "94.0"}/100 ${
+                          isHighConfidence
+                            ? "meets statutory criteria for Section 106 BNSS 2023 action."
+                            : "below statutory threshold (<85%)."
+                        }`}
                   </span>
                 </div>
+                {/* Bug 3 Fix: Button changed from gov-btn-saffron (orange) to gov-btn-primary (black/navy) */}
                 <button
-                  className="gov-btn gov-btn-saffron"
-                  disabled={!isHighConfidence}
+                  type="button"
+                  id="btn-proceed-stage-5"
+                  className="gov-btn gov-btn-primary"
+                  disabled={!isScoringComputed || !isHighConfidence}
                   onClick={handleAdvanceToStage5}
-                  style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700 }}
-                  title={!isHighConfidence ? "Requires Confidence Score >= 85%" : "Proceed to Court Sanctions"}
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    opacity: (!isScoringComputed || !isHighConfidence) ? 0.5 : 1,
+                    cursor: (!isScoringComputed || !isHighConfidence) ? "not-allowed" : "pointer"
+                  }}
+                  title={
+                    !isScoringComputed
+                      ? "Compute 4-pillar score to proceed"
+                      : !isHighConfidence
+                      ? "Requires Confidence Score >= 85%"
+                      : "Proceed to Court Sanctions"
+                  }
                 >
                   Proceed to Stage 5: SAHYOG Sanctions & Court Docket <ArrowRight size={14} />
                 </button>
@@ -562,8 +666,11 @@ export const App: React.FC = () => {
               currentUser={currentUser}
               onOpenNoticeModal={() => setShowNoticeModal(true)}
               onOpenMerkleModal={() => setShowMerkleModal(true)}
+              onPreviewDossierPdf={() => handleOpenPdfPreview("dossier/pdf", "Executive Attribution Dossier (MHA Project CHAKRA)")}
               onDownloadDossierPdf={handleDownloadDossierPdf}
+              onPreviewSummonsPdf={() => handleOpenPdfPreview("bnss-summons/pdf", "Section 94 BNSS Summons & Sec 106 Freezing Notice")}
               onDownloadSummonsPdf={handleDownloadSummonsPdf}
+              onPreviewBsaPdf={() => handleOpenPdfPreview("bsa-certificate/pdf", "Section 63(4) BSA 2023 Digital Evidence Certificate")}
               onDownloadBsaPdf={handleDownloadBsaPdf}
             />
           )}
@@ -597,6 +704,19 @@ export const App: React.FC = () => {
             isOpen={showMerkleModal}
             onClose={() => setShowMerkleModal(false)}
             attribution={activeAttribution}
+          />
+          <DocumentPreviewModal
+            isOpen={previewModal.isOpen}
+            onClose={handleClosePdfPreview}
+            documentTitle={previewModal.title}
+            pdfBlobUrl={previewModal.blobUrl}
+            isLoading={previewModal.isLoading}
+            onDownload={() => {
+              if (previewModal.endpoint.includes("dossier")) handleDownloadDossierPdf();
+              else if (previewModal.endpoint.includes("summons")) handleDownloadSummonsPdf();
+              else handleDownloadBsaPdf();
+            }}
+            sahyogCaseId={activeAttribution.sahyog_case_id}
           />
         </>
       )}

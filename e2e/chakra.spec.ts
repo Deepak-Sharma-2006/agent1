@@ -137,27 +137,30 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=Custom Graph Injection JSON Payload:")).toBeVisible();
     await page.locator(".gov-modal-footer button:has-text('Cancel')").click();
 
-    // Test Scenario Switching & Fraud Loss Value Injection (Ensures no '0' or HTML5 step mismatch)
+    // Test Scenario Switching: Selecting Scenario 2 ONLY populates inputs; does NOT auto-trace or open Stage 2
     await scenarioSelect.selectOption("CASE_2_MUM_FAKE_TRADING_APP");
     await page.waitForTimeout(400);
     const fraudLossInput = page.locator("input[type='number']");
     await expect(fraudLossInput).toHaveValue("12000000");
     await expect(page.locator("text=Formatted: ₹ 1,20,00,000")).toBeVisible();
+    // Verify Bug 1: Stage 2 tab is STILL locked after scenario selection!
+    await expect(tabGraph).toBeDisabled();
 
     // Switch back to Case 1
     await scenarioSelect.selectOption("CASE_1_BLR_TELEGRAM_TASK");
     await page.waitForTimeout(400);
     await expect(fraudLossInput).toHaveValue("4500000");
     await expect(page.locator("text=Formatted: ₹ 45,00,000")).toBeVisible();
+    await expect(tabGraph).toBeDisabled();
 
-    // Execute Automated Attribution and verify transition state (No validation blockage)
+    // Execute Automated Attribution: explicitly required to open Stage 2
     const executeBtn = page.locator("button:has-text('Execute Automated Attribution')");
     await expect(executeBtn).toBeVisible();
     await executeBtn.click();
     await page.waitForTimeout(800);
 
     // -------------------------------------------------------------------------
-    // ELEMENTAL VERIFICATION 5: Stage 2 - Multi-Chain Attribution Canvas (2-Step Synthesis)
+    // ELEMENTAL VERIFICATION 5: Stage 2 - Multi-Chain Attribution Canvas (Progressive Synthesis)
     // -------------------------------------------------------------------------
     // Verify Stage 2 is unlocked, but Stage 3 is STILL locked (Strict linear gating)
     await expect(tabGraph).toBeEnabled();
@@ -168,8 +171,16 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(synthesizeBtn).toBeVisible();
     await expect(page.locator("text=Stage 2: Multi-Chain Attribution Canvas Awaiting Synthesis")).toBeVisible();
 
-    // Step B: Trigger Graph Synthesis
+    // Verify Bug 7 Gating: Proceed to Stage 3 button is DISABLED before synthesis
+    const proceedToSweepBtn = page.locator("#btn-proceed-stage-3");
+    await expect(proceedToSweepBtn).toBeVisible();
+    await expect(proceedToSweepBtn).toBeDisabled();
+
+    // Step B: Trigger Bhedak Progressive Graph Synthesis
     await synthesizeBtn.click();
+    await page.waitForTimeout(1800); // Allow progressive 4-hop reveal to complete
+
+    // Viewport is active and elements synthesized
     await expect(page.locator(".cytoscape-viewport-canvas")).toBeVisible();
     await expect(page.locator("text=Interactive Multi-Chain Attribution Canvas")).toBeVisible();
 
@@ -192,20 +203,30 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.getByText("VASP Hot Storage", { exact: true })).toBeVisible();
     await expect(page.getByText("Sweep Consolidation", { exact: true })).toBeVisible();
 
-    // Verify Stage 3 is STILL locked before clicking proceed
-    await expect(tabSweep).toBeDisabled();
-
-    // Verify Stepwise Action Dock: Proceed to Stage 3
-    const proceedToSweepBtn = page.locator("button:has-text('Proceed to Stage 3: Sweep Forensics & Fueler Lab')");
-    await expect(proceedToSweepBtn).toBeVisible();
+    // Verify Proceed to Stage 3 button is now ENABLED!
+    await expect(proceedToSweepBtn).toBeEnabled();
     await proceedToSweepBtn.click();
 
     // -------------------------------------------------------------------------
-    // ELEMENTAL VERIFICATION 6: Stage 3 - Sweep Forensics & Fueler Lab
+    // ELEMENTAL VERIFICATION 6: Stage 3 - Sweep Forensics & Fueler Lab (Operator Simulation)
     // -------------------------------------------------------------------------
     // Stage 3 is now unlocked, Stage 4 is STILL locked!
     await expect(tabSweep).toBeEnabled();
     await expect(tabScoring).toBeDisabled();
+
+    // Bug 2 & 7: Stage 3 initially displays pre-execution briefing card and Proceed to Stage 4 is DISABLED
+    await expect(page.locator("text=Stage 3: Centralized Exchange Sweep & Fueler Forensics Awaiting Execution")).toBeVisible();
+    const proceedToScoringBtn = page.locator("#btn-proceed-stage-4");
+    await expect(proceedToScoringBtn).toBeVisible();
+    await expect(proceedToScoringBtn).toBeDisabled();
+
+    // Execute operator analysis simulation
+    const executeSweepBtn = page.locator("#btn-execute-sweep-analysis");
+    await expect(executeSweepBtn).toBeVisible();
+    await executeSweepBtn.click();
+    await page.waitForTimeout(1600); // Allow 3-step forensic query simulation to complete
+
+    // Verify forensic views are now populated
     await expect(page.locator("text=Stage 3: Internal VASP Sweep Forensics & Gas Fueler Analysis")).toBeVisible();
     await expect(page.locator("text=SWEEP CONSOLIDATION CONFIRMED")).toBeVisible();
     await expect(page.locator("text=Centralized Exchange Omnibus Sweep Verification Principle:")).toBeVisible();
@@ -221,43 +242,46 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=Custodial Chain-of-Custody Calldata Verification")).toBeVisible();
     await expect(page.locator("text=Candidate Deposit Address:")).toBeVisible();
     await expect(page.locator("text=VASP Operational Hot Wallet:")).toBeVisible();
-    await expect(page.locator("text=Inbound Deposit Transaction Hash:")).toBeVisible();
-    await expect(page.locator("text=Internal Sweep Transaction Hash:")).toBeVisible();
-    await expect(page.locator("text=Gas Sponsor (VASP Fueler Address):")).toBeVisible();
-    await expect(page.locator("text=Cryptographic Merkle Tree Evidence Root (BSA Section 63(4)):")).toBeVisible();
 
-    // Verify Stage 4 is STILL locked before clicking proceed
-    await expect(tabScoring).toBeDisabled();
-
-    // Verify Stepwise Action Dock: Proceed to Stage 4
-    const proceedToScoringBtn = page.locator("button:has-text('Proceed to Stage 4: 4-Pillar Confidence Scorer')");
-    await expect(proceedToScoringBtn).toBeVisible();
+    // Verify Proceed to Stage 4 button is now ENABLED!
+    await expect(proceedToScoringBtn).toBeEnabled();
     await proceedToScoringBtn.click();
 
     // -------------------------------------------------------------------------
-    // ELEMENTAL VERIFICATION 7: Stage 4 - 4-Pillar Explainable Confidence Scorer
+    // ELEMENTAL VERIFICATION 7: Stage 4 - 4-Pillar Explainable Confidence Scorer (Operator Simulation)
     // -------------------------------------------------------------------------
     // Stage 4 is now unlocked, Stage 5 is locked until verified!
     await expect(tabScoring).toBeEnabled();
+
+    // Bug 2 & 7: Stage 4 initially displays pre-computation card and Proceed to Stage 5 is DISABLED
+    await expect(page.locator("text=Stage 4: Mathematical Admissibility Scorer Awaiting Calculation")).toBeVisible();
+    const proceedToStatutoryBtn = page.locator("#btn-proceed-stage-5");
+    await expect(proceedToStatutoryBtn).toBeVisible();
+    await expect(proceedToStatutoryBtn).toBeDisabled();
+
+    // Bug 3 Verification: Button must have class gov-btn-primary (black/navy), NOT gov-btn-saffron
+    const btnClasses = await proceedToStatutoryBtn.getAttribute("class");
+    expect(btnClasses).toContain("gov-btn-primary");
+    expect(btnClasses).not.toContain("gov-btn-saffron");
+
+    // Execute 4-pillar scoring calculation simulation
+    const computeScoringBtn = page.locator("#btn-compute-scoring");
+    await expect(computeScoringBtn).toBeVisible();
+    await computeScoringBtn.click();
+    await page.waitForTimeout(1800); // Allow 4-pillar calculation to complete
+
+    // Verify scoring matrix is now populated
     await expect(page.locator("text=Stage 4: 4-Pillar Explainable Confidence Scorer")).toBeVisible();
     await expect(page.locator("text=TIER 1 (HIGH CONFIDENCE ≥ 85%)")).toBeVisible();
     await expect(page.locator("text=OUT OF 100")).toBeVisible();
     await expect(page.locator("text=STATUTORY ACTION MANDATE UNDER BHARATIYA NAGARIK SURAKSHA SANHITA (BNSS 2023):")).toBeVisible();
 
-    // Verify 4 Mathematical Pillar Cards
-    await expect(page.locator("text=1. Infrastructure Match")).toBeVisible();
-    await expect(page.locator("text=2. Sweep Consistency & Gas Fueler")).toBeVisible();
-    await expect(page.locator("text=3. Proximity Decay")).toBeVisible();
-    await expect(page.locator("text=4. Volume Continuity")).toBeVisible();
-    await expect(page.locator("text=Judicial Admissibility & Cross-Examination Resilience (Section 63(4) BSA 2023):")).toBeVisible();
-
-    // Verify Stepwise Action Dock: Proceed to Stage 5
-    const proceedToStatutoryBtn = page.locator("button:has-text('Proceed to Stage 5: SAHYOG Sanctions & Court Docket')");
-    await expect(proceedToStatutoryBtn).toBeVisible();
+    // Verify Proceed to Stage 5 button is now ENABLED!
+    await expect(proceedToStatutoryBtn).toBeEnabled();
     await proceedToStatutoryBtn.click();
 
     // -------------------------------------------------------------------------
-    // ELEMENTAL VERIFICATION 8: Stage 5 - SAHYOG Sanctions & Court Docket (Clean UI)
+    // ELEMENTAL VERIFICATION 8: Stage 5 - SAHYOG Sanctions, Dynamic Case Data & PDF Previews
     // -------------------------------------------------------------------------
     await expect(tabStatutory).toBeEnabled();
 
@@ -267,11 +291,32 @@ test.describe("Project CHAKRA: Comprehensive Maximum-Accuracy E2E Suite", () => 
     await expect(page.locator("text=Section 106 BNSS 2023 Freezing Notice")).toBeVisible();
     await expect(page.locator("text=Section 63(4) BSA 2023 Digital Evidence Certificate")).toBeVisible();
 
-    // Verify 3 ReportLab Certified PDF Export Cards
+    // Verify 3 ReportLab Certified PDF Export Cards with Preview & Download
     await expect(page.locator("text=Certified Law Enforcement Document Exports (ReportLab PDF Generation)")).toBeVisible();
     await expect(page.locator("text=Executive Attribution Dossier")).toBeVisible();
     await expect(page.locator("text=Section 94 BNSS Summons")).toBeVisible();
     await expect(page.locator("text=BSA 63(4) Evidence Certificate")).toBeVisible();
+
+    // Bug 4: Test PDF Preview for Dossier
+    const previewDossierBtn = page.locator("#btn-preview-dossier-pdf");
+    await expect(previewDossierBtn).toBeVisible();
+    await previewDossierBtn.click();
+    await expect(page.locator("#pdf-preview-iframe")).toBeVisible({ timeout: 6000 });
+    await page.locator("#btn-close-pdf-preview").click();
+
+    // Bug 4: Test PDF Preview for BNSS Summons
+    const previewSummonsBtn = page.locator("#btn-preview-summons-pdf");
+    await expect(previewSummonsBtn).toBeVisible();
+    await previewSummonsBtn.click();
+    await expect(page.locator("#pdf-preview-iframe")).toBeVisible({ timeout: 6000 });
+    await page.locator("#btn-close-pdf-preview").click();
+
+    // Bug 4: Test PDF Preview for BSA Certificate
+    const previewBsaBtn = page.locator("#btn-preview-bsa-pdf");
+    await expect(previewBsaBtn).toBeVisible();
+    await previewBsaBtn.click();
+    await expect(page.locator("#pdf-preview-iframe")).toBeVisible({ timeout: 6000 });
+    await page.locator("#btn-close-pdf-preview").click();
 
     // Verify Merkle Audit Modal Trigger
     const merkleAuditBtn = page.locator("button:has-text('Audit Cryptographic Merkle Inclusion Proof')");

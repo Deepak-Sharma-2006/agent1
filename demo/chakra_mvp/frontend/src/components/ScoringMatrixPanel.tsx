@@ -1,12 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import type { AttributionResponse, ScorePillarBreakdown } from "../types";
-import { Award, ShieldCheck, Scale, AlertTriangle, CheckCircle2, TrendingUp, Info } from "lucide-react";
+import { Award, ShieldCheck, Scale, AlertTriangle, CheckCircle2, TrendingUp, Info, Loader2 } from "lucide-react";
 
 interface ScoringMatrixPanelProps {
   attribution: AttributionResponse | null;
+  isComputed?: boolean;
+  onScoringComplete?: () => void;
 }
 
-export const ScoringMatrixPanel: React.FC<ScoringMatrixPanelProps> = ({ attribution }) => {
+export const ScoringMatrixPanel: React.FC<ScoringMatrixPanelProps> = ({
+  attribution,
+  isComputed: propIsComputed,
+  onScoringComplete
+}) => {
+  const [internalComputed, setInternalComputed] = useState<boolean>(false);
+  const [isComputing, setIsComputing] = useState<boolean>(false);
+  const [calcStatus, setCalcStatus] = useState<string | null>(null);
+  const isComputed = propIsComputed !== undefined ? propIsComputed : internalComputed;
+
   if (!attribution) {
     return (
       <div className="gov-card" style={{ padding: "40px", textAlign: "center", color: "#64748B" }}>
@@ -19,11 +30,146 @@ export const ScoringMatrixPanel: React.FC<ScoringMatrixPanelProps> = ({ attribut
     );
   }
 
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const handleComputeScoring = async () => {
+    setIsComputing(true);
+    try {
+      setCalcStatus("⚡ [Pillar 1/4] Evaluating Infrastructure & Cluster Match (Hot Wallet & Gas Sponsor)...");
+      await delay(400);
+      setCalcStatus("⚡ [Pillar 2/4] Evaluating Omnibus Sweep Consistency & Zero-Remainder Pattern...");
+      await delay(400);
+      setCalcStatus("⚡ [Pillar 3/4] Calculating Proximity Decay Penalty e^(-0.25 * hops)...");
+      await delay(400);
+      setCalcStatus("⚡ [Pillar 4/4] Calculating Volume Continuity & Peeling Ratio...");
+      await delay(400);
+      setCalcStatus(`✓ 4-Pillar Admissibility Matrix Compiled! Score: ${attribution.confidence_score.toFixed(1)}/100 (${attribution.confidence_tier})`);
+      setInternalComputed(true);
+      onScoringComplete?.();
+    } finally {
+      setIsComputing(false);
+    }
+  };
+
   const score = attribution.confidence_score;
   const breakdown = attribution.score_breakdown;
 
   const isTier1 = score >= 85.0;
   const isTier2 = score >= 60.0 && score < 85.0;
+
+  if (!isComputed) {
+    return (
+      <div className="gov-card" style={{ padding: "32px 24px" }}>
+        <div
+          style={{
+            maxWidth: "680px",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+            gap: "16px"
+          }}
+        >
+          <div
+            style={{
+              width: "52px",
+              height: "52px",
+              borderRadius: "50%",
+              background: "#ECFDF5",
+              border: "1px solid #A7F3D0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            <Award size={26} color="#047857" />
+          </div>
+
+          <div>
+            <div style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A" }}>
+              Stage 4: Mathematical Admissibility Scorer Awaiting Calculation
+            </div>
+            <div style={{ fontSize: "12px", color: "#64748B", marginTop: "6px", lineHeight: "1.55" }}>
+              Attribution and sweep consolidation verified for Case <b>{attribution.sahyog_case_id}</b>.
+              Execute the 4-pillar multi-factor admissibility scoring formula to determine whether confidence satisfies statutory criteria for <b>Section 106 BNSS 2023</b> asset freezing sanctions.
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "10px",
+              width: "100%",
+              background: "#F8FAFC",
+              border: "1px solid #E2E8F0",
+              borderRadius: "6px",
+              padding: "12px",
+              fontSize: "11px",
+              textAlign: "left"
+            }}
+          >
+            <div>
+              <span style={{ color: "#64748B", display: "block", fontSize: "10px", textTransform: "uppercase" }}>Case Docket</span>
+              <span style={{ fontWeight: 700, color: "#0F172A", fontFamily: "var(--font-mono)" }}>
+                {attribution.sahyog_case_id}
+              </span>
+            </div>
+            <div>
+              <span style={{ color: "#64748B", display: "block", fontSize: "10px", textTransform: "uppercase" }}>Target VASP</span>
+              <span style={{ fontWeight: 800, color: "#047857" }}>
+                {attribution.nearest_vasp || "Unknown"}
+              </span>
+            </div>
+            <div>
+              <span style={{ color: "#64748B", display: "block", fontSize: "10px", textTransform: "uppercase" }}>Hop Distance</span>
+              <span style={{ fontWeight: 700, color: "#0F172A" }}>
+                {attribution.hop_distance} Intermediary Hops
+              </span>
+            </div>
+            <div>
+              <span style={{ color: "#64748B", display: "block", fontSize: "10px", textTransform: "uppercase" }}>Network</span>
+              <span style={{ fontWeight: 700, color: "#0F172A" }}>
+                {attribution.network} ({attribution.asset_symbol || "USDT"})
+              </span>
+            </div>
+          </div>
+
+          {isComputing ? (
+            <div
+              style={{
+                width: "100%",
+                background: "#0F2942",
+                color: "#FFFFFF",
+                padding: "14px 18px",
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                fontSize: "12px",
+                fontWeight: 600
+              }}
+            >
+              <Loader2 size={16} className="spin-loader" color="#F59E0B" />
+              <span>{calcStatus || "Evaluating 4-Pillar Admissibility Matrix..."}</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              id="btn-compute-scoring"
+              className="gov-btn gov-btn-primary"
+              onClick={handleComputeScoring}
+              style={{ padding: "10px 24px", fontSize: "13px", fontWeight: 700, gap: "8px", background: "#0F2942" }}
+            >
+              <Award size={16} color="#F59E0B" /> Compute 4-Pillar Mathematical Admissibility Score
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="gov-card">

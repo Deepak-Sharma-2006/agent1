@@ -12,7 +12,8 @@ import {
   Key,
   ShieldCheck,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Eye
 } from "lucide-react";
 
 interface StatutoryCourtDocketProps {
@@ -20,8 +21,11 @@ interface StatutoryCourtDocketProps {
   currentUser: AuthUser;
   onOpenNoticeModal: () => void;
   onOpenMerkleModal: () => void;
+  onPreviewDossierPdf: () => void;
   onDownloadDossierPdf: () => void;
+  onPreviewSummonsPdf: () => void;
   onDownloadSummonsPdf: () => void;
+  onPreviewBsaPdf: () => void;
   onDownloadBsaPdf: () => void;
 }
 
@@ -30,8 +34,11 @@ export const StatutoryCourtDocket: React.FC<StatutoryCourtDocketProps> = ({
   currentUser,
   onOpenNoticeModal,
   onOpenMerkleModal,
+  onPreviewDossierPdf,
   onDownloadDossierPdf,
+  onPreviewSummonsPdf,
   onDownloadSummonsPdf,
+  onPreviewBsaPdf,
   onDownloadBsaPdf
 }) => {
   if (!attribution) {
@@ -270,13 +277,26 @@ export const StatutoryCourtDocket: React.FC<StatutoryCourtDocketProps> = ({
               <div style={{ fontSize: "11px", color: "#64748B", flexGrow: 1, lineHeight: "1.45" }}>
                 Complete analytical dossier featuring graph visual diagrams, 4-pillar scores, hop breakdown, and VASP compliance records.
               </div>
-              <button
-                className="gov-btn gov-btn-outline"
-                onClick={onDownloadDossierPdf}
-                style={{ width: "100%", padding: "8px", fontSize: "11.5px", fontWeight: 600, color: "#0F172A", borderColor: "#CBD5E1" }}
-              >
-                <Download size={13} /> Download Dossier PDF
-              </button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <button
+                  type="button"
+                  id="btn-preview-dossier-pdf"
+                  className="gov-btn gov-btn-outline"
+                  onClick={onPreviewDossierPdf}
+                  style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#0F172A", borderColor: "#CBD5E1", gap: "5px" }}
+                >
+                  <Eye size={13} /> Preview
+                </button>
+                <button
+                  type="button"
+                  id="btn-download-dossier-pdf"
+                  className="gov-btn gov-btn-primary"
+                  onClick={onDownloadDossierPdf}
+                  style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, gap: "5px" }}
+                >
+                  <Download size={13} /> Download
+                </button>
+              </div>
             </div>
 
             {/* PDF 2: Section 94 BNSS Summons */}
@@ -288,13 +308,26 @@ export const StatutoryCourtDocket: React.FC<StatutoryCourtDocketProps> = ({
               <div style={{ fontSize: "11px", color: "#64748B", flexGrow: 1, lineHeight: "1.45" }}>
                 Statutory summons ordering VASP Nodal Officer to furnish KYC documents, registered bank accounts, and IP login logs within 72 hours.
               </div>
-              <button
-                className="gov-btn gov-btn-outline"
-                onClick={onDownloadSummonsPdf}
-                style={{ width: "100%", padding: "8px", fontSize: "11.5px", fontWeight: 600, color: "#DC2626", borderColor: "#FECACA", background: "#FEF2F2" }}
-              >
-                <FileText size={13} /> Download BNSS Summons PDF
-              </button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <button
+                  type="button"
+                  id="btn-preview-summons-pdf"
+                  className="gov-btn gov-btn-outline"
+                  onClick={onPreviewSummonsPdf}
+                  style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#DC2626", borderColor: "#FECACA", background: "#FEF2F2", gap: "5px" }}
+                >
+                  <Eye size={13} /> Preview
+                </button>
+                <button
+                  type="button"
+                  id="btn-download-summons-pdf"
+                  className="gov-btn gov-btn-primary"
+                  onClick={onDownloadSummonsPdf}
+                  style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, gap: "5px" }}
+                >
+                  <Download size={13} /> Download
+                </button>
+              </div>
             </div>
 
             {/* PDF 3: Section 63(4) BSA Evidence Certificate */}
@@ -306,13 +339,26 @@ export const StatutoryCourtDocket: React.FC<StatutoryCourtDocketProps> = ({
               <div style={{ fontSize: "11px", color: "#64748B", flexGrow: 1, lineHeight: "1.45" }}>
                 Dual-attestation electronic evidence affidavit signed by Station House Officer and NCFL Chief Forensic Examiner for trial court admissibility.
               </div>
-              <button
-                className="gov-btn gov-btn-outline"
-                onClick={onDownloadBsaPdf}
-                style={{ width: "100%", padding: "8px", fontSize: "11.5px", fontWeight: 600, color: "#047857", borderColor: "#A7F3D0", background: "#ECFDF5" }}
-              >
-                <Scale size={13} /> Download BSA Certificate PDF
-              </button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <button
+                  type="button"
+                  id="btn-preview-bsa-pdf"
+                  className="gov-btn gov-btn-outline"
+                  onClick={onPreviewBsaPdf}
+                  style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, color: "#047857", borderColor: "#A7F3D0", background: "#ECFDF5", gap: "5px" }}
+                >
+                  <Eye size={13} /> Preview
+                </button>
+                <button
+                  type="button"
+                  id="btn-download-bsa-pdf"
+                  className="gov-btn gov-btn-primary"
+                  onClick={onDownloadBsaPdf}
+                  style={{ padding: "8px 10px", fontSize: "11px", fontWeight: 700, gap: "5px" }}
+                >
+                  <Download size={13} /> Download
+                </button>
+              </div>
             </div>
           </div>
         </div>

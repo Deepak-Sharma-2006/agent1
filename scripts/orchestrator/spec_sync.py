@@ -2,12 +2,12 @@
 In-Repo Universal Specification & Documentation Synchronizer
 Solves the Ephemeral Artifact Defect and Multi-Machine Memory Silo:
 1. Mirrors all IDE brain artifacts and reports into permanent, version-controlled git directories:
-   - docs/plans/        (Feature Implementation Plans)
-   - docs/walkthroughs/ (Execution Walkthroughs & Test Proofs)
-   - docs/audits/       (Adversarial Pentests & System Readiness Audits)
-   - docs/adrs/         (Architecture Decision Records)
-   - docs/research/     (Multi-Hop Research Triangulation Dossiers)
-   - docs/rfcs/         (Formal API & Data Model Contracts)
+   - docs/plans/          (Feature Implementation Plans)
+   - docs/walkthroughs/   (Execution Walkthroughs & Test Proofs)
+   - docs/audits/         (Adversarial Security Audits & System Readiness)
+   - docs/decisions/      (Enterprise Architecture Decisions)
+   - docs/research/       (Multi-Hop Research Triangulation Dossiers)
+   - docs/specifications/ (Formal API & Data Model Contracts)
 2. Maintains living INDEX.md catalogs in each directory.
 3. Dual-persists to SQLite Memory Vault and git-mergeable append-only JSONL (.agents/memory/vault/records.jsonl).
 """
@@ -46,10 +46,10 @@ DOCUMENT_CONFIGS: Dict[str, Dict[str, str]] = {
         "index_title": "Enterprise Audit Documentation Index",
         "description": "Permanent records of adversarial pentests, code audits, and system readiness."
     },
-    "adr": {
-        "dir": "docs/adrs",
-        "kind": "ADR",
-        "index_title": "Architecture Decision Records (ADRs)",
+    "decision": {
+        "dir": "docs/decisions",
+        "kind": "Decision",
+        "index_title": "Enterprise Architecture Decisions",
         "description": "Permanent records of fundamental architectural choices, trade-offs, and moats."
     },
     "research": {
@@ -58,12 +58,30 @@ DOCUMENT_CONFIGS: Dict[str, Dict[str, str]] = {
         "index_title": "Enterprise Deep Research Dossiers",
         "description": "Multi-hop research triangulation on statutory mandates, competitor benchmarks, and CVEs."
     },
-    "rfc": {
-        "dir": "docs/rfcs",
-        "kind": "RFC",
-        "index_title": "Requests for Comments & Contract Specifications",
+    "specification": {
+        "dir": "docs/specifications",
+        "kind": "Specification",
+        "index_title": "Contract & Interface Specifications",
         "description": "Formal typed interface schemas, state machine models, and API definitions."
     }
+}
+
+DOC_TYPE_ALIASES: Dict[str, str] = {
+    "adr": "decision",
+    "adrs": "decision",
+    "decision": "decision",
+    "decisions": "decision",
+    "rfc": "specification",
+    "rfcs": "specification",
+    "specification": "specification",
+    "specifications": "specification",
+    "plan": "plan",
+    "plans": "plan",
+    "walkthrough": "walkthrough",
+    "walkthroughs": "walkthrough",
+    "audit": "audit",
+    "audits": "audit",
+    "research": "research"
 }
 
 
@@ -73,14 +91,31 @@ class SpecSync:
     """
 
     @classmethod
+    def _extract_title_and_slug(cls, content: str, default_name: str) -> tuple[str, str]:
+        """Extracts human-meaningful title and slug from the first markdown heading."""
+        import re
+        for line in content.splitlines():
+            line = line.strip()
+            if line.startswith("# "):
+                raw_title = line[2:].strip()
+                clean_title = re.sub(r'^[A-Za-z\s]+:\s*', '', raw_title)
+                slug = re.sub(r'[^a-zA-Z0-9_]', '_', clean_title.lower()).strip('_')
+                slug = re.sub(r'_+', '_', slug)
+                words = [w for w in slug.split('_') if w and w not in ["and", "or", "the", "for", "with", "in", "to", "of", "a", "an"]][:4]
+                slug_short = "_".join(words) if words else default_name
+                return raw_title, slug_short
+        return default_name, default_name
+
+    @classmethod
     def persist_document(
         cls,
         doc_type: str,
         name: str,
         content: str,
-        title: Optional[str] = None
+        title: Optional[str] = None,
+        custom_timestamp: Optional[float] = None
     ) -> str:
-        doc_type_clean = doc_type.lower().strip()
+        doc_type_clean = DOC_TYPE_ALIASES.get(doc_type.lower().strip(), doc_type.lower().strip())
         config = DOCUMENT_CONFIGS.get(doc_type_clean)
         if not config:
             raise ValueError(f"Unknown document type '{doc_type}'. Supported: {list(DOCUMENT_CONFIGS.keys())}")
@@ -89,46 +124,65 @@ class SpecSync:
         os.makedirs(target_dir, exist_ok=True)
 
         import re
-        date_prefix = time.strftime("%Y-%m-%d")
-        safe_name = re.sub(r'[^a-zA-Z0-9_]', '_', name.lower()).strip('_')
-        filename = f"{date_prefix}_{safe_name}_{doc_type_clean}.md"
+        epoch_time = custom_timestamp if custom_timestamp is not None else time.time()
+        time_struct = time.localtime(epoch_time)
+        timestamp_prefix = time.strftime("%Y-%m-%d_%H-%M-%S", time_struct)
+        display_timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time_struct)
+
+        # Smart title and slug extraction
+        extracted_title, extracted_slug = cls._extract_title_and_slug(content, name)
+        final_title = title or extracted_title or name
+        final_slug = extracted_slug if name in ["active_feature", "feature", "document", "unnamed"] else re.sub(r'[^a-zA-Z0-9_]', '_', name.lower()).strip('_')
+        final_slug = re.sub(r'_+', '_', final_slug)
+
+        filename = f"{timestamp_prefix}_{final_slug}_{doc_type_clean}.md"
         target_path = os.path.join(target_dir, filename)
 
         with open(target_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-        # Update living index catalog
-        cls._update_index(target_dir, config["kind"], name, filename, title or name, config)
+        # Update living index catalog with real-time timestamp (YYYY-MM-DD HH:MM:SS)
+        cls._update_index(target_dir, config["kind"], final_slug, filename, final_title, config, display_timestamp)
 
         # Dual-record in SQLite vault and git-mergeable JSONL
-        cls._record_in_vault(f"{config['kind']}: {title or name}", doc_type_clean, content, target_path)
+        cls._record_in_vault(f"{config['kind']}: {final_title}", doc_type_clean, content, target_path)
 
         print(f"[SpecSync] Persisted {config['kind']} -> {config['dir']}/{filename}")
         return target_path
 
     @classmethod
-    def persist_plan(cls, name: str, content: str, title: Optional[str] = None) -> str:
-        return cls.persist_document("plan", name, content, title)
+    def persist_plan(cls, name: str, content: str, title: Optional[str] = None, custom_timestamp: Optional[float] = None) -> str:
+        return cls.persist_document("plan", name, content, title, custom_timestamp)
 
     @classmethod
-    def persist_walkthrough(cls, name: str, content: str, title: Optional[str] = None) -> str:
-        return cls.persist_document("walkthrough", name, content, title)
+    def persist_walkthrough(cls, name: str, content: str, title: Optional[str] = None, custom_timestamp: Optional[float] = None) -> str:
+        return cls.persist_document("walkthrough", name, content, title, custom_timestamp)
 
     @classmethod
-    def persist_audit(cls, name: str, content: str, title: Optional[str] = None) -> str:
-        return cls.persist_document("audit", name, content, title)
+    def persist_audit(cls, name: str, content: str, title: Optional[str] = None, custom_timestamp: Optional[float] = None) -> str:
+        return cls.persist_document("audit", name, content, title, custom_timestamp)
 
     @classmethod
-    def persist_adr(cls, name: str, content: str, title: Optional[str] = None) -> str:
-        return cls.persist_document("adr", name, content, title)
+    def persist_decision(cls, name: str, content: str, title: Optional[str] = None, custom_timestamp: Optional[float] = None) -> str:
+        return cls.persist_document("decision", name, content, title, custom_timestamp)
 
     @classmethod
-    def persist_research(cls, name: str, content: str, title: Optional[str] = None) -> str:
-        return cls.persist_document("research", name, content, title)
+    def persist_adr(cls, name: str, content: str, title: Optional[str] = None, custom_timestamp: Optional[float] = None) -> str:
+        """Backward-compatible alias for persist_decision."""
+        return cls.persist_decision(name, content, title, custom_timestamp)
 
     @classmethod
-    def persist_rfc(cls, name: str, content: str, title: Optional[str] = None) -> str:
-        return cls.persist_document("rfc", name, content, title)
+    def persist_research(cls, name: str, content: str, title: Optional[str] = None, custom_timestamp: Optional[float] = None) -> str:
+        return cls.persist_document("research", name, content, title, custom_timestamp)
+
+    @classmethod
+    def persist_specification(cls, name: str, content: str, title: Optional[str] = None, custom_timestamp: Optional[float] = None) -> str:
+        return cls.persist_document("specification", name, content, title, custom_timestamp)
+
+    @classmethod
+    def persist_rfc(cls, name: str, content: str, title: Optional[str] = None, custom_timestamp: Optional[float] = None) -> str:
+        """Backward-compatible alias for persist_specification."""
+        return cls.persist_specification(name, content, title, custom_timestamp)
 
     @classmethod
     def get_all_indexes(cls) -> Dict[str, Dict[str, Any]]:
@@ -159,7 +213,8 @@ class SpecSync:
         - implementation_plan.md -> docs/plans/
         - walkthrough.md        -> docs/walkthroughs/
         - *_audit.md            -> docs/audits/
-        into permanent git-tracked storage, updating living INDEX catalogs and the SQLite Memory Vault.
+        into permanent git-tracked storage with real-time timestamps (min & sec),
+        updating living INDEX catalogs and the SQLite Memory Vault.
         """
         synced_files: List[str] = []
         search_dirs: List[str] = []
@@ -183,7 +238,9 @@ class SpecSync:
                 with open(plan_path, "r", encoding="utf-8") as f:
                     content = f.read()
                 if content.strip():
-                    dest = cls.persist_plan(feat, content, f"Implementation Plan: {feat}")
+                    mtime = os.path.getmtime(plan_path)
+                    title, slug = cls._extract_title_and_slug(content, feat)
+                    dest = cls.persist_plan(slug, content, title, custom_timestamp=mtime)
                     synced_files.append(dest)
 
             # 2. Walkthrough
@@ -192,7 +249,9 @@ class SpecSync:
                 with open(walkthrough_path, "r", encoding="utf-8") as f:
                     content = f.read()
                 if content.strip():
-                    dest = cls.persist_walkthrough(feat, content, f"Walkthrough: {feat}")
+                    mtime = os.path.getmtime(walkthrough_path)
+                    title, slug = cls._extract_title_and_slug(content, feat)
+                    dest = cls.persist_walkthrough(slug, content, title, custom_timestamp=mtime)
                     synced_files.append(dest)
 
             # 3. Audits
@@ -202,17 +261,28 @@ class SpecSync:
                     with open(fpath, "r", encoding="utf-8") as f:
                         content = f.read()
                     if content.strip():
+                        mtime = os.path.getmtime(fpath)
                         audit_name = fname.replace(".md", "").replace("_audit", "")
-                        dest = cls.persist_audit(audit_name, content, f"Audit: {audit_name}")
+                        title, slug = cls._extract_title_and_slug(content, audit_name)
+                        dest = cls.persist_audit(slug, content, title, custom_timestamp=mtime)
                         synced_files.append(dest)
 
         return synced_files
 
     @classmethod
-    def _update_index(cls, base_dir: str, kind: str, feature: str, filename: str, title: str, config: Dict[str, str]) -> None:
+    def _update_index(
+        cls,
+        base_dir: str,
+        kind: str,
+        feature: str,
+        filename: str,
+        title: str,
+        config: Dict[str, str],
+        timestamp_str: Optional[str] = None
+    ) -> None:
         index_file = os.path.join(base_dir, "INDEX.md")
-        timestamp_str = time.strftime("%Y-%m-%d %H:%M")
-        entry = f"- **{timestamp_str}** | [{title}]({filename}) | *Scope: {feature}*\n"
+        ts = timestamp_str or time.strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"- **{ts}** | [{title}]({filename}) | *Scope: {feature}*\n"
 
         if not os.path.exists(index_file):
             with open(index_file, "w", encoding="utf-8") as f:
@@ -286,7 +356,7 @@ if __name__ == "__main__":
     parser.add_argument("--file", help="Source file to read content from")
     parser.add_argument("--title", help="Human-readable title")
     parser.add_argument("--all-indexes", action="store_true", help="Print summary of all 6 living index catalogs")
-    parser.add_argument("--sync-brain", help="Sync brain artifacts directory into in-repo docs/")
+    parser.add_argument("--sync-brain", nargs="?", const="AUTO", help="Sync brain artifacts directory into in-repo docs/")
     args = parser.parse_args()
 
     if args.all_indexes:
@@ -299,8 +369,22 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if args.sync_brain:
-        synced = SpecSync.sync_brain_artifacts(args.sync_brain, args.name)
-        print(f"[SpecSync] Synchronized {len(synced)} document(s) from brain artifacts.")
+        target_brain = args.sync_brain
+        if target_brain == "AUTO":
+            app_data = os.path.expanduser(r"~\.gemini\antigravity-ide\brain")
+            if os.path.exists(app_data):
+                dirs = [
+                    os.path.join(app_data, d) for d in os.listdir(app_data)
+                    if os.path.isdir(os.path.join(app_data, d)) and not d.startswith(".") and d != "tempmediaStorage"
+                ]
+                dirs.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+                target_brain = dirs[0] if dirs else None
+
+        if target_brain and os.path.exists(target_brain):
+            synced = SpecSync.sync_brain_artifacts(target_brain, args.name)
+            print(f"[SpecSync] Synchronized {len(synced)} document(s) from brain artifacts ({target_brain}).")
+        else:
+            print("[SpecSync] No active brain directory found to synchronize.")
         sys.exit(0)
 
     if not args.name:

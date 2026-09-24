@@ -13,18 +13,18 @@
 In response to operator feedback, the Project CHAKRA Law Enforcement Operations Platform was overhauled to maximize workspace efficiency, eliminate visual clutter, and establish official institutional branding:
 
 1. **Header Fluff Removal & Vertical Compaction**:
-   - Reclaimed $\approx 32\text{px}$ of vertical screen space by compacting the utility bar (padding $3\text{px}$), institutional brand header (padding $6\text{px}$), and status docket bar ($5\text{px}$).
+   - Reclaimed approx 32px of vertical screen space by compacting the utility bar (padding 3px), institutional brand header (padding 6px), and status docket bar (5px).
    - Removed redundant subtitle lines that duplicated ministry and agency information.
 2. **Official Ministry of Home Affairs (MHA) Logo**:
    - Embedded the authentic bilingual Ministry of Home Affairs seal ([`demo/chakra_mvp/frontend/public/mha_logo.png`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/demo/chakra_mvp/frontend/public/mha_logo.png)) featuring the Lion Capital of Ashoka and crisp Hindi/English typography ("गृह मंत्रालय / MINISTRY OF HOME AFFAIRS").
 3. **Zero-Scrollbar 5-Stage Navigation Grid**:
    - Re-engineered `.gov-navigation-bar` into a CSS Grid (`repeat(5, minmax(0, 1fr))`) with `overflow: hidden;`.
-   - Guaranteed all 5 operational stage tabs fit seamlessly across $1024\text{px} - 1920\text{px}+$ viewports with zero horizontal scrollbars.
+   - Guaranteed all 5 operational stage tabs fit seamlessly across 1024px - 1920px+ viewports with zero horizontal scrollbars.
 4. **Stage 1 Redundancy Elimination & Active Docket Bar**:
-   - Purged the 4 redundant stage description cards ("Multi-Chain Graph Traversal", "Internal VASP Sweep Forensics", "4-Pillar Explainable Scorer", "Court-Admissible BSA Evidence") that previously wasted $60\%$ of horizontal space.
+   - Purged the 4 redundant stage description cards ("Multi-Chain Graph Traversal", "Internal VASP Sweep Forensics", "4-Pillar Explainable Scorer", "Court-Admissible BSA Evidence") that previously wasted 60% of horizontal space.
    - Introduced a prominent full-width **Active Incident Docket & Quick-Dispatch Bar** at the top of Stage 1 displaying active FIR docket, NCRP complaint ID, attributed VASP, confidence score, and direct Stage 2 / Stage 5 workflow transition triggers.
 5. **Ergonomic Balanced 2-Column Workstation Layout**:
-   - Transitioned Stage 1 from the cramped $460\text{px}$ sidebar into a spacious, symmetrical 2-column grid (`1fr 1fr`):
+   - Transitioned Stage 1 from the cramped 460px sidebar into a spacious, symmetrical 2-column grid (`1fr 1fr`):
      - **Left Workstation Card**: Legal Case Dossier & NCRP Intelligence (Investigating Officer authority banner, State Police station, crime narrative, victim reported loss badge, and stolen target crypto asset).
      - **Right Workstation Card**: Target Suspect Address & Algorithmic Attribution Engine (Full-width wallet input, network selector, fraud loss input, degree-bounded beam search sliders, primary execution button, and ad-hoc calldata modal trigger).
 

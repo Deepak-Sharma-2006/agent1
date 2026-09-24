@@ -45,7 +45,7 @@ An enterprise-grade, production-hardened development platform and operational ha
 5. **Universal Task Dispatcher Subsystems**:
    - **Task 1: Solution Formulation** (`--task solution`): First-principles dynamic synthesis, multi-hop live research triangulation, 4-moat defensibility matrix, and cloud COGS financial modeling.
    - **Task 2: Code Implementation** (`--task code`): Process sandbox jail, extreme edge-case fuzzing, 5-pass autonomous self-healing TDD loop.
-   - **Task 3: Presentation Pitch Synthesis** (`--task presentation`): OmniDeck 2D Flex/Grid solver, 7 visual primitives, high-fidelity UI mockups (browser chrome, mobile HUD, 2x2 matrix), and cross-platform PDF export.
+   - **Task 3: Presentation Pitch Synthesis** (`--task presentation`): OmniDeck 2D Flex/Grid solver, 7 visual primitives, high-fidelity UI mockups (browser chrome, mobile HUD, 2x2 matrix), cross-platform PDF export, and automated 4K Playwright slide rendering with geometry pre-flight layout assertions (`npm run test:slides`).
    - **Task 4: Enterprise Audit & Brownfield Ingestion** (`--task audit`): Automated 5-pillar health audit and auto-healing of legacy codebases.
    - **Task 5: In-Progress Project Resumption** (`--task continue`): Baseline stabilization and delta feature build via TDD.
    - **Task 6: Deep Research Triangulation** (`--task research`): Multi-hop exploration across 4 modes (`EXPLORATION`, `FEASIBILITY`, `DIAGNOSTIC`, `IMPACT`) powered by Jina Reader (`r.jina.ai`), DuckDuckGo, Semantic Scholar, and arXiv APIs with a minimum 120-second deliberation timer.

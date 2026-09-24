@@ -10,7 +10,7 @@ This implementation plan details the technical remediation for all 7 reported bu
 > **1. Strict Linear Gating (Bugs 1 & 7)**:
 > - **Selecting a crime docket from the dropdown in Stage 1 will NEVER automatically run attribution or unlock Stage 2.** It will exclusively populate the input fields (Suspect Wallet, Network, Reported Fraud Loss, NCRP ID, and Summary).
 > - The operator must explicitly click **`[Execute Automated Attribution]`** to run the beam search traversal and unlock Stage 2.
-> - At every subsequent stage (Stage 2 $\rightarrow$ Stage 3 $\rightarrow$ Stage 4 $\rightarrow$ Stage 5), the action dock **"Proceed" button remains strictly disabled** until the operator performs that stage's required forensic action.
+> - At every subsequent stage (Stage 2 rightarrow Stage 3 rightarrow Stage 4 rightarrow Stage 5), the action dock **"Proceed" button remains strictly disabled** until the operator performs that stage's required forensic action.
 > - Navigation tabs will also reflect this lock: jumping ahead past uncompleted stages is blocked.
 
 > [!IMPORTANT]
@@ -170,8 +170,8 @@ demo/chakra_mvp/
   - Card 2: **Section 94 BNSS Summons**
   - Card 3: **BSA 63(4) Evidence Certificate**
 - Add a two-button action cluster to each card:
-  - **`[Preview Document]`** (`gov-btn-outline` with `Eye` icon) $\rightarrow$ opens `DocumentPreviewModal` with live PDF stream.
-  - **`[Download PDF]`** (`gov-btn-primary` or themed outline with `Download` icon) $\rightarrow$ triggers direct browser file download.
+  - **`[Preview Document]`** (`gov-btn-outline` with `Eye` icon) rightarrow opens `DocumentPreviewModal` with live PDF stream.
+  - **`[Download PDF]`** (`gov-btn-primary` or themed outline with `Download` icon) rightarrow triggers direct browser file download.
 - Ensure all case metadata shown in Stage 5 dynamically binds to `attribution` without hardcoded fallback strings.
 
 ---

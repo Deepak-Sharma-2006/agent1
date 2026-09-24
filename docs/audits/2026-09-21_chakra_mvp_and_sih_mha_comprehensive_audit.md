@@ -42,8 +42,8 @@ This audit evaluates both the **Target Architecture Blueprint** (the sovereign c
 ### 2.1 Alignment with Official MHA I4C Problem Statement
 The solution blueprint located at [`docs/sih_solutions/sih-2026-mha-vasp-attribution-blueprint.md`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/docs/sih_solutions/sih-2026-mha-vasp-attribution-blueprint.md) (847 lines, 71.5 KB) specifically deconstructs the operational crisis of Indian Law Enforcement Agencies:
 1. **The Blind Notice Bottleneck**: Solves the reality where 85%+ of reported fraud wallets are unhosted (non-custodial) addresses, eliminating wasted 14-day Section 94 BNSS requisitions sent to domestic exchanges.
-2. **Nearest VASP Attribution**: Traces forward transaction flows to locate the nearest centralized exchange deposit address within a 5-hop boundary in $< 8$ minutes.
-3. **Deterministic Deposit-to-Sweep Validation**: Eliminates speculation by mathematically validating automated exchange balance zeroing ($\ge 95\%$) and consolidation sweeps into known hot storage pools.
+2. **Nearest VASP Attribution**: Traces forward transaction flows to locate the nearest centralized exchange deposit address within a 5-hop boundary in < 8 minutes.
+3. **Deterministic Deposit-to-Sweep Validation**: Eliminates speculation by mathematically validating automated exchange balance zeroing (≥ 95%) and consolidation sweeps into known hot storage pools.
 4. **Direct SAHYOG API Interoperability**: Seamlessly generates and transmits pre-populated **Section 94 BNSS** KYC summons and **Section 106/107 BNSS** 24-hour emergency debit freeze notices directly to the registered VASP compliance desk.
 
 ### 2.2 Claude Council Governance & Contrarian Moats
@@ -53,8 +53,8 @@ The solution adheres strictly to Rule 10 of [`AGENTS.md`](file:///c:/Users/Deepa
   - Multi-chain UTDM (Universal Transaction Data Model) indexing Ethereum, Tron, Bitcoin, BSC, Polygon, and Solana.
   - Curated, encrypted registry of over 120,000 verified VASP infrastructure endpoints (FIU-IND registered entities and global exchanges).
 - **Algorithmic Moat** ([`sih-2026-mha-vasp-attribution-blueprint.md#L344-L390`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/docs/sih_solutions/sih-2026-mha-vasp-attribution-blueprint.md#L344-L390)):
-  - **Degree-Bounded Beam Search** ($k=8$) preventing graph combinatorial explosion ($O(k^d)$ vs $O(B^d)$).
-  - **Deposit-to-Sweep Consolidation Heuristic**: Confirms exchange internal sweeps via gas sponsorship and temporal windows ($< 120$ min).
+  - **Degree-Bounded Beam Search** (k=8) preventing graph combinatorial explosion (O(k^d) vs O(B^d)).
+  - **Deposit-to-Sweep Consolidation Heuristic**: Confirms exchange internal sweeps via gas sponsorship and temporal windows (< 120 min).
   - **Honest Taint Boundaries**: Marks zk-SNARK mixers (Tornado Cash) as forensic boundaries, refusing to invent fake links and preventing evidentiary dismissal in court.
 - **Sovereign & Statutory Moat** ([`sih-2026-mha-vasp-attribution-blueprint.md#L470-L580`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/docs/sih_solutions/sih-2026-mha-vasp-attribution-blueprint.md#L470-L580)):
   - Full statutory alignment with post-July 2024 Indian criminal codes: **Bharatiya Sakshya Adhiniyam, 2023 (Section 63(4))** and **Bharatiya Nagarik Suraksha Sanhita, 2023 (Sections 94, 106, 107)**.
@@ -97,12 +97,12 @@ The blueprint details concrete operational touchpoints for each of the 7 officia
   - Implements dust pruning: filters transactions below `$10.00` USD to prevent sybil/dust explosion.
   - Detects direct hot wallet transfers and initiates sweep evaluation on intermediary hops.
 - **Deposit-to-Sweep Detector (`engine/sweep_detector.py`)**:
-  - Validates balance consolidation: verifies sweep amount vs inbound amount ($\ge 95\%$).
+  - Validates balance consolidation: verifies sweep amount vs inbound amount (≥ 95%).
   - Validates temporal proximity: sweep must occur within 120 minutes of deposit.
   - Detects gas sponsorship: checks if transaction gas was paid by known VASP fuelers or exchange hot storage.
 - **Explainable 4-Pillar Scoring (`engine/scoring.py`)**:
   - Computes objective score: Infrastructure Match (max 40 pts) + Sweep Consistency (max 25 pts) + Proximity Decay (max 20 pts) + Volume Continuity (max 15 pts) minus Risk Penalties (Mixer -35 pts, Bridge -15 pts).
-  - Evaluates statutory tiers: Tier 1 ($\ge 85\%$, Section 106 BNSS freeze), Tier 2 ($\ge 60\%$, Section 94 BNSS summons), Tier 3 ($< 60\%$, forensic review).
+  - Evaluates statutory tiers: Tier 1 (≥ 85%, Section 106 BNSS freeze), Tier 2 (≥ 60%, Section 94 BNSS summons), Tier 3 (< 60%, forensic review).
 - **Cryptographic Evidence Tree (`core/merkle.py`)**:
   - In-memory SHA-256 Merkle Evidence Tree computing root hash over all traversal transaction hashes.
   - Generates binary inclusion proofs and enables tamper-evident verification.
@@ -186,7 +186,7 @@ The blueprint details concrete operational touchpoints for each of the 7 officia
 | **Target Crime Vector** | Tor v3 Darknet Markets, APT Extortion, Drug Trafficking | Transnational P2P Crypto Fraud, Investment Scams, Mule Rings |
 | **Core Traversal Focus** | Cross-platform entity resolution & PGP/Handle matching | Multi-chain nearest VASP attribution & sweep detection |
 | **Blockchain Scope** | Bitcoin (MICH common-spend) + Tron TRC-20 sweeps | TRON, Ethereum, Bitcoin, BNB Chain, Solana, Polygon |
-| **Specialized Engine** | IndicBERT / DistilGPT-2 Hinglish Stylometry & Diurnal Trough | Degree-Bounded Beam Search ($k=8$) + Deposit-to-Sweep Detector |
+| **Specialized Engine** | IndicBERT / DistilGPT-2 Hinglish Stylometry & Diurnal Trough | Degree-Bounded Beam Search (k=8) + Deposit-to-Sweep Detector |
 | **Statutory Action** | Intelligence Annexure under Section 63 BSA 2023 | Automated Sec 94 BNSS Summons & Sec 106/107 BNSS Debit Freeze |
 | **Judicial Hand-off** | Raw intelligence passed to CBI / NIA as court evidence | Direct digital routing to VASP nodal officers via SAHYOG API |
 | **Evaluator Tooling** | Live 24-hr Diurnal Histogram & Subword Tokenizer | Live Custom Graph Injection Modal for Jury Testing |

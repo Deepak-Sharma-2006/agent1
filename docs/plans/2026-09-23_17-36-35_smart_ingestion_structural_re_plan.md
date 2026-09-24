@@ -14,11 +14,11 @@ This plan ensures **zero loss of local project files** (`demo/chakra_mvp`, `demo
 
 > [!NOTE]
 > **Directory Re-ordering & Human-Naming Migrations**:
-> 1. `e2e/` $\rightarrow$ `browser_tests/`: In alignment with Directive 14 (Human Naming Standard), all Playwright specs move to `browser_tests/`. Our local custom assertions for Project CHAKRA (such as the 7-bug fixes and mainnet ledger tests) will be fully retained inside `browser_tests/chakra.spec.ts`.
-> 2. `docs/adrs/` $\rightarrow$ `docs/decisions/`: ADR documents move into the standard human-readable decisions catalog, and `docs/decisions/INDEX.md` is updated.
-> 3. `docs/rfcs/` $\rightarrow$ `docs/specifications/`: Formal RFCs and schema contracts move into the standard specifications catalog, and `docs/specifications/INDEX.md` is updated.
-> 4. `scripts/pen-test-runner.ts` $\rightarrow$ `scripts/security-audit-runner.ts`: Renamed for clarity, with backwards-compatible alias `npm run pentest` intact.
-> 5. `implementation_setup_guide.md` $\rightarrow$ `docs/architecture/production_architecture_blueprint.md`: Moved to `docs/architecture/` to satisfy the Root Compactness Standard ($\le 12$ essential root files).
+> 1. `e2e/` rightarrow `browser_tests/`: In alignment with Directive 14 (Human Naming Standard), all Playwright specs move to `browser_tests/`. Our local custom assertions for Project CHAKRA (such as the 7-bug fixes and mainnet ledger tests) will be fully retained inside `browser_tests/chakra.spec.ts`.
+> 2. `docs/adrs/` rightarrow `docs/decisions/`: ADR documents move into the standard human-readable decisions catalog, and `docs/decisions/INDEX.md` is updated.
+> 3. `docs/rfcs/` rightarrow `docs/specifications/`: Formal RFCs and schema contracts move into the standard specifications catalog, and `docs/specifications/INDEX.md` is updated.
+> 4. `scripts/pen-test-runner.ts` rightarrow `scripts/security-audit-runner.ts`: Renamed for clarity, with backwards-compatible alias `npm run pentest` intact.
+> 5. `implementation_setup_guide.md` rightarrow `docs/architecture/production_architecture_blueprint.md`: Moved to `docs/architecture/` to satisfy the Root Compactness Standard (≤ 12 essential root files).
 > 6. `UNIVERSAL_AGENT_INSTRUCTIONS.md`: Added at the root for single-file instruction compilation across Claude Code, Cursor, Windsurf, Copilot, and Codex.
 
 ---
@@ -27,26 +27,26 @@ This plan ensures **zero loss of local project files** (`demo/chakra_mvp`, `demo
 
 ### 1. Directory Re-ordering & Folder Renames
 
-#### [MOVE] `e2e/` $\rightarrow$ `browser_tests/`
+#### [MOVE] `e2e/` rightarrow `browser_tests/`
 - Move [`e2e/chakra.spec.ts`](file:///e2e/chakra.spec.ts) and [`e2e/bhedak.spec.ts`](file:///e2e/bhedak.spec.ts) to `browser_tests/`.
 - Preserve our rich local assertions (including linear workflow verification and live mainnet wallet grounding `TJQQLsfYvwK1gJyET4C7hvPdJ2YyNcAUbL`).
 - Update [`playwright.config.ts`](file:///playwright.config.ts) `testDir` to `./browser_tests`.
 
-#### [MOVE] `docs/adrs/` $\rightarrow$ `docs/decisions/`
+#### [MOVE] `docs/adrs/` rightarrow `docs/decisions/`
 - Move all files from [`docs/adrs/`](file:///docs/adrs/) to [`docs/decisions/`](file:///docs/decisions/).
 - Pull new template decision files: `2026-09-23_db_migration_adr.md`, `2026-09-23_db_migration_decision.md`.
 - Remove legacy `docs/adrs/` directory.
 
-#### [MOVE] `docs/rfcs/` $\rightarrow$ `docs/specifications/`
+#### [MOVE] `docs/rfcs/` rightarrow `docs/specifications/`
 - Move all files from [`docs/rfcs/`](file:///docs/rfcs/) to [`docs/specifications/`](file:///docs/specifications/).
 - Pull new template specification files: `2026-09-23_audit_probe_specification.md`, `2026-09-23_db_migration_specification.md`, etc.
 - Remove legacy `docs/rfcs/` directory.
 
-#### [MOVE] `scripts/pen-test-runner.ts` $\rightarrow$ `scripts/security-audit-runner.ts`
+#### [MOVE] `scripts/pen-test-runner.ts` rightarrow `scripts/security-audit-runner.ts`
 - Replace `scripts/pen-test-runner.ts` with [`scripts/security-audit-runner.ts`](file:///scripts/security-audit-runner.ts).
 - Provide backwards-compatible npm alias in `package.json`.
 
-#### [MOVE] `implementation_setup_guide.md` $\rightarrow$ `docs/architecture/production_architecture_blueprint.md`
+#### [MOVE] `implementation_setup_guide.md` rightarrow `docs/architecture/production_architecture_blueprint.md`
 - Relocate and enrich architectural guide in [`docs/architecture/production_architecture_blueprint.md`](file:///docs/architecture/production_architecture_blueprint.md) with Brownfield Onboarding, Team Mesh synchronization, Universal Harness Compiler, and 4-Layer Fail-Closed Compliance.
 - Remove root copy to enforce root compactness.
 
@@ -88,9 +88,9 @@ Automated compiler transforming `AGENTS.md` into `CLAUDE.md`, `.cursorrules`, `.
 - Update browser test scripts to point to `browser_tests/`.
 
 #### [MODIFY] [`AGENTS.md`](file:///AGENTS.md) and [`GEMINI.md`](file:///GEMINI.md)
-- Directive 6: Incorporate Zero-LaTeX Invariant (clean Unicode symbols: $\ge, \le, \times, \ne, \rightarrow$).
+- Directive 6: Incorporate Zero-LaTeX Invariant (clean Unicode symbols: ≥, ≤, ×, ne, rightarrow).
 - Directive 13: Twin-Documentation Sync Invariant (`README.md` and `SYSTEM_COMMANDS.md`).
-- Directive 14: Mandatory Human-Naming Invariant & Root Compactness Standard ($\le 12$ files).
+- Directive 14: Mandatory Human-Naming Invariant & Root Compactness Standard (≤ 12 files).
 - Directive 15: Mandatory Real-Time Brain Artifact-to-Docs Synchronous Mirroring (with second-level timestamps).
 
 #### [MODIFY] [`README.md`](file:///README.md) and [`SYSTEM_COMMANDS.md`](file:///SYSTEM_COMMANDS.md)
@@ -162,4 +162,4 @@ Automated compiler transforming `AGENTS.md` into `CLAUDE.md`, `.cursorrules`, `.
 
 ### Manual Verification
 - Verify `git status` shows zero missing local files from `demo/` or `specs/presentations/`.
-- Verify root directory has $\le 12$ files and clean human names.
+- Verify root directory has ≤ 12 files and clean human names.

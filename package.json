@@ -24,6 +24,8 @@
     "test:browser": "playwright test",
     "test:browser:chakra": "playwright test browser_tests/chakra.spec.ts",
     "test:browser:bhedak": "playwright test browser_tests/bhedak.spec.ts",
+    "test:slides": "node scripts/engine/render_championship_decks.mjs",
+    "render:slides": "node scripts/engine/render_championship_decks.mjs",
     "audit:sast": "bandit -r demo/ -ll -q",
     "attest:verify": "python -m scripts.orchestrator.squad_attestation --verify",
     "audit:adversarial": "node --experimental-strip-types scripts/adversarial-suite-runner.ts",

@@ -26,7 +26,7 @@ Brought the **Project BHEDAK MVP demonstration** ([`demo/bhedak_mvp/`](file:///c
 ### Phase 2: Central Reactive State Store & Fail-Closed Gating (Rule 13)
 - **[`components/StatutoryExportModal.tsx`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/demo/bhedak_mvp/frontend/src/components/StatutoryExportModal.tsx)**:
   - Bound all export triggers (`download-bsa-txt-btn`, `print-court-pdf-btn`, `copy-export-btn`, `copy-stix-btn`, `download-stix-json-btn`) to `disabled={!isAdmissible}`.
-  - Court certificates and STIX bundles are strictly fail-closed until computed confidence meets statutory admission criteria ($\ge 85.0\%$ deterministic proof).
+  - Court certificates and STIX bundles are strictly fail-closed until computed confidence meets statutory admission criteria (≥ 85.0% deterministic proof).
 - **[`components/CaseOverview.tsx`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/demo/bhedak_mvp/frontend/src/components/CaseOverview.tsx)** & **[`components/ConfidenceScorer.tsx`](file:///c:/Users/Deepak%20Sharma/OneDrive/Desktop/scripts/demo/bhedak_mvp/frontend/src/components/ConfidenceScorer.tsx)**:
   - Purged hardcoded `"95.0%"` strings from buttons, binding action labels dynamically to computed pipeline states.
 

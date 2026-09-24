@@ -82,8 +82,8 @@ Remediate all technical deficiencies identified during the enterprise audit of *
   - Candidate Deposit Address verification card
   - Attributed VASP Entity & Registered FIU-IND Number
   - Hot Wallet Consolidation Target Address
-  - Balance Zeroing Ratio ($\ge 95\%$ consolidation proof)
-  - Latency / Temporal Window ($< 120$ minutes)
+  - Balance Zeroing Ratio (≥ 95% consolidation proof)
+  - Latency / Temporal Window (< 120 minutes)
   - Gas Sponsorship Attestation from VASP Fueler Wallets
   - Deposit & Sweep transaction hash inspection with copy triggers.
 

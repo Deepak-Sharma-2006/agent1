@@ -56,7 +56,7 @@ The document directly deconstructs and satisfies the official problem statement 
   1. *Data Ingestion Moat*: 256-node Tor crawler pool with automated Equihash PoW acceleration.
   2. *Algorithmic Moat*: Tri-tiered pipeline with hard mathematical ceiling of 0.65 on probabilistic scores.
   3. *Sovereign/Statutory Moat*: Section 63 BSA 2023 legal compliance and IT Act 69/70A grounding.
-  4. *Financial Unit Economics Moat*: In-house open-core stack yielding 97.2% gross margin ($0.0008/query vs. $0.12+ commercial licenses).
+  4. *Financial Unit Economics Moat*: In-house open-core stack yielding 97.2% gross margin (0.0008/query vs.0.12+ commercial licenses).
 
 ### 2.3 Legal & Statutory Admissibility Grounding
 The blueprint is grounded in current Indian evidentiary jurisprudence:
@@ -66,7 +66,7 @@ The blueprint is grounded in current Indian evidentiary jurisprudence:
 - Explicitly models Article 50 separation of powers: Judicial officers do not hold operational user accounts; intelligence packages are transmitted as sealed evidence annexures to investigating agencies (CBI/NIA).
 
 ### 2.4 Blueprint Gaps & Refinements
-- **Gap 1.1 (Hardware Sizing vs. COGS Discrepancy)**: Section 14 outlines a 14-node cluster requiring 4x NVIDIA H100 GPUs and 256 GB RAM nodes, yet Section 4 estimates query execution at $0.0008. While on-premise amortized electricity supports low marginal costs, high upfront capital expenditure ($180,000+) should be clearly separated from operational query cost.
+- **Gap 1.1 (Hardware Sizing vs. COGS Discrepancy)**: Section 14 outlines a 14-node cluster requiring 4x NVIDIA H100 GPUs and 256 GB RAM nodes, yet Section 4 estimates query execution at 0.0008. While on-premise amortized electricity supports low marginal costs, high upfront capital expenditure (180,000+) should be clearly separated from operational query cost.
 
 ---
 

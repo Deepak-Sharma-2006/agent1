@@ -76,7 +76,7 @@ In strict adherence to official directives, **Project CHAKRA** has been fully re
   3. *Mumbai Illegal Mahadev Betting App Laundering* (₹85,00,000 / TRON TRC-20 USDT)
   4. *Jaipur Fake Stock Trading App (SEBI Impersonation)* (₹62,00,000 / BSC BEP-20 USDT)
   5. *Hyderabad Sextortion & Loan App Syndicate* (₹38,00,000 / ETH ERC-20 USDC)
-- **Degree-Bounded Beam Search Parameters**: Max traversal depth (1–6 hops) and dust threshold ($0–$100 USD) to prevent combinatorial path explosion.
+- **Degree-Bounded Beam Search Parameters**: Max traversal depth (1–6 hops) and dust threshold (0–100 USD) to prevent combinatorial path explosion.
 - **Ad-Hoc Intelligence & Offline Calldata Ingestion Console**: Clean modal for pasting custom raw calldata and bridge traces directly into active memory.
 
 ### 3.2 Stage 2: Multi-Chain Attribution Canvas (`AttributionGraph.tsx`)
@@ -99,8 +99,8 @@ In strict adherence to official directives, **Project CHAKRA** has been fully re
 - **4 Mathematical Pillars**:
   1. *Infrastructure Match* (Max 40 pts): Known FIU-IND hot wallets and smart contract bytecode.
   2. *Sweep Consistency & Gas Fueler* (Max 25 pts): Sweep ratio, latency, and gas fueler sponsorship.
-  3. *Proximity Decay* (Max 20 pts): $S_{\text{proximity}} = 20 \times e^{-0.35 \times (\text{hops} - 1)}$.
-  4. *Volume Continuity* (Max 15 pts): $15 \times \min(1.0, \frac{\text{traced}}{\text{fraud}})$.
+  3. *Proximity Decay* (Max 20 pts): S_{proximity} = 20 × e^{-0.35 × (hops - 1)}.
+  4. *Volume Continuity* (Max 15 pts): 15 × min(1.0, frac{traced}{fraud}).
 - **Judicial Scrutiny Resilience**: Eliminates "black-box AI" vulnerabilities in trial courts under Section 63(4) BSA 2023.
 
 ### 3.5 Stage 5: SAHYOG Statutory Sanctions & Court Docket (`StatutoryCourtDocket.tsx`)

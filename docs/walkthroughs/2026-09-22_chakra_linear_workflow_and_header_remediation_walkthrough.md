@@ -63,7 +63,7 @@ In response to operator evaluation of the Project CHAKRA Operations Platform, fo
   - Stage 2: Multi-Chain Attribution Canvas (Locked until Stage 1 trace executed).
   - Stage 3: Sweep Forensics & Fueler Lab (Locked until Stage 2 canvas inspected).
   - Stage 4: 4-Pillar Confidence Scorer (Locked until Stage 3 sweep audited).
-  - Stage 5: SAHYOG Sanctions & Court Docket (Locked until Stage 4 score calculated and $\ge 85\%$).
+  - Stage 5: SAHYOG Sanctions & Court Docket (Locked until Stage 4 score calculated and ≥ 85%).
 - Embedded fixed bottom action docks (`.chakra-stage-action-dock`) across Stages 2, 3, and 4 to provide clear stepwise navigation forward.
 
 ---

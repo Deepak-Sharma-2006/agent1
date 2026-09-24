@@ -2,10 +2,18 @@
 
 > **Status**: ACTIVE | Automated Living Index | Reconciled via Team Mesh Engine
 
-Total Registered Documents: **16**
+Total Registered Documents: **24**
 
 | Timestamp | Document Title | File Name | Link |
 | :--- | :--- | :--- | :--- |
+| `2026-09-23 21-43-21` | **SIH Championship Slide 3 Visual Graph Flow & Technical Approach Finalization Plan** | `2026-09-23_21-43-21_sih_championship_slide_3_plan.md` | [View Document](file:///docs/plans/2026-09-23_21-43-21_sih_championship_slide_3_plan.md) |
+| `2026-09-23 20-46-58` | **Visual Scaling, Typography & Spacing Remediation Plan for Slide 2 (BHEDAK & CHAKRA)** | `2026-09-23_20-46-58_visual_scaling_typography_spacing_plan.md` | [View Document](file:///docs/plans/2026-09-23_20-46-58_visual_scaling_typography_spacing_plan.md) |
+| `2026-09-23 20-31-02` | **Implementation Plan: Visual Replication of Slide 2 for BHEDAK & CHAKRA (SIH 2024 Visual Parity)** | `2026-09-23_20-31-02_visual_replication_slide_2_plan.md` | [View Document](file:///docs/plans/2026-09-23_20-31-02_visual_replication_slide_2_plan.md) |
+| `2026-09-23 19-40-55` | **Implementation Plan: Presentation Subsystem Overhaul & File Purge** | `2026-09-23_19-40-55_presentation_subsystem_overhaul_file_plan.md` | [View Document](file:///docs/plans/2026-09-23_19-40-55_presentation_subsystem_overhaul_file_plan.md) |
+| `2026-09-23 19-05-27` | **Updated Implementation Plan: Canva-Grade Visual Overhaul Grounded in Empirical Research** | `2026-09-23_19-05-27_canva_grade_visual_overhaul_plan.md` | [View Document](file:///docs/plans/2026-09-23_19-05-27_canva_grade_visual_overhaul_plan.md) |
+| `2026-09-23 18-59-10` | **Updated Implementation Plan: Canva-Grade Visual Overhaul from Solution POV (BHEDAK & CHAKRA)** | `2026-09-23_18-59-10_canva_grade_visual_overhaul_plan.md` | [View Document](file:///docs/plans/2026-09-23_18-59-10_canva_grade_visual_overhaul_plan.md) |
+| `2026-09-23 18-53-34` | **Implementation Plan: Canva-Grade Visual Transformation for BHEDAK & CHAKRA Presentations** | `2026-09-23_18-53-34_canva_grade_visual_transformation_plan.md` | [View Document](file:///docs/plans/2026-09-23_18-53-34_canva_grade_visual_transformation_plan.md) |
+| `2026-09-23 18-02-12` | **Implementation Plan: SIH Championship Presentation Upgrade & Council Audit** | `2026-09-23_18-02-12_sih_championship_presentation_upgrade_plan.md` | [View Document](file:///docs/plans/2026-09-23_18-02-12_sih_championship_presentation_upgrade_plan.md) |
 | `2026-09-23 17-43-18` | **2026-09-23_17-43-18_audit_probe_plan** | `2026-09-23_17-43-18_audit_probe_plan.md` | [View Document](file:///docs/plans/2026-09-23_17-43-18_audit_probe_plan.md) |
 | `2026-09-23 17-36-35` | **Smart Ingestion & Structural Re-Ordering of Agentic Workflow Template** | `2026-09-23_17-36-35_smart_ingestion_structural_re_plan.md` | [View Document](file:///docs/plans/2026-09-23_17-36-35_smart_ingestion_structural_re_plan.md) |
 | `2026-09-23 11-16-56` | **Architectural Implementation Plan: Application Scale Separation, Session Lifecycle Protocol & Template Release** | `2026-09-23_11-16-56_application_scale_separation_session_plan.md` | [View Document](file:///docs/plans/2026-09-23_11-16-56_application_scale_separation_session_plan.md) |

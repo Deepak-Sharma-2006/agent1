@@ -82,8 +82,13 @@ python -m scripts.orchestrator.task_dispatcher --task presentation --prompt "Sov
 
 # Stage 2: Gated PDF Export (Supports PowerPoint COM, headless LibreOffice, and headless Chrome fallback)
 python -m scripts.orchestrator.task_dispatcher --task presentation --prompt "Sovereign Defense AI" --theme "cyber_dark_terminal" --export-pdf
+
+# High-Fidelity 4K Championship Slide Rendering & Pre-Flight Layout Assertions
+npm run render:slides                         # Renders all slides with Playwright (deviceScaleFactor: 2)
+npm run test:slides -- --slide 3              # Runs automated geometry, typography, and pipeline assertions
+python scripts/engine/compile_sih_pptx.py     # Compiles 4K UHD (3840x2160) OpenXML PPTX and Lossless PDF
 ```
-*Outputs: Native PowerPoint deck in `specs/presentations/deck_dispatcher_output.pptx` (and PDF if `--export-pdf` passed).*
+*Outputs: 4K PPTX and Lossless PDF decks in `specs/presentations/` and `specs/presentations/rendered/`.*
 
 ---
 

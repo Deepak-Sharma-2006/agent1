@@ -44,6 +44,9 @@ specs/*.pdf
 specs/*.html
 !specs/presentations/BHEDAK_SIH2026.pptx
 !specs/presentations/CHAKRA_SIH2026.pptx
+!specs/presentations/BHEDAK_SIH2026.pdf
+!specs/presentations/CHAKRA_SIH2026.pdf
+specs/presentations/sih_2024.pdf
 
 # Playwright artifacts
 test-results/

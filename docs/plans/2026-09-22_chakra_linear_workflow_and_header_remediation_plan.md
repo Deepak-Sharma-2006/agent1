@@ -27,7 +27,7 @@ In response to operator evaluation of the Project CHAKRA Operations Platform, fo
      - Stage 2 (Graph Canvas): Locked until Stage 1 attribution is executed.
      - Stage 3 (Sweep Forensics): Locked until Stage 2 graph traversal is audited.
      - Stage 4 (Confidence Scorer): Locked until Stage 3 sweep forensics is audited.
-     - Stage 5 (Statutory Sanctions): Locked until Stage 4 confidence score is calculated and meets statutory threshold ($\ge 85\%$).
+     - Stage 5 (Statutory Sanctions): Locked until Stage 4 confidence score is calculated and meets statutory threshold (≥ 85%).
    - Add step-progression action dock buttons at the bottom of Stages 1, 2, 3, and 4 to guide the investigator sequentially through the pipeline.
    - Guarantee Rule 13 invariant: zero data loss across stage transitions.
 

@@ -11,8 +11,8 @@
 During production review of the Project CHAKRA dashboard, five distinct ergonomic and visual deficiencies were identified:
 1. **Header Fluff & Excessive Vertical Space**: The top region (`.gov-utility-bar`, `.gov-brand-header`, `.gov-agency-titles`) consumes unnecessary vertical height before the blue operational docket bar (`CASE DOCKET: ... | NCRP COMPLAINT: ... | STATION: ...`).
 2. **Unofficial / Incomplete Emblem**: The current SVG shows a generic emblem without the official bilingual "गृह मंत्रालय / MINISTRY OF HOME AFFAIRS" seal specified by MHA directives.
-3. **5-Stage Navigation Horizontal Scrollbar**: The `.gov-navigation-bar` enforces fixed-width flex items with `12px 18px` padding, causing tabs to spill over and trigger an unsightly horizontal scrollbar on screens $<1440\text{px}$.
-4. **Stage 1 Asymmetry & Space Waste**: Stage 1 was split into an undersized `460px` intake panel and a bloated right-hand briefing column. The right column wastes $60\%$ of screen width repeating 4 redundant textual descriptions of downstream stages that are already clearly visible in the top navigation bar.
+3. **5-Stage Navigation Horizontal Scrollbar**: The `.gov-navigation-bar` enforces fixed-width flex items with `12px 18px` padding, causing tabs to spill over and trigger an unsightly horizontal scrollbar on screens <1440px.
+4. **Stage 1 Asymmetry & Space Waste**: Stage 1 was split into an undersized `460px` intake panel and a bloated right-hand briefing column. The right column wastes 60% of screen width repeating 4 redundant textual descriptions of downstream stages that are already clearly visible in the top navigation bar.
 5. **Cramped Interactive Ingestion Workstation**: The left column squeezes high-frequency interactive elements (suspect wallet address, network selector, fraud loss, degree-bounded beam search sliders, and primary action triggers) into a narrow vertical column.
 
 ---
@@ -26,7 +26,7 @@ During production review of the Project CHAKRA dashboard, five distinct ergonomi
   - `.gov-utility-bar`: Reduced from `6px 24px` to `3px 20px` (font size: `10.5px`).
   - `.gov-brand-header`: Reduced padding from `10px 24px` to `6px 20px`, emblem height bounded to `50px`.
   - `.gov-status-bar`: Height optimized to `32px` (`5px 20px` padding), consolidating CASE DOCKET, NCRP COMPLAINT, POLICE STATION, SOVEREIGN ENGINE, and LATENCY.
-- **Vertical Savings**: Reclaims $\approx 32\text{px}$ of primary viewport height for operational workflows.
+- **Vertical Savings**: Reclaims approx 32px of primary viewport height for operational workflows.
 
 ### B. Zero-Scrollbar 5-Stage Navigation Grid
 - Transform `.gov-navigation-bar` from an unbounded `display: flex; overflow-x: auto;` container into a deterministic 5-column responsive grid:
@@ -50,7 +50,7 @@ During production review of the Project CHAKRA dashboard, five distinct ergonomi
 ### C. Restyled Stage 1 Layout: Balanced 2-Column Operational Workstation
 - **Remove Redundancy**: Eliminate the 4 redundant text cards ("Multi-Chain Graph Traversal", "Internal VASP Sweep Forensics", "4-Pillar Explainable Scorer", "Court-Admissible BSA Evidence") from Stage 1.
 - **Top Quick-Dispatch Incident Card (Full-Width)**:
-  - Displays the active FIR Docket, NCRP Portal ID, Attributed VASP, and Confidence Score ($94.0/\text{Tier 1}$).
+  - Displays the active FIR Docket, NCRP Portal ID, Attributed VASP, and Confidence Score (94.0/Tier 1).
   - Quick-action buttons: `[Open Multi-Chain Graph Canvas (Stage 2) →]` and `[View Statutory Sanctions (Stage 5) →]`.
 - **Balanced 2-Column Workstation Grid (`1fr 1fr`)**:
   - **Left Workstation Card: Legal Intelligence & Case Dossier (`50%`)**:
@@ -61,7 +61,7 @@ During production review of the Project CHAKRA dashboard, five distinct ergonomi
   - **Right Workstation Card: Algorithmic Attribution Engine & Search Controls (`50%`)**:
     - Target Suspect Cryptocurrency Wallet Address: Full-width monospace input with ample breathing room.
     - Two-column input row: Underlying Network / Ledger selector & Reported Fraud Loss (₹ INR).
-    - Algorithmic Anti-Explosion Parameters Card: Max Graph Traversal Depth slider (1–6 hops) & Dust Filter Floor Threshold slider ($0–$100 USD) with real-time value indicators.
+    - Algorithmic Anti-Explosion Parameters Card: Max Graph Traversal Depth slider (1–6 hops) & Dust Filter Floor Threshold slider (0–100 USD) with real-time value indicators.
     - Primary Operational Trigger: `[⚡ Execute Automated Attribution]` (High-contrast primary button).
     - Offline Ingestion Dock: `[Ad-Hoc Intelligence & Offline Calldata Ingestion Console]`.
 

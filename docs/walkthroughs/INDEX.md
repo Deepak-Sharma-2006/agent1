@@ -2,10 +2,20 @@
 
 > **Status**: ACTIVE | Automated Living Index | Reconciled via Team Mesh Engine
 
-Total Registered Documents: **16**
+Total Registered Documents: **26**
 
 | Timestamp | Document Title | File Name | Link |
 | :--- | :--- | :--- | :--- |
+| `2026-09-23 23-20-50` | **SIH Championship Deck Walkthrough: Slide 3 Directed Graph Workflow & Automated Layout Guard** | `2026-09-23_23-20-50_slide_3_directed_graph_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_23-20-50_slide_3_directed_graph_walkthrough.md) |
+| `2026-09-23 22-55-36` | **SIH Championship Deck Walkthrough: Slide 3 Directed Graph Workflow & Automated Layout Guard** | `2026-09-23_22-55-36_slide_3_directed_graph_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_22-55-36_slide_3_directed_graph_walkthrough.md) |
+| `2026-09-23 21-48-45` | **SIH Championship Deck Walkthrough: Slide 2 & Slide 3 Visual Perfection** | `2026-09-23_21-48-45_slide_2_slide_3_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_21-48-45_slide_2_slide_3_walkthrough.md) |
+| `2026-09-23 21-02-47` | **SIH Championship Slide 2 Visual Perfection Walkthrough** | `2026-09-23_21-02-47_sih_championship_slide_2_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_21-02-47_sih_championship_slide_2_walkthrough.md) |
+| `2026-09-23 20-52-35` | **SIH Championship Slide 2 Visual Scaling & Typographical Remediation Walkthrough** | `2026-09-23_20-52-35_sih_championship_slide_2_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_20-52-35_sih_championship_slide_2_walkthrough.md) |
+| `2026-09-23 20-39-04` | **SIH Championship Slide 2 Visual Replication & Presentation Pipeline Walkthrough** | `2026-09-23_20-39-04_sih_championship_slide_2_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_20-39-04_sih_championship_slide_2_walkthrough.md) |
+| `2026-09-23 20-01-23` | **Walkthrough: SIH Championship Presentation Subsystem Overhaul & Visual Transformation** | `2026-09-23_20-01-23_sih_championship_presentation_subsystem_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_20-01-23_sih_championship_presentation_subsystem_walkthrough.md) |
+| `2026-09-23 19-23-34` | **Walkthrough: SIH Championship Presentation Canva-Grade Visual Overhaul & Sovereign Architecture Realignment** | `2026-09-23_19-23-34_sih_championship_presentation_canva_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_19-23-34_sih_championship_presentation_canva_walkthrough.md) |
+| `2026-09-23 18-32-01` | **Walkthrough: SIH Championship Presentation Quality Remediation & Problem Statement Realignment** | `2026-09-23_18-32-01_sih_championship_presentation_quality_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_18-32-01_sih_championship_presentation_quality_walkthrough.md) |
+| `2026-09-23 18-13-07` | **Walkthrough: SIH Championship Presentation Upgrade for CHAKRA & BHEDAK** | `2026-09-23_18-13-07_sih_championship_presentation_upgrade_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_18-13-07_sih_championship_presentation_upgrade_walkthrough.md) |
 | `2026-09-23 17-45-43` | **Walkthrough: Smart Ingestion of Clean Agentic Workflow Template & Re-Organization** | `2026-09-23_17-45-43_smart_ingestion_clean_agentic_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_17-45-43_smart_ingestion_clean_agentic_walkthrough.md) |
 | `2026-09-23 17-43-18` | **Phase Comprehension Dossier: AUDIT_PROBE** | `2026-09-23_17-43-18_audit_probe_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_17-43-18_audit_probe_walkthrough.md) |
 | `2026-09-23 11-21-52` | **Walkthrough: Implementation of Zero-Process Hook, Context Window Meter, Team Mesh Git Reconciler & Dual-Scope Scale Separation** | `2026-09-23_11-21-52_implementation_zero_process_hook_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-23_11-21-52_implementation_zero_process_hook_walkthrough.md) |
@@ -22,3 +32,5 @@ Total Registered Documents: **16**
 | `2026-09-21` | **Walkthrough: Project BHEDAK MVP & Workflow Standards Remediation** | `2026-09-21_bhedak_mvp_workflow_remediation_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-21_bhedak_mvp_workflow_remediation_walkthrough.md) |
 | `2026-09-21` | **Walkthrough for Audit Trail** | `2026-09-21_audit_trail_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-21_audit_trail_walkthrough.md) |
 | `2026-09-21` | **Phase Comprehension Dossier: AUDIT_PROBE** | `2026-09-21_audit_probe_walkthrough.md` | [View Document](file:///docs/walkthroughs/2026-09-21_audit_probe_walkthrough.md) |
+- **2026-09-23 23:49:05** | [SIH Championship Deck Walkthrough: Slide 3 Directed Graph Workflow & Automated Layout Guard](2026-09-23_23-49-05_slide_3_directed_graph_walkthrough.md) | *Scope: slide_3_directed_graph*
+- **2026-09-24 00:30:48** | [SIH 2026 Championship Slide Decks: All 6 Slides Master Overhaul Walkthrough](2026-09-24_00-30-48_sih_2026_championship_slide_walkthrough.md) | *Scope: sih_2026_championship_slide*
